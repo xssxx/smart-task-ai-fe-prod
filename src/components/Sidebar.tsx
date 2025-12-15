@@ -15,8 +15,12 @@ import {
   Target,
   Zap,
 } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 const Sidebar = () => {
+  const pathname = usePathname();
+
   const [activeItem, setActiveItem] = useState("home");
   const [expandedWorkspace, setExpandedWorkspace] = useState<string | null>(
     "project-a"
@@ -34,8 +38,13 @@ const Sidebar = () => {
       name: "Project Alpha",
       color: "bg-blue-500",
       items: [
-        { id: "overview", icon: LayoutDashboard, label: "Overview" },
-        { id: "board", icon: FolderKanban, label: "Board" },
+        {
+          id: "overview",
+          icon: LayoutDashboard,
+          label: "Overview",
+          to: "/app/home",
+        },
+        { id: "board", icon: FolderKanban, label: "Board", to: "/app/board" },
         { id: "sprint", icon: Zap, label: "Sprint" },
         { id: "goals", icon: Target, label: "Goals" },
       ],
@@ -143,8 +152,9 @@ const Sidebar = () => {
                     {workspace.items.map((item) => {
                       const Icon = item.icon;
                       return (
-                        <button
+                        <Link
                           key={item.id}
+                          href={item.to ?? "#"}
                           onClick={() => setActiveItem(item.id)}
                           className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                             activeItem === item.id
@@ -154,7 +164,7 @@ const Sidebar = () => {
                         >
                           <Icon className="w-4 h-4" />
                           <span>{item.label}</span>
-                        </button>
+                        </Link>
                       );
                     })}
                   </div>
