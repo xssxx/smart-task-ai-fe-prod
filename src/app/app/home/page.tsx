@@ -202,7 +202,7 @@ export default function TaskDashboard() {
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
           {/* Recent Tasks */}
           <Card className="lg:col-span-2">
             <CardHeader>
@@ -274,87 +274,6 @@ export default function TaskDashboard() {
               </div>
             </CardContent>
           </Card>
-
-          {/* Projects Overview */}
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Projects</CardTitle>
-                <CardDescription>Active project status</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {projects.map((project, idx) => (
-                  <div key={idx} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div
-                          className={`w-3 h-3 rounded-full ${project.color}`}
-                        ></div>
-                        <span className="font-medium text-sm text-gray-900">
-                          {project.name}
-                        </span>
-                      </div>
-                      <span className="text-xs text-gray-600">
-                        {project.completed}/{project.tasks}
-                      </span>
-                    </div>
-                    <Progress
-                      value={(project.completed / project.tasks) * 100}
-                      className="h-2"
-                    />
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Team Activity</CardTitle>
-                <CardDescription>Recent updates from your team</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <Avatar className="w-8 h-8">
-                    <AvatarImage src="https://api.dicebear.com/7.x/avataaars/svg?seed=sarah" />
-                    <AvatarFallback>SJ</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-900">
-                      <span className="font-medium">Sarah J</span> completed a
-                      task
-                    </p>
-                    <p className="text-xs text-gray-500">2 hours ago</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <Avatar className="w-8 h-8">
-                    <AvatarImage src="https://api.dicebear.com/7.x/avataaars/svg?seed=mike" />
-                    <AvatarFallback>MT</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-900">
-                      <span className="font-medium">Mike T</span> added a
-                      comment
-                    </p>
-                    <p className="text-xs text-gray-500">4 hours ago</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <Avatar className="w-8 h-8">
-                    <AvatarImage src="https://api.dicebear.com/7.x/avataaars/svg?seed=alex" />
-                    <AvatarFallback>AK</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-900">
-                      <span className="font-medium">Alex K</span> created a new
-                      task
-                    </p>
-                    <p className="text-xs text-gray-500">Yesterday</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
         </div>
       </main>
     </div>
