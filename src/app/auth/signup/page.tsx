@@ -58,7 +58,7 @@ export default function SignUpPage() {
         username: formData.username,
         email: formData.email,
         password: formData.password,
-        confirmPassword: formData.confirmPassword,
+        confirm_password: formData.confirmPassword,
       };
 
       const response = await signup(payload);

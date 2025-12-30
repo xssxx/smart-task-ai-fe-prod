@@ -2,12 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { supabase } from "@/lib/supabase/client";
 
 export default function AuthCallback() {
   const router = useRouter();
@@ -21,7 +16,36 @@ export default function AuthCallback() {
         return;
       }
 
-      // ✅ login สำเร็จ
+      const user = data.session.user;
+      const token = data.session.access_token;
+
+      // เช็คว่ามี account หรือยัง
+      const { data: existingAccount } = await supabase
+        .from("accounts")
+        .select("id")
+        .eq("id", user.id)
+        .single();
+
+      // ถ้ายังไม่มี ให้สร้าง
+      if (!existingAccount) {
+        const { error: insertError } = await supabase.from("accounts").insert({
+          id: user.id,
+          email: user.email,
+          username: null,
+          password: "OAUTH",
+          state: "active",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
+
+        if (insertError) {
+          console.error("Error creating account:", insertError);
+        }
+      }
+
+      // Save token to cookie
+      document.cookie = `auth-token=${token}; path=/; max-age=86400`;
+
       router.replace("/app/home");
     };
 
