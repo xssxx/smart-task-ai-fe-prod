@@ -1,5 +1,5 @@
 "use client";
-import React, { EventHandler, useState } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   Card,
   CardContent,
@@ -18,6 +18,8 @@ import {
   MoreHorizontal,
   Filter,
   Search,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { DraggedTask } from "@/types/board";
 
@@ -144,6 +146,208 @@ export default function BoardPage() {
   const [draggedTask, setDraggedTask] = useState<DraggedTask | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState(null);
 
+  // Mobile swipe state
+  const [currentColumnIndex, setCurrentColumnIndex] = useState(0);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Touch drag state for mobile
+  const [touchDragTask, setTouchDragTask] = useState<DraggedTask | null>(null);
+  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(
+    null
+  );
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
+  const [draggedElement, setDraggedElement] = useState<HTMLElement | null>(
+    null
+  );
+  const autoScrollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Scroll to column on mobile
+  const scrollToColumn = useCallback(
+    (index: number) => {
+      if (scrollContainerRef.current) {
+        const container = scrollContainerRef.current;
+        const columnWidth = container.scrollWidth / columns.length;
+        container.scrollTo({
+          left: columnWidth * index,
+          behavior: "smooth",
+        });
+        setCurrentColumnIndex(index);
+      }
+    },
+    [columns.length]
+  );
+
+  // Handle scroll end to snap to nearest column
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    let scrollTimeout: NodeJS.Timeout;
+
+    const handleScroll = () => {
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        const columnWidth = container.scrollWidth / columns.length;
+        const scrollPosition = container.scrollLeft;
+        const nearestIndex = Math.round(scrollPosition / columnWidth);
+        const clampedIndex = Math.max(
+          0,
+          Math.min(nearestIndex, columns.length - 1)
+        );
+
+        if (clampedIndex !== currentColumnIndex) {
+          setCurrentColumnIndex(clampedIndex);
+        }
+
+        // Snap to the nearest column
+        container.scrollTo({
+          left: columnWidth * clampedIndex,
+          behavior: "smooth",
+        });
+      }, 150);
+    };
+
+    container.addEventListener("scroll", handleScroll);
+    return () => {
+      container.removeEventListener("scroll", handleScroll);
+      clearTimeout(scrollTimeout);
+    };
+  }, [columns.length, currentColumnIndex]);
+
+  // Touch handlers for mobile drag and drop
+  const handleTouchStart = (
+    e: React.TouchEvent,
+    task: any,
+    columnId: string
+  ) => {
+    const touch = e.touches[0];
+    const target = e.currentTarget as HTMLElement;
+
+    // Start long press timer for drag
+    const timer = setTimeout(() => {
+      setTouchDragTask({ task, sourceColumnId: columnId });
+      setIsDragging(true);
+      setDragPosition({ x: touch.clientX, y: touch.clientY });
+      setDraggedElement(target);
+      target.style.opacity = "0.5";
+
+      // Prevent scrolling while dragging
+      document.body.style.overflow = "hidden";
+    }, 300); // 300ms long press to start drag
+
+    setLongPressTimer(timer);
+  };
+
+  // Auto-scroll when dragging near edges
+  const startAutoScroll = useCallback(
+    (direction: "left" | "right") => {
+      if (autoScrollIntervalRef.current) return;
+
+      autoScrollIntervalRef.current = setInterval(() => {
+        const newIndex =
+          direction === "right"
+            ? Math.min(columns.length - 1, currentColumnIndex + 1)
+            : Math.max(0, currentColumnIndex - 1);
+
+        if (newIndex !== currentColumnIndex) {
+          scrollToColumn(newIndex);
+        }
+      }, 400); // Scroll every 400ms while at edge
+    },
+    [columns.length, currentColumnIndex, scrollToColumn]
+  );
+
+  const stopAutoScroll = useCallback(() => {
+    if (autoScrollIntervalRef.current) {
+      clearInterval(autoScrollIntervalRef.current);
+      autoScrollIntervalRef.current = null;
+    }
+  }, []);
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (longPressTimer && !isDragging) {
+      // Cancel long press if user moves before timer completes
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+      return;
+    }
+
+    if (!isDragging || !touchDragTask) return;
+
+    const touch = e.touches[0];
+    setDragPosition({ x: touch.clientX, y: touch.clientY });
+
+    // Auto-scroll when near screen edges
+    const screenWidth = window.innerWidth;
+    const edgeThreshold = 50; // pixels from edge to trigger scroll
+
+    if (touch.clientX > screenWidth - edgeThreshold) {
+      // Near right edge - scroll to next column
+      startAutoScroll("right");
+    } else if (touch.clientX < edgeThreshold) {
+      // Near left edge - scroll to previous column
+      startAutoScroll("left");
+    } else {
+      // Not near edge - stop auto-scroll
+      stopAutoScroll();
+    }
+
+    // Find which column we're over
+    const elements = document.elementsFromPoint(touch.clientX, touch.clientY);
+    const columnElement = elements.find((el) =>
+      el.getAttribute("data-column-id")
+    );
+    if (columnElement) {
+      const columnId = columnElement.getAttribute("data-column-id");
+      setDragOverColumn(columnId as any);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    // Stop auto-scroll
+    stopAutoScroll();
+
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+
+    if (isDragging && touchDragTask && dragOverColumn) {
+      const { task, sourceColumnId } = touchDragTask;
+
+      if (sourceColumnId !== dragOverColumn) {
+        setColumns((prevColumns) => {
+          return prevColumns.map((col) => {
+            if (col.id === sourceColumnId) {
+              return {
+                ...col,
+                tasks: col.tasks.filter((t) => t.id !== task.id),
+              };
+            }
+            if (col.id === dragOverColumn) {
+              return {
+                ...col,
+                tasks: [...col.tasks, task],
+              };
+            }
+            return col;
+          });
+        });
+      }
+    }
+
+    // Reset drag state
+    if (draggedElement) {
+      draggedElement.style.opacity = "1";
+    }
+    setTouchDragTask(null);
+    setIsDragging(false);
+    setDragOverColumn(null);
+    setDraggedElement(null);
+    document.body.style.overflow = "";
+  };
+
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case "urgent":
@@ -225,11 +429,28 @@ export default function BoardPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Mobile drag indicator */}
+      {isDragging && touchDragTask && (
+        <div
+          className="fixed z-50 pointer-events-none bg-white rounded-lg shadow-2xl border-2 border-blue-400 p-3 max-w-[200px]"
+          style={{
+            left: dragPosition.x - 100,
+            top: dragPosition.y - 30,
+            transform: "scale(0.9)",
+          }}
+        >
+          <p className="text-sm font-medium truncate">
+            {touchDragTask.task.title}
+          </p>
+          <p className="text-xs text-gray-500">Drop to move</p>
+        </div>
+      )}
+
       <main className="p-6 max-w-[1600px] mx-auto">
         {/* Page Header */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
-            <div>
+            <div className="hidden sm:block">
               <h2 className="text-3xl font-bold text-gray-900 mb-2">Board</h2>
               <p className="text-gray-600">
                 Manage your tasks with a visual kanban board
@@ -252,11 +473,54 @@ export default function BoardPage() {
           </div>
         </div>
 
+        {/* Mobile Column Navigation */}
+        <div className="flex md:hidden items-center justify-between mb-4 px-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => scrollToColumn(Math.max(0, currentColumnIndex - 1))}
+            disabled={currentColumnIndex === 0}
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </Button>
+          <div className="flex gap-2">
+            {columns.map((col, idx) => (
+              <button
+                key={col.id}
+                onClick={() => scrollToColumn(idx)}
+                className={`w-2 h-2 rounded-full transition-all ${
+                  idx === currentColumnIndex ? col.color : "bg-gray-300"
+                }`}
+              />
+            ))}
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() =>
+              scrollToColumn(
+                Math.min(columns.length - 1, currentColumnIndex + 1)
+              )
+            }
+            disabled={currentColumnIndex === columns.length - 1}
+          >
+            <ChevronRight className="w-5 h-5" />
+          </Button>
+        </div>
+
         {/* Kanban Board */}
-        <div className="flex gap-4 overflow-x-auto pb-4">
+        <div
+          ref={scrollContainerRef}
+          className="flex gap-4 overflow-x-auto pb-4 md:overflow-x-visible snap-x snap-mandatory md:snap-none scroll-smooth"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        >
           {columns.map((column) => (
-            <div key={column.id} className="shrink-0 w-80">
+            <div
+              key={column.id}
+              className="shrink-0 w-[85vw] md:w-80 snap-center md:snap-align-none"
+            >
               <Card
+                data-column-id={column.id}
                 className={`h-full transition-all ${
                   dragOverColumn === column.id
                     ? "ring-2 ring-blue-400 ring-offset-2"
@@ -292,9 +556,16 @@ export default function BoardPage() {
                       draggable
                       onDragStart={(e) => handleDragStart(e, task, column.id)}
                       onDragEnd={handleDragEnd}
-                      className="border-gray-200 hover:border-gray-300 hover:shadow-md transition-all cursor-move"
+                      onTouchStart={(e) => handleTouchStart(e, task, column.id)}
+                      onTouchMove={handleTouchMove}
+                      onTouchEnd={handleTouchEnd}
+                      className={`border-gray-200 hover:border-gray-300 hover:shadow-md transition-all cursor-move touch-manipulation ${
+                        isDragging && touchDragTask?.task.id === task.id
+                          ? "opacity-50 scale-95"
+                          : ""
+                      }`}
                     >
-                      <CardContent className="p-4 cursor-pointer">
+                      <CardContent className="p-4 cursor-pointer select-none">
                         <div className="space-y-3">
                           <div>
                             <h4 className="font-medium text-gray-900 mb-1">

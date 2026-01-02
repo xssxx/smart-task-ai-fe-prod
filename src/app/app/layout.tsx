@@ -1,4 +1,6 @@
-import type { Metadata } from "next";
+"use client";
+
+import { useState } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import "../globals.css";
 import Navbar from "@/components/Navbar";
@@ -14,16 +16,15 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "TaskFlow - Task Management",
-  description: "Manage your tasks and projects efficiently",
-};
-
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+
   return (
     <html lang="en">
       <body
@@ -31,7 +32,7 @@ export default function RootLayout({
       >
         <div className="flex h-screen overflow-hidden">
           {/* Sidebar - Fixed on the left */}
-          <Sidebar />
+          <Sidebar isOpen={sidebarOpen} onToggle={toggleSidebar} />
 
           {/* Main content area */}
           <div className="flex-1 flex flex-col overflow-hidden">
