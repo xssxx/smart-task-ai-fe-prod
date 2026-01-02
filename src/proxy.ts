@@ -4,7 +4,7 @@ import type { NextRequest } from "next/server";
 // Public routes that don't require authentication
 const PUBLIC_ROUTES = ["/auth/login", "/auth/signup", "/auth/callback"];
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Get JWT token from cookie
