@@ -1,6 +1,8 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import axios from "axios";
+import { SYSTEM_PROMPT } from "@/prompts/systemPrompt";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -55,6 +57,12 @@ export default function AIChatPage() {
   }, [messages]);
 
   const handleSendMessage = async () => {
+    const groqApiKey = process.env.NEXT_PUBLIC_GROQ_API_KEY;
+    if (!groqApiKey) {
+      console.error("No GROQ API key configured");
+      return;
+    }
+
     if (!input.trim() || isLoading) return;
 
     const userMessage: Message = {
@@ -68,92 +76,66 @@ export default function AIChatPage() {
     setInput("");
     setIsLoading(true);
 
-    // Simulate AI response
-    setTimeout(() => {
-      const aiResponse = generateAIResponse(input);
+    try {
+      const groqApiUrl = process.env.NEXT_PUBLIC_GROQ_API_URL;
+      if (!groqApiUrl) {
+        console.error("No GROQ API url found");
+        return;
+      }
+      const response = await axios.post(
+        groqApiUrl,
+        {
+          model: "openai/gpt-oss-120b",
+          messages: [
+            {
+              role: "system",
+              content: SYSTEM_PROMPT,
+            },
+            ...messages.map((msg) => ({
+              role: msg.role,
+              content: msg.content,
+            })),
+            {
+              role: "user",
+              content: input,
+            },
+          ],
+          temperature: 0.7,
+          max_tokens: 1024,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${groqApiKey}`,
+          },
+        }
+      );
+
+      const data = response.data;
+      const aiContent =
+        data.choices[0]?.message?.content || "ขออภัย ไม่สามารถประมวลผลได้";
+
+      const aiResponse: Message = {
+        id: Date.now().toString(),
+        role: "assistant",
+        content: aiContent,
+        timestamp: new Date(),
+      };
+
       setMessages((prev) => [...prev, aiResponse]);
-      setIsLoading(false);
-    }, 1500);
-  };
-
-  const generateAIResponse = (userInput: string): Message => {
-    const lowerInput = userInput.toLowerCase();
-
-    // Check if user is asking to create tasks
-    if (
-      lowerInput.includes("สร้าง") ||
-      lowerInput.includes("create") ||
-      lowerInput.includes("ทำ") ||
-      lowerInput.includes("งาน") ||
-      lowerInput.includes("task") ||
-      lowerInput.includes("project")
-    ) {
-      // Generate sample tasks based on input
-      const tasks: GeneratedTask[] = [
-        {
-          title: "วางแผนโครงสร้างโปรเจกต์",
-          description: "กำหนด architecture และเทคโนโลยีที่จะใช้",
-          priority: "high",
-          assignee: "Team Lead",
-          dueDate: "2024-12-20",
-          tags: ["planning", "architecture"],
-        },
-        {
-          title: "ออกแบบ UI/UX",
-          description: "สร้าง wireframe และ mockup",
-          priority: "high",
-          assignee: "Designer",
-          dueDate: "2024-12-22",
-          tags: ["design", "ui/ux"],
-        },
-        {
-          title: "พัฒนา Backend API",
-          description: "สร้าง RESTful API endpoints",
-          priority: "medium",
-          assignee: "Backend Dev",
-          dueDate: "2024-12-25",
-          tags: ["backend", "api"],
-        },
-        {
-          title: "พัฒนา Frontend",
-          description: "Implement UI components และ integrate กับ API",
-          priority: "medium",
-          assignee: "Frontend Dev",
-          dueDate: "2024-12-27",
-          tags: ["frontend", "react"],
-        },
-        {
-          title: "ทดสอบระบบ",
-          description: "Unit testing, Integration testing และ UAT",
-          priority: "high",
-          dueDate: "2024-12-30",
-          tags: ["testing", "qa"],
-        },
-      ];
-
-      return {
+    } catch (error) {
+      console.error("Error calling Groq API:", error);
+      const errorResponse: Message = {
         id: Date.now().toString(),
         role: "assistant",
         content:
-          "ผมได้วิเคราะห์และสร้าง tasks ให้คุณแล้วครับ ตามที่คุณขอ นี่คือรายการงานที่แนะนำ:",
+          "ขออภัย เกิดข้อผิดพลาดในการเชื่อมต่อกับ AI กรุณาลองใหม่อีกครั้ง",
         timestamp: new Date(),
-        tasks,
       };
+      setMessages((prev) => [...prev, errorResponse]);
+    } finally {
+      setIsLoading(false);
     }
-
-    // Default responses
-    const responses = [
-      "เข้าใจแล้วครับ คุณต้องการให้ผมช่วยอะไรเพิ่มเติมไหมครับ?",
-      "ได้เลยครับ ผมสามารถช่วยคุณสร้าง tasks, กำหนด priority, หรือจัดการงานต่างๆ ได้ครับ",
-      "มีอะไรให้ผมช่วยเพิ่มเติมไหมครับ? ลองบอกผมเกี่ยวกับโปรเจกต์ที่คุณกำลังทำอยู่สิครับ",
-    ];
-
-    return {
-      id: Date.now().toString(),
-      role: "assistant",
-      content: responses[Math.floor(Math.random() * responses.length)],
-      timestamp: new Date(),
-    };
   };
 
   const handleAddTask = (task: GeneratedTask) => {
