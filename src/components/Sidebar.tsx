@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -12,79 +12,100 @@ import {
   MessageCircle,
   Menu,
   X,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { listProjects, Project } from "@/services/api";
+
+interface WorkspaceItem {
+  id: string;
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  to: string;
+}
+
+interface Workspace {
+  id: string;
+  name: string;
+  color: string;
+  items: WorkspaceItem[];
+}
 
 interface SidebarProps {
   isOpen?: boolean;
   onToggle?: () => void;
 }
 
+const WORKSPACE_COLORS = [
+  "bg-blue-500",
+  "bg-purple-500",
+  "bg-green-500",
+  "bg-orange-500",
+  "bg-pink-500",
+  "bg-cyan-500",
+];
+
 const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
   const pathname = usePathname();
 
   const [activeItem, setActiveItem] = useState("home");
-  const [expandedWorkspace, setExpandedWorkspace] = useState<string | null>(
-    "project-a"
-  );
+  const [expandedWorkspace, setExpandedWorkspace] = useState<string | null>(null);
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        setLoading(true);
+        const response = await listProjects();
+        // API returns { success, message, data: { items, pagination }, error }
+        const items = response.data?.data?.items ?? [];
+        const projects: Project[] = Array.isArray(items) ? items : [];
+        
+        const mappedWorkspaces: Workspace[] = projects.map((project, index) => ({
+          id: project.id,
+          name: project.name,
+          color: WORKSPACE_COLORS[index % WORKSPACE_COLORS.length],
+          items: [
+            {
+              id: `overview-${project.id}`,
+              icon: LayoutDashboard,
+              label: "Overview",
+              to: "/app/home",
+            },
+            {
+              id: `board-${project.id}`,
+              icon: FolderKanban,
+              label: "Board",
+              to: "/app/board",
+            },
+            {
+              id: `chat-${project.id}`,
+              icon: MessageCircle,
+              label: "Chat AI",
+              to: `/app/chat/${project.id}`,
+            },
+          ],
+        }));
+        
+        setWorkspaces(mappedWorkspaces);
+        if (mappedWorkspaces.length > 0) {
+          setExpandedWorkspace(mappedWorkspaces[0].id);
+        }
+      } catch (err) {
+        console.error("Error fetching projects:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, []);
 
   const menuItems = [
     { id: "home", icon: Home, label: "Home", href: "#" },
     { id: "my-calendar", icon: Calendar, label: "My Calendar", href: "#" },
-  ];
-
-  const workspaces = [
-    {
-      id: "project-a",
-      name: "Project Alpha",
-      color: "bg-blue-500",
-      items: [
-        {
-          id: "overview",
-          icon: LayoutDashboard,
-          label: "Overview",
-          to: "/app/home",
-        },
-        { id: "board", icon: FolderKanban, label: "Board", to: "/app/board" },
-        {
-          id: "chat",
-          icon: MessageCircle,
-          label: "Chat AI",
-          to: "/app/chat",
-        },
-      ],
-    },
-    {
-      id: "project-b",
-      name: "Project Beta",
-      color: "bg-purple-500",
-      items: [
-        { id: "overview-b", icon: LayoutDashboard, label: "Overview" },
-        { id: "board-b", icon: FolderKanban, label: "Board", to: "/app/board" },
-        {
-          id: "chat",
-          icon: MessageCircle,
-          label: "Chat AI",
-          to: "/app/chat",
-        },
-      ],
-    },
-    {
-      id: "marketing",
-      name: "Marketing",
-      color: "bg-green-500",
-      items: [
-        { id: "overview-m", icon: LayoutDashboard, label: "Overview" },
-        { id: "board-m", icon: FolderKanban, label: "Board", to: "/app/board" },
-        {
-          id: "chat",
-          icon: MessageCircle,
-          label: "Chat AI",
-          to: "/app/chat",
-        },
-      ],
-    },
   ];
 
   return (
@@ -160,55 +181,63 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
             </div>
 
             <div className="space-y-1">
-              {workspaces.map((workspace) => (
-                <div key={workspace.id}>
-                  {/* Workspace Header */}
-                  <button
-                    onClick={() =>
-                      setExpandedWorkspace(
-                        expandedWorkspace === workspace.id ? null : workspace.id
-                      )
-                    }
-                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
-                  >
-                    <ChevronRight
-                      className={`w-4 h-4 transition-transform ${
-                        expandedWorkspace === workspace.id ? "rotate-90" : ""
-                      }`}
-                    />
-                    <div
-                      className={`w-2 h-2 rounded-full ${workspace.color}`}
-                    ></div>
-                    <span className="flex-1 text-left truncate">
-                      {workspace.name}
-                    </span>
-                  </button>
-
-                  {/* Workspace Items */}
-                  {expandedWorkspace === workspace.id && (
-                    <div className="ml-6 space-y-1 mt-1">
-                      {workspace.items.map((item) => {
-                        const Icon = item.icon;
-                        return (
-                          <Link
-                            key={item.id}
-                            href={item.to ?? "#"}
-                            onClick={() => setActiveItem(item.id)}
-                            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                              activeItem === item.id
-                                ? "bg-blue-50 text-blue-600 font-medium"
-                                : "text-gray-600 hover:bg-gray-100"
-                            }`}
-                          >
-                            <Icon className="w-4 h-4" />
-                            <span>{item.label}</span>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  )}
+              {loading ? (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
                 </div>
-              ))}
+              ) : workspaces.length === 0 ? (
+                <p className="text-sm text-gray-500 px-3 py-2">No projects yet</p>
+              ) : (
+                workspaces.map((workspace) => (
+                  <div key={workspace.id}>
+                    {/* Workspace Header */}
+                    <button
+                      onClick={() =>
+                        setExpandedWorkspace(
+                          expandedWorkspace === workspace.id ? null : workspace.id
+                        )
+                      }
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+                    >
+                      <ChevronRight
+                        className={`w-4 h-4 transition-transform ${
+                          expandedWorkspace === workspace.id ? "rotate-90" : ""
+                        }`}
+                      />
+                      <div
+                        className={`w-2 h-2 rounded-full ${workspace.color}`}
+                      ></div>
+                      <span className="flex-1 text-left truncate">
+                        {workspace.name}
+                      </span>
+                    </button>
+
+                    {/* Workspace Items */}
+                    {expandedWorkspace === workspace.id && (
+                      <div className="ml-6 space-y-1 mt-1">
+                        {workspace.items.map((item) => {
+                          const Icon = item.icon;
+                          return (
+                            <Link
+                              key={item.id}
+                              href={item.to ?? "#"}
+                              onClick={() => setActiveItem(item.id)}
+                              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                                activeItem === item.id
+                                  ? "bg-blue-50 text-blue-600 font-medium"
+                                  : "text-gray-600 hover:bg-gray-100"
+                              }`}
+                            >
+                              <Icon className="w-4 h-4" />
+                              <span>{item.label}</span>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
