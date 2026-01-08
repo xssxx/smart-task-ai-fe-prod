@@ -33,9 +33,14 @@ export default function SignInPage() {
     try {
       const res = await signin({ username: email, password });
       if (res.status === 200) {
-        const token = res.data.token;
-        document.cookie = `auth-token=${token}; path=/; max-age=86400`;
-        window.location.href = "/app/home";
+        // API response structure: { success, message, data: { token } }
+        const token = res.data.data?.token || res.data.token;
+        if (token) {
+          document.cookie = `auth-token=${token}; path=/; max-age=86400`;
+          window.location.href = "/app/home";
+        } else {
+          console.error("No token in response:", res.data);
+        }
       }
     } catch (error) {
       console.error("Sign in failed:", error);

@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -19,7 +19,10 @@ import {
   Plus,
   Calendar,
   BarChart3,
+  Loader2,
+  FolderOpen,
 } from "lucide-react";
+import { listProjects, Project } from "@/services/api";
 
 export default function TaskDashboard() {
   const [tasks] = useState([
@@ -70,21 +73,29 @@ export default function TaskDashboard() {
     },
   ]);
 
-  const [projects] = useState([
-    {
-      name: "Website Redesign",
-      tasks: 24,
-      completed: 18,
-      color: "bg-blue-500",
-    },
-    { name: "Mobile App", tasks: 16, completed: 8, color: "bg-purple-500" },
-    {
-      name: "API Integration",
-      tasks: 12,
-      completed: 10,
-      color: "bg-green-500",
-    },
-  ]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [projectsLoading, setProjectsLoading] = useState(true);
+  const [projectsError, setProjectsError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        setProjectsLoading(true);
+        setProjectsError(null);
+        const response = await listProjects();
+        // API returns { success, message, data: { items, pagination }, error }
+        const items = response.data?.data?.items ?? [];
+        setProjects(Array.isArray(items) ? items : []);
+      } catch (err) {
+        setProjectsError("Failed to load projects");
+        console.error("Error fetching projects:", err);
+      } finally {
+        setProjectsLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, []);
 
   const stats = {
     total: tasks.length,
@@ -202,7 +213,63 @@ export default function TaskDashboard() {
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Workspaces (Projects) */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Workspaces</CardTitle>
+                  <CardDescription>Your active projects</CardDescription>
+                </div>
+                <Button size="sm" variant="outline" className="cursor-pointer">
+                  <Plus className="w-4 h-4 mr-2" />
+                  New
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {projectsLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+                </div>
+              ) : projectsError ? (
+                <div className="text-center py-8 text-red-500">
+                  <AlertCircle className="w-8 h-8 mx-auto mb-2" />
+                  <p className="text-sm">{projectsError}</p>
+                </div>
+              ) : projects.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <FolderOpen className="w-8 h-8 mx-auto mb-2" />
+                  <p className="text-sm">No projects yet</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {projects.map((project) => (
+                    <div
+                      key={project.id}
+                      className="border border-gray-200 rounded-lg p-3 hover:border-gray-300 transition-colors cursor-pointer"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 rounded-full bg-blue-500" />
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-gray-900 truncate">
+                            {project.name}
+                          </h4>
+                          {project.config?.nickname && (
+                            <p className="text-xs text-gray-500 truncate">
+                              {project.config.nickname}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Recent Tasks */}
           <Card className="lg:col-span-2">
             <CardHeader>
