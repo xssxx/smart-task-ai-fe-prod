@@ -13,7 +13,7 @@ import {
   Loader2,
   AlertCircle,
 } from "lucide-react";
-import { sendChatMessage, sendChatMessageStream } from "@/services/api";
+import { sendChatMessage } from "@/services/api";
 import { ChatMessage, Message } from "@/types/chat";
 
 export default function AIChatPage() {
@@ -24,8 +24,6 @@ export default function AIChatPage() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [useStreaming, setUseStreaming] = useState(false);
-  const [streamingContent, setStreamingContent] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -35,7 +33,7 @@ export default function AIChatPage() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, streamingContent]);
+  }, [messages]);
 
   const getSessionHistory = (): Message[] => {
     return messages.map((msg) => ({
@@ -60,12 +58,7 @@ export default function AIChatPage() {
     setError(null);
 
     const sessionHistory = getSessionHistory();
-
-    if (useStreaming) {
-      await handleStreamingResponse(input, sessionHistory);
-    } else {
-      await handleNonStreamingResponse(input, sessionHistory);
-    }
+    await handleNonStreamingResponse(input, sessionHistory);
   };
 
 
@@ -96,44 +89,6 @@ export default function AIChatPage() {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleStreamingResponse = async (
-    content: string,
-    sessionHistory: Message[]
-  ) => {
-    setStreamingContent("");
-    
-    const streamingMsgId = Date.now().toString();
-    
-    sendChatMessageStream(
-      projectId,
-      { content, session_history: sessionHistory },
-      (chunk) => {
-        setStreamingContent((prev) => prev + chunk);
-      },
-      () => {
-        setStreamingContent((prev) => {
-          const finalContent = prev;
-          setMessages((msgs) => [
-            ...msgs,
-            {
-              id: streamingMsgId,
-              role: "assistant",
-              content: finalContent,
-              timestamp: new Date(),
-            },
-          ]);
-          return "";
-        });
-        setIsLoading(false);
-      },
-      (errorMsg) => {
-        setError(errorMsg);
-        setStreamingContent("");
-        setIsLoading(false);
-      }
-    );
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -168,7 +123,6 @@ export default function AIChatPage() {
     );
   }
 
-
   return (
     <div className="min-h-screen bg-gray-50">
       <main className="h-screen flex flex-col max-w-5xl mx-auto">
@@ -176,26 +130,13 @@ export default function AIChatPage() {
         <div className="p-6 bg-white border-b border-gray-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center">
                 <Sparkles className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">
-                  AI Task Assistant
-                </h2>
-                <p className="text-sm text-gray-600">
-                  สร้างและจัดการ tasks ด้วย AI
-                </p>
+                <h2 className="text-2xl font-bold text-gray-900">AI Task Assistant</h2>
+                <p className="text-sm text-gray-600">สร้างและจัดการ tasks ด้วย AI</p>
               </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-gray-600">Streaming:</label>
-              <input
-                type="checkbox"
-                checked={useStreaming}
-                onChange={(e) => setUseStreaming(e.target.checked)}
-                className="rounded"
-              />
             </div>
           </div>
         </div>
@@ -205,76 +146,35 @@ export default function AIChatPage() {
           <div className="mx-6 mt-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
             <AlertCircle className="w-5 h-5 text-red-500" />
             <span className="text-red-700">{error}</span>
-            <button
-              onClick={() => setError(null)}
-              className="ml-auto text-red-500 hover:text-red-700"
-            >
-              ✕
-            </button>
+            <button onClick={() => setError(null)} className="ml-auto text-red-500 hover:text-red-700">✕</button>
           </div>
         )}
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex gap-4 ${
-                message.role === "user" ? "flex-row-reverse" : ""
-              }`}
-            >
-              {/* Avatar */}
+            <div key={message.id} className={`flex gap-4 ${message.role === "user" ? "flex-row-reverse" : ""}`}>
               <div className="shrink-0">
                 {message.role === "assistant" ? (
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-full bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center">
                     <Sparkles className="w-4 h-4 text-white" />
                   </div>
                 ) : (
                   <Avatar className="w-8 h-8">
                     <AvatarImage src="https://api.dicebear.com/7.x/avataaars/svg?seed=user" />
-                    <AvatarFallback>
-                      <User className="w-4 h-4" />
-                    </AvatarFallback>
+                    <AvatarFallback><User className="w-4 h-4" /></AvatarFallback>
                   </Avatar>
                 )}
               </div>
 
-              {/* Message Content */}
-              <div
-                className={`flex-1 ${
-                  message.role === "user" ? "flex justify-end" : ""
-                }`}
-              >
-                <div
-                  className={`inline-block max-w-2xl ${
-                    message.role === "user"
-                      ? "bg-blue-600 text-white rounded-2xl rounded-tr-sm"
-                      : "bg-white border border-gray-200 rounded-2xl rounded-tl-sm"
-                  } p-4 shadow-sm`}
-                >
-                  <p
-                    className={`text-sm whitespace-pre-wrap ${
-                      message.role === "user" ? "text-white" : "text-gray-900"
-                    }`}
-                  >
-                    {message.content}
-                  </p>
-
-                  <p
-                    className={`text-xs mt-2 ${
-                      message.role === "user"
-                        ? "text-blue-100"
-                        : "text-gray-500"
-                    }`}
-                  >
-                    {message.timestamp?.toLocaleTimeString("th-TH", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    }) || ""}
+              <div className={`flex-1 ${message.role === "user" ? "flex justify-end" : ""}`}>
+                <div className={`inline-block max-w-2xl ${message.role === "user" ? "bg-blue-600 text-white rounded-2xl rounded-tr-sm" : "bg-white border border-gray-200 rounded-2xl rounded-tl-sm"} p-4 shadow-sm`}>
+                  <p className={`text-sm whitespace-pre-wrap ${message.role === "user" ? "text-white" : "text-gray-900"}`}>{message.content}</p>
+                  <p className={`text-xs mt-2 ${message.role === "user" ? "text-blue-100" : "text-gray-500"}`}>
+                    {message.timestamp?.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }) || ""}
                   </p>
                 </div>
 
-                {/* Task Actions */}
                 {message.taskActions && message.taskActions.length > 0 && (
                   <div className="mt-4 space-y-2">
                     {message.taskActions.map((action, idx) => (
@@ -284,16 +184,9 @@ export default function AIChatPage() {
                             <CheckCircle2 className="w-5 h-5 text-green-500" />
                             <div className="flex-1">
                               <span className="font-medium">{action.name}</span>
-                              <span className="text-gray-500 text-sm ml-2">
-                                ({action.task_id})
-                              </span>
+                              <span className="text-gray-500 text-sm ml-2">({action.task_id})</span>
                             </div>
-                            <Badge
-                              variant="outline"
-                              className={getActionBadgeColor(action.type)}
-                            >
-                              {action.type}
-                            </Badge>
+                            <Badge variant="outline" className={getActionBadgeColor(action.type)}>{action.type}</Badge>
                           </div>
                         </CardContent>
                       </Card>
@@ -304,24 +197,9 @@ export default function AIChatPage() {
             </div>
           ))}
 
-          {/* Streaming content */}
-          {streamingContent && (
+          {isLoading && (
             <div className="flex gap-4">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-white" />
-              </div>
-              <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-sm p-4 shadow-sm max-w-2xl">
-                <p className="text-sm text-gray-900 whitespace-pre-wrap">
-                  {streamingContent}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Loading indicator */}
-          {isLoading && !streamingContent && (
-            <div className="flex gap-4">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-full bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center">
                 <Sparkles className="w-4 h-4 text-white" />
               </div>
               <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-sm p-4 shadow-sm">
@@ -332,7 +210,6 @@ export default function AIChatPage() {
               </div>
             </div>
           )}
-
           <div ref={messagesEndRef} />
         </div>
 
@@ -340,18 +217,16 @@ export default function AIChatPage() {
         <div className="p-6 bg-white border-t border-gray-200">
           <div className="max-w-4xl mx-auto">
             <div className="flex gap-3 items-end">
-              <div className="flex-1 relative">
+              <div className="flex-1 relative flex items-end">
                 <textarea
                   ref={textareaRef}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="พิมพ์ข้อความ... (เช่น 'สร้าง task ชื่อ ประชุมทีม priority high')"
+                  placeholder="พิมพ์ข้อความ"
                   className="w-full resize-none rounded-xl border border-gray-300 px-4 py-3 pr-12 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[52px] max-h-32"
                   rows={1}
-                  style={{
-                    height: "auto",
-                  }}
+                  style={{ height: "auto" }}
                   onInput={(e) => {
                     const target = e.target as HTMLTextAreaElement;
                     target.style.height = "auto";
@@ -359,23 +234,11 @@ export default function AIChatPage() {
                   }}
                 />
               </div>
-              <Button
-                onClick={handleSendMessage}
-                disabled={!input.trim() || isLoading}
-                size="lg"
-                className="h-[52px] px-6"
-              >
-                {isLoading ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <Send className="w-5 h-5" />
-                )}
+              <Button onClick={handleSendMessage} disabled={!input.trim() || isLoading} size="lg" className="h-[52px] px-6 shrink-0 bg-blue-500 hover:bg-blue-600 text-white">
+                {isLoading ? <Loader2 className="w-5 h-5 animate-spin text-white" /> : <Send className="w-5 h-5 text-white" />}
               </Button>
             </div>
-
-            <p className="text-xs text-gray-500 mt-2 text-center">
-              กด Enter เพื่อส่งข้อความ, Shift + Enter เพื่อขึ้นบรรทัดใหม่
-            </p>
+            <p className="text-xs text-gray-500 mt-2 text-center">กด Enter เพื่อส่งข้อความ, Shift + Enter เพื่อขึ้นบรรทัดใหม่</p>
           </div>
         </div>
       </main>

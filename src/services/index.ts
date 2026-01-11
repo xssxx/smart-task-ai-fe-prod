@@ -1,14 +1,16 @@
 import axios from "axios";
 
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
+
 const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080",
+  baseURL: API_BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
 });
 
 // Helper function to get token from cookie
-const getTokenFromCookie = (): string | null => {
+export const getTokenFromCookie = (): string | null => {
   if (typeof window === "undefined") return null;
   
   const cookies = document.cookie.split(";");

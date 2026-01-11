@@ -9,8 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   CheckCircle2,
   Clock,
@@ -19,25 +18,62 @@ import {
   Plus,
   Calendar,
   BarChart3,
-  Loader2,
   FolderOpen,
+  MoreHorizontal,
+  Edit3,
+  Trash2,
 } from "lucide-react";
 import { listProjects, Project } from "@/services/api";
+import CreateProjectModal from "@/components/CreateProjectModal";
+import CreateTaskFromHomeModal from "@/components/CreateTaskFromHomeModal";
+import EditWorkspaceModal from "@/components/EditWorkspaceModal";
+import DeleteWorkspaceModal from "@/components/DeleteWorkspaceModal";
 
-export default function TaskDashboard() {
+const getPriorityColor = (priority: string) => {
+  switch (priority?.toLowerCase()) {
+    case "urgent":
+      return "bg-red-100 text-red-800 border-red-200";
+    case "high":
+      return "bg-orange-100 text-orange-800 border-orange-200";
+    case "medium":
+      return "bg-yellow-100 text-yellow-800 border-yellow-200";
+    case "low":
+      return "bg-green-100 text-green-800 border-green-200";
+    default:
+      return "bg-gray-100 text-gray-800 border-gray-200";
+  }
+};
+
+const getStatusColor = (status: string) => {
+  switch (status?.toLowerCase()) {
+    case "completed":
+      return "bg-green-100 text-green-800 border-green-200";
+    case "in-progress":
+      return "bg-blue-100 text-blue-800 border-blue-200";
+    case "todo":
+      return "bg-gray-100 text-gray-800 border-gray-200";
+    default:
+      return "bg-gray-100 text-gray-800 border-gray-200";
+  }
+};
+
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Progress } from "@/components/ui/progress";
+
+export default function HomePage() {
   const [tasks] = useState([
     {
       id: 1,
-      title: "Design new landing page",
-      status: "in-progress",
+      title: "Complete project setup",
+      status: "completed",
       priority: "high",
-      assignee: "Sarah J",
-      progress: 65,
-      dueDate: "2024-12-18",
+      assignee: "John D",
+      progress: 100,
+      dueDate: "2024-12-10",
     },
     {
       id: 2,
-      title: "Fix authentication bug",
+      title: "Design review meeting",
       status: "completed",
       priority: "urgent",
       assignee: "Mike T",
@@ -76,60 +112,59 @@ export default function TaskDashboard() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [projectsLoading, setProjectsLoading] = useState(true);
   const [projectsError, setProjectsError] = useState<string | null>(null);
+  const [showCreateProjectModal, setShowCreateProjectModal] = useState(false);
+  const [showCreateTaskModal, setShowCreateTaskModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [deletingProject, setDeletingProject] = useState<Project | null>(null);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+
+  const fetchProjects = async () => {
+    try {
+      setProjectsLoading(true);
+      setProjectsError(null);
+      const response = await listProjects();
+      // API returns { success, message, data: { items, pagination }, error }
+      const items = response.data?.data?.items ?? [];
+      setProjects(Array.isArray(items) ? items : []);
+    } catch (err) {
+      setProjectsError("Failed to load projects");
+      console.error("Error fetching projects:", err);
+    } finally {
+      setProjectsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        setProjectsLoading(true);
-        setProjectsError(null);
-        const response = await listProjects();
-        // API returns { success, message, data: { items, pagination }, error }
-        const items = response.data?.data?.items ?? [];
-        setProjects(Array.isArray(items) ? items : []);
-      } catch (err) {
-        setProjectsError("Failed to load projects");
-        console.error("Error fetching projects:", err);
-      } finally {
-        setProjectsLoading(false);
-      }
-    };
-
     fetchProjects();
   }, []);
+
+  const handleProjectCreated = () => {
+    fetchProjects();
+  };
+
+  const handleProjectUpdated = () => {
+    fetchProjects();
+  };
+
+  const handleEditProject = (project: Project) => {
+    setEditingProject(project);
+    setShowEditModal(true);
+    setOpenDropdown(null);
+  };
+
+  const handleDeleteProject = (project: Project) => {
+    setDeletingProject(project);
+    setShowDeleteModal(true);
+    setOpenDropdown(null);
+  };
 
   const stats = {
     total: tasks.length,
     completed: tasks.filter((t) => t.status === "completed").length,
     inProgress: tasks.filter((t) => t.status === "in-progress").length,
     todo: tasks.filter((t) => t.status === "todo").length,
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "completed":
-        return "bg-green-100 text-green-800 border-green-200";
-      case "in-progress":
-        return "bg-blue-100 text-blue-800 border-blue-200";
-      case "todo":
-        return "bg-gray-100 text-gray-800 border-gray-200";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
-    }
-  };
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "urgent":
-        return "bg-red-100 text-red-800 border-red-200";
-      case "high":
-        return "bg-orange-100 text-orange-800 border-orange-200";
-      case "medium":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200";
-      case "low":
-        return "bg-green-100 text-green-800 border-green-200";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
-    }
   };
 
   return (
@@ -222,16 +257,26 @@ export default function TaskDashboard() {
                   <CardTitle>Workspaces</CardTitle>
                   <CardDescription>Your active projects</CardDescription>
                 </div>
-                <Button size="sm" variant="outline" className="cursor-pointer">
-                  <Plus className="w-4 h-4 mr-2" />
+                <Button size="sm" variant="outline" onClick={() => setShowCreateProjectModal(true)} className="flex items-center justify-center gap-2">
+                  <Plus className="w-4 h-4" />
                   New
                 </Button>
               </div>
             </CardHeader>
             <CardContent>
               {projectsLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="border border-gray-200 rounded-lg p-3">
+                      <div className="flex items-center gap-3">
+                        <Skeleton className="w-2 h-2 rounded-full" />
+                        <div className="flex-1 space-y-2">
+                          <Skeleton className="h-4 w-3/4" />
+                          <Skeleton className="h-3 w-1/2" />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ) : projectsError ? (
                 <div className="text-center py-8 text-red-500">
@@ -248,7 +293,7 @@ export default function TaskDashboard() {
                   {projects.map((project) => (
                     <div
                       key={project.id}
-                      className="border border-gray-200 rounded-lg p-3 hover:border-gray-300 transition-colors cursor-pointer"
+                      className="border border-gray-200 rounded-lg p-3 hover:border-gray-300 transition-colors group"
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-2 h-2 rounded-full bg-blue-500" />
@@ -260,6 +305,54 @@ export default function TaskDashboard() {
                             <p className="text-xs text-gray-500 truncate">
                               {project.config.nickname}
                             </p>
+                          )}
+                        </div>
+                        <div className="relative">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenDropdown(openDropdown === project.id ? null : project.id);
+                            }}
+                          >
+                            <MoreHorizontal className="w-4 h-4 text-gray-500" />
+                          </Button>
+
+                          {/* Dropdown Content */}
+                          {openDropdown === project.id && (
+                            <>
+                              {/* Backdrop */}
+                              <div
+                                className="fixed inset-0 z-10"
+                                onClick={() => setOpenDropdown(null)}
+                              />
+
+                              {/* Menu */}
+                              <div className="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 animate-in fade-in-0 slide-in-from-top-2 duration-200">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEditProject(project);
+                                  }}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                                >
+                                  <Edit3 className="w-4 h-4" />
+                                  แก้ไข
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteProject(project);
+                                  }}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                  ลบ
+                                </button>
+                              </div>
+                            </>
                           )}
                         </div>
                       </div>
@@ -280,8 +373,8 @@ export default function TaskDashboard() {
                     Your latest work items and their progress
                   </CardDescription>
                 </div>
-                <Button size="sm" className="cursor-pointer">
-                  <Plus className="w-4 h-4 mr-2" />
+                <Button size="sm" onClick={() => setShowCreateTaskModal(true)} className="flex items-center justify-center gap-2">
+                  <Plus className="w-4 h-4" />
                   New Task
                 </Button>
               </div>
@@ -343,6 +436,36 @@ export default function TaskDashboard() {
           </Card>
         </div>
       </main>
+
+      {/* Modals */}
+      <CreateProjectModal
+        open={showCreateProjectModal}
+        onOpenChange={setShowCreateProjectModal}
+        onSuccess={handleProjectCreated}
+      />
+
+      <CreateTaskFromHomeModal
+        open={showCreateTaskModal}
+        onOpenChange={setShowCreateTaskModal}
+        onSuccess={() => {
+          // Refresh tasks if needed
+        }}
+        projects={projects}
+      />
+
+      <EditWorkspaceModal
+        open={showEditModal}
+        onOpenChange={setShowEditModal}
+        onSuccess={handleProjectUpdated}
+        project={editingProject}
+      />
+
+      <DeleteWorkspaceModal
+        open={showDeleteModal}
+        onOpenChange={setShowDeleteModal}
+        onSuccess={handleProjectUpdated}
+        project={deletingProject}
+      />
     </div>
   );
 }

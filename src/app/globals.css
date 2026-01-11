@@ -4,6 +4,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  --font-sans: var(--font-kanit), sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -119,5 +120,68 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-kanit), sans-serif;
   }
+}
+
+/* Custom loading animations */
+@keyframes fadeInScale {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes fadeOutScale {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+.loading-fade-in {
+  animation: fadeInScale 0.3s ease-out forwards;
+}
+
+.loading-fade-out {
+  animation: fadeOutScale 0.3s ease-in forwards;
+}
+
+/* Collapsible animations */
+@keyframes collapsible-down {
+  from {
+    height: 0;
+    opacity: 0;
+  }
+  to {
+    height: var(--radix-collapsible-content-height);
+    opacity: 1;
+  }
+}
+
+@keyframes collapsible-up {
+  from {
+    height: var(--radix-collapsible-content-height);
+    opacity: 1;
+  }
+  to {
+    height: 0;
+    opacity: 0;
+  }
+}
+
+.animate-collapsible-down {
+  animation: collapsible-down 0.2s ease-out;
+}
+
+.animate-collapsible-up {
+  animation: collapsible-up 0.2s ease-out;
 }

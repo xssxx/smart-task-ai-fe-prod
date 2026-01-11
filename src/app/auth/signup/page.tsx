@@ -16,12 +16,12 @@ export default function SignUpPage() {
     agreeTerms: false,
   });
 
-  const handleInputChange = (field: any, value: any) => {
+  const handleInputChange = (field: keyof typeof formData, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setError(""); // Clear error when user types
   };
 
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
 
