@@ -119,7 +119,7 @@ export default function EditWorkspaceModal({
         <DialogHeader>
           <DialogTitle>แก้ไข Workspace</DialogTitle>
           <DialogDescription>
-            แก้ไขข้อมูล workspace "{project.name}"
+            แก้ไขข้อมูล workspace &quot;{project.name}&quot;
           </DialogDescription>
         </DialogHeader>
 

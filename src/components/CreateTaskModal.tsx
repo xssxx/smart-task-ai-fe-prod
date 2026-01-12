@@ -1,7 +1,5 @@
 "use client";
 import { useState } from "react";
-import { format } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -12,12 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -25,9 +17,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 import { createTask, CreateTaskRequest } from "@/services/api";
+import { toast } from "sonner";
+import { DateTimePicker } from "@/components/ui/datetime-picker";
+import { PRIORITY_OPTIONS, STATUS_OPTIONS, TOAST_DURATION } from "@/constants";
 
 interface CreateTaskModalProps {
   open: boolean;
@@ -36,20 +30,6 @@ interface CreateTaskModalProps {
   projectId: string;
   defaultStatus?: string;
 }
-
-const PRIORITY_OPTIONS = [
-  { value: "low", label: "Low" },
-  { value: "medium", label: "Medium" },
-  { value: "high", label: "High" },
-  { value: "urgent", label: "Urgent" },
-];
-
-const STATUS_OPTIONS = [
-  { value: "todo", label: "To Do" },
-  { value: "in_progress", label: "In Progress" },
-  { value: "review", label: "Review" },
-  { value: "done", label: "Done" },
-];
 
 export default function CreateTaskModal({
   open,
@@ -60,8 +40,8 @@ export default function CreateTaskModal({
 }: CreateTaskModalProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [startDate, setStartDate] = useState<Date>();
-  const [endDate, setEndDate] = useState<Date>();
+  const [startDateTime, setStartDateTime] = useState<{ date?: Date | null, hasTime: boolean }>({ hasTime: true });
+  const [endDateTime, setEndDateTime] = useState<{ date?: Date | null, hasTime: boolean }>({ hasTime: true });
   const [formData, setFormData] = useState<CreateTaskRequest>({
     name: "",
     description: "",
@@ -74,12 +54,22 @@ export default function CreateTaskModal({
     e.preventDefault();
     if (!formData.name.trim()) {
       setError("กรุณากรอกชื่อ Task");
+      toast.error("ข้อมูลไม่ครบถ้วน", {
+        description: "กรุณากรอกชื่อ Task",
+        duration: TOAST_DURATION.ERROR,
+      });
       return;
     }
 
     try {
       setIsLoading(true);
       setError(null);
+      
+      // Show info toast when creating (will use 2 seconds)
+      toast.info("กำลังสร้าง Task", {
+        description: "กรุณารอสักครู่...",
+        duration: TOAST_DURATION.INFO,
+      });
       
       const payload: CreateTaskRequest = {
         name: formData.name.trim(),
@@ -88,8 +78,8 @@ export default function CreateTaskModal({
       if (formData.description?.trim()) payload.description = formData.description.trim();
       if (formData.priority) payload.priority = formData.priority;
       if (formData.status) payload.status = formData.status;
-      if (startDate) payload.start_date_time = startDate.toISOString();
-      if (endDate) payload.end_date_time = endDate.toISOString();
+      if (startDateTime.date) payload.start_date_time = startDateTime.date.toISOString();
+      if (endDateTime.date) payload.end_date_time = endDateTime.date.toISOString();
       if (formData.location?.trim()) payload.location = formData.location.trim();
 
       await createTask(projectId, payload);
@@ -102,14 +92,22 @@ export default function CreateTaskModal({
         status: defaultStatus,
         location: "",
       });
-      setStartDate(undefined);
-      setEndDate(undefined);
+      setStartDateTime({ hasTime: true });
+      setEndDateTime({ hasTime: true });
       
+      toast.success("สร้าง Task สำเร็จ", {
+        description: `Task "${payload.name}" ถูกสร้างเรียบร้อยแล้ว`,
+        duration: TOAST_DURATION.SUCCESS,
+      });
       onOpenChange(false);
       onSuccess();
     } catch (err) {
       console.error("Error creating task:", err);
       setError("ไม่สามารถสร้าง Task ได้ กรุณาลองใหม่");
+      toast.error("สร้าง Task ไม่สำเร็จ", {
+        description: "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง",
+        duration: TOAST_DURATION.ERROR,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -119,6 +117,7 @@ export default function CreateTaskModal({
     setFormData((prev) => ({ ...prev, [field]: value }));
     setError(null);
   };
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -199,64 +198,26 @@ export default function CreateTaskModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>วันเริ่มต้น</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !startDate && "text-muted-foreground"
-                    )}
-                    disabled={isLoading}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {startDate ? format(startDate, "PPP") : <span>เลือกวันที่</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={startDate}
-                    onSelect={setStartDate}
-                    className="rounded-md border shadow-sm"
-                    captionLayout="dropdown"
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
+          {/* Start DateTime */}
+          <div className="space-y-2">
+            <Label>วันเวลาเริ่มต้น</Label>
+            <DateTimePicker
+              value={startDateTime}
+              onChange={setStartDateTime}
+              isDisabled={isLoading}
+              placeholder="เลือกวันเวลาเริ่มต้น"
+            />
+          </div>
 
-            <div className="space-y-2">
-              <Label>วันสิ้นสุด</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !endDate && "text-muted-foreground"
-                    )}
-                    disabled={isLoading}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {endDate ? format(endDate, "PPP") : <span>เลือกวันที่</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={endDate}
-                    onSelect={setEndDate}
-                    className="rounded-md border shadow-sm"
-                    captionLayout="dropdown"
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
+          {/* End DateTime */}
+          <div className="space-y-2">
+            <Label>วันเวลาสิ้นสุด</Label>
+            <DateTimePicker
+              value={endDateTime}
+              onChange={setEndDateTime}
+              isDisabled={isLoading}
+              placeholder="เลือกวันเวลาสิ้นสุด"
+            />
           </div>
 
           <div className="space-y-2">

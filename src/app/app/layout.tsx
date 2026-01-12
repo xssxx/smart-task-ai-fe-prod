@@ -7,6 +7,7 @@ import Navbar from "@/components/Navbar";
 import Sidebar from "@/components/Sidebar";
 import { LoadingProvider } from "@/components/LoadingProvider";
 import { PageLoader } from "@/components/ui/page-loader";
+import { Toaster } from "@/components/ui/sonner";
 
 const kanit = Kanit({
   variable: "--font-kanit",
@@ -47,6 +48,14 @@ export default function RootLayout({
                 </main>
               </div>
             </div>
+            <Toaster 
+              position="top-right" 
+              richColors 
+              closeButton={false} 
+              duration={2000}
+              expand={false}
+              visibleToasts={9}
+            />
           </LoadingProvider>
         </Suspense>
       </body>

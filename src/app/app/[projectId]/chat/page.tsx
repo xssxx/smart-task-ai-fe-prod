@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Send,
-  Sparkles,
+  Bot,
   CheckCircle2,
   User,
   Loader2,
@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { sendChatMessage } from "@/services/api";
 import { ChatMessage, Message } from "@/types/chat";
+import { getActionBadgeColor } from "@/constants";
 
 export default function AIChatPage() {
   const params = useParams();
@@ -98,31 +99,6 @@ export default function AIChatPage() {
     }
   };
 
-  const getActionBadgeColor = (type: string) => {
-    switch (type) {
-      case "created":
-        return "bg-green-100 text-green-800 border-green-200";
-      case "updated":
-        return "bg-blue-100 text-blue-800 border-blue-200";
-      case "deleted":
-        return "bg-red-100 text-red-800 border-red-200";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
-    }
-  };
-
-  if (!projectId) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900">Project not found</h2>
-          <p className="text-gray-600 mt-2">Please select a project from the sidebar</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gray-50">
       <main className="h-screen flex flex-col max-w-5xl mx-auto">
@@ -130,8 +106,8 @@ export default function AIChatPage() {
         <div className="p-6 bg-white border-b border-gray-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 rounded-full bg-black flex items-center justify-center">
+                <Bot className="w-5 h-5 text-white" />
               </div>
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">AI Task Assistant</h2>
@@ -156,8 +132,8 @@ export default function AIChatPage() {
             <div key={message.id} className={`flex gap-4 ${message.role === "user" ? "flex-row-reverse" : ""}`}>
               <div className="shrink-0">
                 {message.role === "assistant" ? (
-                  <div className="w-8 h-8 rounded-full bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                    <Sparkles className="w-4 h-4 text-white" />
+                  <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center">
+                    <Bot className="w-4 h-4 text-white" />
                   </div>
                 ) : (
                   <Avatar className="w-8 h-8">
@@ -168,9 +144,9 @@ export default function AIChatPage() {
               </div>
 
               <div className={`flex-1 ${message.role === "user" ? "flex justify-end" : ""}`}>
-                <div className={`inline-block max-w-2xl ${message.role === "user" ? "bg-blue-600 text-white rounded-2xl rounded-tr-sm" : "bg-white border border-gray-200 rounded-2xl rounded-tl-sm"} p-4 shadow-sm`}>
+                <div className={`inline-block max-w-2xl ${message.role === "user" ? "bg-gray-900 text-white rounded-2xl rounded-tr-sm" : "bg-white border border-gray-200 rounded-2xl rounded-tl-sm"} p-4 shadow-sm`}>
                   <p className={`text-sm whitespace-pre-wrap ${message.role === "user" ? "text-white" : "text-gray-900"}`}>{message.content}</p>
-                  <p className={`text-xs mt-2 ${message.role === "user" ? "text-blue-100" : "text-gray-500"}`}>
+                  <p className={`text-xs mt-2 ${message.role === "user" ? "text-gray-300" : "text-gray-500"}`}>
                     {message.timestamp?.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }) || ""}
                   </p>
                 </div>
@@ -199,8 +175,8 @@ export default function AIChatPage() {
 
           {isLoading && (
             <div className="flex gap-4">
-              <div className="w-8 h-8 rounded-full bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-white" />
+              <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center">
+                <Bot className="w-4 h-4 text-white" />
               </div>
               <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-sm p-4 shadow-sm">
                 <div className="flex items-center gap-2 text-gray-600">
@@ -224,7 +200,7 @@ export default function AIChatPage() {
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="พิมพ์ข้อความ"
-                  className="w-full resize-none rounded-xl border border-gray-300 px-4 py-3 pr-12 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[52px] max-h-32"
+                  className="w-full resize-none rounded-xl border border-gray-300 px-4 py-3 pr-12 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent min-h-[52px] max-h-32"
                   rows={1}
                   style={{ height: "auto" }}
                   onInput={(e) => {
@@ -234,7 +210,7 @@ export default function AIChatPage() {
                   }}
                 />
               </div>
-              <Button onClick={handleSendMessage} disabled={!input.trim() || isLoading} size="lg" className="h-[52px] px-6 shrink-0 bg-blue-500 hover:bg-blue-600 text-white">
+              <Button onClick={handleSendMessage} disabled={!input.trim() || isLoading} size="lg" className="h-[52px] px-6 shrink-0 rounded-xl bg-gray-900 hover:bg-gray-800 text-white">
                 {isLoading ? <Loader2 className="w-5 h-5 animate-spin text-white" /> : <Send className="w-5 h-5 text-white" />}
               </Button>
             </div>

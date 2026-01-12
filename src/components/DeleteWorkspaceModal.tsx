@@ -78,8 +78,8 @@ export default function DeleteWorkspaceModal({
           )}
 
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <p className="text-sm text-red-700">
-              คุณแน่ใจหรือไม่ที่จะลบ workspace <strong>"{project.name}"</strong>?
+              <p className="text-sm text-red-700">
+              คุณแน่ใจหรือไม่ที่จะลบ workspace <strong>&quot;{project.name}&quot;</strong>?
             </p>
             <p className="text-xs text-red-600 mt-2">
               ข้อมูลทั้งหมดใน workspace นี้จะถูกลบอย่างถาวร รวมถึง tasks และ chat history

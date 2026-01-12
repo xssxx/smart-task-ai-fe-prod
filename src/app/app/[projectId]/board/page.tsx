@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -33,9 +33,11 @@ import {
   AlertCircle,
   RefreshCw,
 } from "lucide-react";
-import { getPriorityColor } from "@/types/board";
 import { listTasksByProject, Task as ApiTask, updateTask } from "@/services/api";
 import CreateTaskModal from "@/components/CreateTaskModal";
+import TaskDetailModal from "@/components/TaskDetailModal";
+import { toast } from "sonner";
+import { getPriorityColor, TOAST_DURATION } from "@/constants";
 
 interface BoardTask {
   id: string;
@@ -96,11 +98,17 @@ function mapColumnToApiStatus(columnId: string): string {
   }
 }
 
-function DraggableTaskCard({ task, columnId }: { task: BoardTask; columnId: string }) {
+function DraggableTaskCard({ task, columnId, onTaskClick }: { task: BoardTask; columnId: string; onTaskClick: (taskId: string) => void }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `task-${task.id}`,
     data: { task, columnId },
   });
+
+  const handleClick = () => {
+    if (!isDragging) {
+      onTaskClick(task.id);
+    }
+  };
 
   if (isDragging) {
     return (
@@ -111,7 +119,13 @@ function DraggableTaskCard({ task, columnId }: { task: BoardTask; columnId: stri
   }
 
   return (
-    <Card ref={setNodeRef} {...listeners} {...attributes} className="border-gray-200 hover:border-gray-300 hover:shadow-md transition-all cursor-grab active:cursor-grabbing touch-manipulation">
+    <Card
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      className="border-gray-200 hover:border-gray-300 hover:shadow-md transition-all cursor-grab active:cursor-grabbing touch-manipulation"
+      onClick={handleClick}
+    >
       <CardContent className="p-4 cursor-pointer select-none">
         <div className="space-y-3">
           <div>
@@ -152,7 +166,7 @@ function DraggableTaskCard({ task, columnId }: { task: BoardTask; columnId: stri
 function DroppableColumn({ column, children, isOver }: { column: Column; children: React.ReactNode; isOver: boolean }) {
   const { setNodeRef } = useDroppable({ id: column.id });
   return (
-    <Card ref={setNodeRef} className={`h-full transition-all ${isOver ? "ring-2 ring-blue-400 ring-offset-2" : ""}`}>
+    <Card ref={setNodeRef} className={`h-full transition-all ${isOver ? "ring-2 ring-gray-900 ring-offset-2" : ""}`}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -170,7 +184,7 @@ function DroppableColumn({ column, children, isOver }: { column: Column; childre
 
 function TaskCardOverlay({ task }: { task: BoardTask }) {
   return (
-    <Card className="shadow-2xl border-2 border-blue-400 cursor-move w-[280px]">
+    <Card className="shadow-2xl border-2 border-gray-900 cursor-move w-[280px]">
       <CardContent className="p-4 select-none">
         <div className="space-y-3">
           <div>
@@ -220,7 +234,7 @@ export default function BoardPage() {
   const projectId = params.projectId as string;
 
   const [columns, setColumns] = useState<Column[]>([
-    { id: "todo", title: "To Do", color: "bg-gray-500", tasks: [] },
+    { id: "todo", title: "To Do", color: "bg-gray-300", tasks: [] },
     { id: "in-progress", title: "In Progress", color: "bg-blue-500", tasks: [] },
     { id: "review", title: "Review", color: "bg-yellow-500", tasks: [] },
     { id: "done", title: "Done", color: "bg-green-500", tasks: [] },
@@ -234,6 +248,8 @@ export default function BoardPage() {
   const [currentColumnIndex, setCurrentColumnIndex] = useState(0);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [createTaskDefaultStatus, setCreateTaskDefaultStatus] = useState("todo");
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const sensors = useSensors(
@@ -248,7 +264,7 @@ export default function BoardPage() {
       setError(null);
       const response = await listTasksByProject(projectId, 100, 0);
       const items = response.data?.data?.items ?? [];
-      
+
       const tasksByStatus: Record<string, BoardTask[]> = { todo: [], "in-progress": [], review: [], done: [] };
       items.forEach((apiTask) => {
         const boardTask = transformApiTask(apiTask);
@@ -324,6 +340,7 @@ export default function BoardPage() {
 
     const targetColumnId = over.id as string;
     if (activeColumnId !== targetColumnId) {
+      const targetColumn = columns.find(c => c.id === targetColumnId);
       setColumns((prev) => prev.map((col) => {
         if (col.id === activeColumnId) return { ...col, tasks: col.tasks.filter((t) => t.id !== activeTask.id) };
         if (col.id === targetColumnId) return { ...col, tasks: [...col.tasks, { ...activeTask, status: targetColumnId }] };
@@ -332,8 +349,16 @@ export default function BoardPage() {
 
       try {
         await updateTask(activeTask.id, { status: mapColumnToApiStatus(targetColumnId) });
+        toast.success("อัพเดท Status สำเร็จ", {
+          description: `ย้าย "${activeTask.title}" ไปยัง ${targetColumn?.title || targetColumnId}`,
+          duration: TOAST_DURATION.SUCCESS,
+        });
       } catch (err) {
         console.error("Failed to update task status:", err);
+        toast.error("อัพเดท Status ไม่สำเร็จ", {
+          description: "เกิดข้อผิดพลาด กำลังโหลดข้อมูลใหม่...",
+          duration: TOAST_DURATION.ERROR,
+        });
         fetchTasks();
       }
     }
@@ -349,6 +374,11 @@ export default function BoardPage() {
     setActiveColumnId(null);
     setOverColumnId(null);
     setIsDraggingTask(false);
+  };
+
+  const handleTaskClick = (taskId: string) => {
+    setSelectedTaskId(taskId);
+    setShowDetailModal(true);
   };
 
   if (!projectId) {
@@ -367,18 +397,31 @@ export default function BoardPage() {
     <div className="min-h-screen bg-gray-50">
       <main className="p-6 max-w-[1600px] mx-auto">
         <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="hidden sm:block">
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Board</h2>
-              <p className="text-gray-600">Manage your tasks with a visual kanban board</p>
+          {/* Header with Title and Action Buttons */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Board</h2>
+              <p className="text-gray-600 text-sm sm:text-base">Manage your tasks with a visual kanban board</p>
             </div>
-            <div className="flex items-center gap-3">
+
+            {/* Action Buttons - Right aligned */}
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               <Button variant="outline" size="sm" onClick={fetchTasks} disabled={isLoading}>
-                <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />Refresh
+                <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
+                <span className="hidden sm:inline">Refresh</span>
               </Button>
-              <Button variant="outline" size="sm"><Filter className="w-4 h-4 mr-2" />Filter</Button>
-              <Button variant="outline" size="sm"><Search className="w-4 h-4 mr-2" />Search</Button>
-              <Button size="sm" onClick={() => { setCreateTaskDefaultStatus("todo"); setShowCreateModal(true); }}><Plus className="w-4 h-4 mr-2" />New Task</Button>
+              <Button variant="outline" size="sm">
+                <Filter className="w-4 h-4 mr-2" />
+                <span className="hidden sm:inline">Filter</span>
+              </Button>
+              <Button variant="outline" size="sm">
+                <Search className="w-4 h-4 mr-2" />
+                <span className="hidden sm:inline">Search</span>
+              </Button>
+              <Button size="sm" onClick={() => { setCreateTaskDefaultStatus("todo"); setShowCreateModal(true); }}>
+                <Plus className="w-4 h-4 mr-2" />
+                New Task
+              </Button>
             </div>
           </div>
         </div>
@@ -397,7 +440,11 @@ export default function BoardPage() {
           </Button>
           <div className="flex gap-2">
             {columns.map((col, idx) => (
-              <button key={col.id} onClick={() => scrollToColumn(idx)} className={`w-2 h-2 rounded-full transition-all ${idx === currentColumnIndex ? col.color : "bg-gray-300"}`} />
+              <button 
+                key={col.id} 
+                onClick={() => scrollToColumn(idx)} 
+                className={`board-nav-dot ${idx === currentColumnIndex ? 'active' : ''}`}
+              />
             ))}
           </div>
           <Button variant="ghost" size="sm" onClick={() => scrollToColumn(Math.min(columns.length - 1, currentColumnIndex + 1))} disabled={currentColumnIndex === columns.length - 1}>
@@ -413,7 +460,7 @@ export default function BoardPage() {
               columns.map((column) => (
                 <div key={column.id} className="shrink-0 w-[85vw] md:w-80 snap-center">
                   <DroppableColumn column={column} isOver={overColumnId === column.id}>
-                    {column.tasks.map((task) => <DraggableTaskCard key={task.id} task={task} columnId={column.id} />)}
+                    {column.tasks.map((task) => <DraggableTaskCard key={task.id} task={task} columnId={column.id} onTaskClick={handleTaskClick} />)}
                     <Button variant="ghost" className="w-full justify-start text-gray-600 hover:text-gray-900" onClick={() => { setCreateTaskDefaultStatus(column.id === "in-progress" ? "in_progress" : column.id); setShowCreateModal(true); }}><Plus className="w-4 h-4 mr-2" />Add task</Button>
                   </DroppableColumn>
                 </div>
@@ -429,6 +476,13 @@ export default function BoardPage() {
           onSuccess={fetchTasks}
           projectId={projectId}
           defaultStatus={createTaskDefaultStatus}
+        />
+
+        <TaskDetailModal
+          open={showDetailModal}
+          onOpenChange={setShowDetailModal}
+          onSuccess={fetchTasks}
+          taskId={selectedTaskId}
         />
       </main>
     </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, useCallback, useTransition } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, useTransition, useRef } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { PageLoader } from "@/components/ui/page-loader";
 
@@ -29,6 +29,8 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
   const [isPending, startTransition] = useTransition();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const prevPathRef = useRef(pathname);
+  const prevSearchRef = useRef(searchParams?.toString());
 
   const startLoading = useCallback(() => {
     setIsLoading(true);
@@ -48,10 +50,24 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
 
   // Stop loading when route changes complete
   useEffect(() => {
-    if (isLoading) {
-      stopLoading();
+    const currentSearch = searchParams?.toString();
+    const hasRouteChanged = pathname !== prevPathRef.current || currentSearch !== prevSearchRef.current;
+    
+    if (hasRouteChanged && isLoading) {
+      // Use requestAnimationFrame to avoid synchronous setState in effect
+      requestAnimationFrame(() => {
+        setIsLoading(false);
+        setIsExiting(true);
+        setTimeout(() => {
+          setIsVisible(false);
+          setIsExiting(false);
+        }, 300);
+      });
     }
-  }, [pathname, searchParams, isLoading, stopLoading]);
+    
+    prevPathRef.current = pathname;
+    prevSearchRef.current = currentSearch;
+  }, [pathname, searchParams, isLoading]);
 
   const shouldShowLoader = isLoading || isPending || isVisible;
 

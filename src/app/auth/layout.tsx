@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Kanit } from "next/font/google";
 import "../globals.css";
+import { Toaster } from "@/components/ui/sonner";
 
 const kanit = Kanit({
   variable: "--font-kanit",
@@ -26,6 +27,14 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         {children}
+        <Toaster 
+          position="top-right" 
+          richColors 
+          closeButton={false} 
+          duration={2000}
+          expand={false}
+          visibleToasts={9}
+        />
       </body>
     </html>
   );

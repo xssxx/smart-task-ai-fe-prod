@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-  LayoutDashboard,
   Bell,
   Settings,
   ChevronDown,
@@ -24,8 +24,8 @@ const Navbar = () => {
       <div className="flex items-center justify-between px-6 py-4 md:px-6 pl-16 md:pl-6">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <LayoutDashboard className="w-6 h-6 text-blue-600" />
-            <h1 className="hidden md:flex text-xl font-bold text-gray-900">
+            <Image src="/logo.svg" alt="Smart Task AI" width={32} height={32} className="object-contain" />
+            <h1 className="hidden md:flex text-xl font-semi-bold text-gray-900">
               Smart Task
             </h1>
           </div>

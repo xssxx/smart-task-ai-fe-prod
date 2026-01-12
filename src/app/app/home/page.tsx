@@ -10,6 +10,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Progress } from "@/components/ui/progress";
 import {
   CheckCircle2,
   Clock,
@@ -28,37 +30,7 @@ import CreateProjectModal from "@/components/CreateProjectModal";
 import CreateTaskFromHomeModal from "@/components/CreateTaskFromHomeModal";
 import EditWorkspaceModal from "@/components/EditWorkspaceModal";
 import DeleteWorkspaceModal from "@/components/DeleteWorkspaceModal";
-
-const getPriorityColor = (priority: string) => {
-  switch (priority?.toLowerCase()) {
-    case "urgent":
-      return "bg-red-100 text-red-800 border-red-200";
-    case "high":
-      return "bg-orange-100 text-orange-800 border-orange-200";
-    case "medium":
-      return "bg-yellow-100 text-yellow-800 border-yellow-200";
-    case "low":
-      return "bg-green-100 text-green-800 border-green-200";
-    default:
-      return "bg-gray-100 text-gray-800 border-gray-200";
-  }
-};
-
-const getStatusColor = (status: string) => {
-  switch (status?.toLowerCase()) {
-    case "completed":
-      return "bg-green-100 text-green-800 border-green-200";
-    case "in-progress":
-      return "bg-blue-100 text-blue-800 border-blue-200";
-    case "todo":
-      return "bg-gray-100 text-gray-800 border-gray-200";
-    default:
-      return "bg-gray-100 text-gray-800 border-gray-200";
-  }
-};
-
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Progress } from "@/components/ui/progress";
+import { getPriorityColor, getStatusColor } from "@/constants";
 
 export default function HomePage() {
   const [tasks] = useState([
@@ -175,7 +147,7 @@ export default function HomePage() {
         <div className="mb-6">
           <h2 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h2>
           <p className="text-gray-600">
-            Welcome back! Here's what's happening with your projects today.
+            Welcome back! Here&apos;s what&apos;s happening with your projects today.
           </p>
         </div>
 

@@ -1,7 +1,8 @@
-import apiClient from ".";
+import apiClient, { clearAuthCookie } from ".";
 import { SigninRequest } from "@/types/auth/signin";
 import { SignupRequest } from "@/types/auth/signup";
 import { SendMessageRequest, SendMessageResponse, ApiResponse } from "@/types/chat";
+import { ROUTES } from "@/constants";
 
 export const signup = (payload: SignupRequest) => {
   return apiClient.post("/api/signup", payload);
@@ -12,10 +13,8 @@ export const signin = (payload: SigninRequest) => {
 };
 
 export const logout = () => {
-  // Clear auth token from cookie
-  document.cookie = "auth-token=; path=/; max-age=0";
-  // Redirect to login page
-  window.location.href = "/auth/login";
+  clearAuthCookie();
+  window.location.href = ROUTES.LOGIN;
 };
 
 // Project types

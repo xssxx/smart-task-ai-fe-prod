@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react";
+import { Calendar as CalendarIcon, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -26,8 +26,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { Loader2 } from "lucide-react";
 import { createTask, CreateTaskRequest, Project } from "@/services/api";
+import { PRIORITY_OPTIONS, STATUS_OPTIONS } from "@/constants";
 
 interface CreateTaskFromHomeModalProps {
   open: boolean;
@@ -35,20 +35,6 @@ interface CreateTaskFromHomeModalProps {
   onSuccess: () => void;
   projects: Project[];
 }
-
-const PRIORITY_OPTIONS = [
-  { value: "low", label: "Low" },
-  { value: "medium", label: "Medium" },
-  { value: "high", label: "High" },
-  { value: "urgent", label: "Urgent" },
-];
-
-const STATUS_OPTIONS = [
-  { value: "todo", label: "To Do" },
-  { value: "in_progress", label: "In Progress" },
-  { value: "review", label: "Review" },
-  { value: "done", label: "Done" },
-];
 
 export default function CreateTaskFromHomeModal({
   open,

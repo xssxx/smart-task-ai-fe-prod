@@ -1,11 +1,11 @@
 "use client";
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  LayoutDashboard,
   Plus,
   Home,
   FolderKanban,
@@ -23,6 +23,7 @@ import { listProjects, Project } from "@/services/api";
 import CreateProjectModal from "@/components/CreateProjectModal";
 import EditWorkspaceModal from "@/components/EditWorkspaceModal";
 import DeleteWorkspaceModal from "@/components/DeleteWorkspaceModal";
+import { WORKSPACE_COLORS } from "@/constants";
 
 interface WorkspaceItem {
   id: string;
@@ -42,15 +43,6 @@ interface SidebarProps {
   isOpen?: boolean;
   onToggle?: () => void;
 }
-
-const WORKSPACE_COLORS = [
-  "bg-blue-500",
-  "bg-purple-500",
-  "bg-green-500",
-  "bg-orange-500",
-  "bg-pink-500",
-  "bg-cyan-500",
-];
 
 const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
   const pathname = usePathname();
@@ -139,6 +131,7 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
 
   useEffect(() => {
     fetchProjects();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Update active state when pathname changes
@@ -216,8 +209,8 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
         <div className="p-4 pt-16 md:pt-4">
           {/* Logo */}
           <div className="flex items-center gap-2 mb-6">
-            <LayoutDashboard className="w-6 h-6 text-blue-600" />
-            <h1 className="text-xl font-bold text-gray-900">Smart Task</h1>
+            <Image src="/logo.svg" alt="Smart Task AI" width={32} height={32} className="object-contain" />
+            <h1 className="text-xl font-semi-bold text-gray-900">Smart Task</h1>
           </div>
 
           {/* Main Menu */}
@@ -231,8 +224,8 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
                   href="/app/home"
                   className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     isActive
-                      ? "bg-blue-50 text-blue-600"
-                      : "text-gray-700 hover:bg-gray-100"
+                      ? "bg-gray-100 text-gray-900"
+                      : "text-gray-600 hover:bg-gray-50"
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -367,8 +360,8 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
                               href={item.to ?? "#"}
                               className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                                 isActive
-                                  ? "bg-blue-50 text-blue-600 font-medium"
-                                  : "text-gray-600 hover:bg-gray-100"
+                                  ? "bg-gray-100 text-gray-900 font-medium"
+                                  : "text-gray-500 hover:bg-gray-50"
                               }`}
                             >
                               <Icon className="w-4 h-4" />
