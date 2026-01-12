@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
+import { AUTH_COOKIE, ROUTES } from "@/constants";
 
 export default function AuthCallback() {
   const router = useRouter();
@@ -12,7 +13,7 @@ export default function AuthCallback() {
       const { data, error } = await supabase.auth.getSession();
 
       if (error || !data.session) {
-        router.replace("/auth/login");
+        router.replace(ROUTES.LOGIN);
         return;
       }
 
@@ -44,9 +45,9 @@ export default function AuthCallback() {
       }
 
       // Save token to cookie
-      document.cookie = `auth-token=${token}; path=/; max-age=86400`;
+      document.cookie = `${AUTH_COOKIE.NAME}=${token}; path=${AUTH_COOKIE.PATH}; max-age=${AUTH_COOKIE.MAX_AGE}`;
 
-      router.replace("/app/home");
+      router.replace(ROUTES.HOME);
     };
 
     handleCallback();
