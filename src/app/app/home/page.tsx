@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -9,8 +9,9 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Progress } from "@/components/ui/progress";
 import {
   CheckCircle2,
   Clock,
@@ -19,22 +20,32 @@ import {
   Plus,
   Calendar,
   BarChart3,
+  FolderOpen,
+  MoreHorizontal,
+  Edit3,
+  Trash2,
 } from "lucide-react";
+import { listProjects, Project } from "@/services/api";
+import CreateProjectModal from "@/components/CreateProjectModal";
+import CreateTaskFromHomeModal from "@/components/CreateTaskFromHomeModal";
+import EditWorkspaceModal from "@/components/EditWorkspaceModal";
+import DeleteWorkspaceModal from "@/components/DeleteWorkspaceModal";
+import { getPriorityColor, getStatusColor } from "@/constants";
 
-export default function TaskDashboard() {
+export default function HomePage() {
   const [tasks] = useState([
     {
       id: 1,
-      title: "Design new landing page",
-      status: "in-progress",
+      title: "Complete project setup",
+      status: "completed",
       priority: "high",
-      assignee: "Sarah J",
-      progress: 65,
-      dueDate: "2024-12-18",
+      assignee: "John D",
+      progress: 100,
+      dueDate: "2024-12-10",
     },
     {
       id: 2,
-      title: "Fix authentication bug",
+      title: "Design review meeting",
       status: "completed",
       priority: "urgent",
       assignee: "Mike T",
@@ -70,55 +81,62 @@ export default function TaskDashboard() {
     },
   ]);
 
-  const [projects] = useState([
-    {
-      name: "Website Redesign",
-      tasks: 24,
-      completed: 18,
-      color: "bg-blue-500",
-    },
-    { name: "Mobile App", tasks: 16, completed: 8, color: "bg-purple-500" },
-    {
-      name: "API Integration",
-      tasks: 12,
-      completed: 10,
-      color: "bg-green-500",
-    },
-  ]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [projectsLoading, setProjectsLoading] = useState(true);
+  const [projectsError, setProjectsError] = useState<string | null>(null);
+  const [showCreateProjectModal, setShowCreateProjectModal] = useState(false);
+  const [showCreateTaskModal, setShowCreateTaskModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [deletingProject, setDeletingProject] = useState<Project | null>(null);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+
+  const fetchProjects = async () => {
+    try {
+      setProjectsLoading(true);
+      setProjectsError(null);
+      const response = await listProjects();
+      // API returns { success, message, data: { items, pagination }, error }
+      const items = response.data?.data?.items ?? [];
+      setProjects(Array.isArray(items) ? items : []);
+    } catch (err) {
+      setProjectsError("Failed to load projects");
+      console.error("Error fetching projects:", err);
+    } finally {
+      setProjectsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProjects();
+  }, []);
+
+  const handleProjectCreated = () => {
+    fetchProjects();
+  };
+
+  const handleProjectUpdated = () => {
+    fetchProjects();
+  };
+
+  const handleEditProject = (project: Project) => {
+    setEditingProject(project);
+    setShowEditModal(true);
+    setOpenDropdown(null);
+  };
+
+  const handleDeleteProject = (project: Project) => {
+    setDeletingProject(project);
+    setShowDeleteModal(true);
+    setOpenDropdown(null);
+  };
 
   const stats = {
     total: tasks.length,
     completed: tasks.filter((t) => t.status === "completed").length,
     inProgress: tasks.filter((t) => t.status === "in-progress").length,
     todo: tasks.filter((t) => t.status === "todo").length,
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "completed":
-        return "bg-green-100 text-green-800 border-green-200";
-      case "in-progress":
-        return "bg-blue-100 text-blue-800 border-blue-200";
-      case "todo":
-        return "bg-gray-100 text-gray-800 border-gray-200";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
-    }
-  };
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "urgent":
-        return "bg-red-100 text-red-800 border-red-200";
-      case "high":
-        return "bg-orange-100 text-orange-800 border-orange-200";
-      case "medium":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200";
-      case "low":
-        return "bg-green-100 text-green-800 border-green-200";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
-    }
   };
 
   return (
@@ -129,7 +147,7 @@ export default function TaskDashboard() {
         <div className="mb-6">
           <h2 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h2>
           <p className="text-gray-600">
-            Welcome back! Here's what's happening with your projects today.
+            Welcome back! Here&apos;s what&apos;s happening with your projects today.
           </p>
         </div>
 
@@ -202,7 +220,121 @@ export default function TaskDashboard() {
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Workspaces (Projects) */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Workspaces</CardTitle>
+                  <CardDescription>Your active projects</CardDescription>
+                </div>
+                <Button size="sm" variant="outline" onClick={() => setShowCreateProjectModal(true)} className="flex items-center justify-center gap-2">
+                  <Plus className="w-4 h-4" />
+                  New
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {projectsLoading ? (
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="border border-gray-200 rounded-lg p-3">
+                      <div className="flex items-center gap-3">
+                        <Skeleton className="w-2 h-2 rounded-full" />
+                        <div className="flex-1 space-y-2">
+                          <Skeleton className="h-4 w-3/4" />
+                          <Skeleton className="h-3 w-1/2" />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : projectsError ? (
+                <div className="text-center py-8 text-red-500">
+                  <AlertCircle className="w-8 h-8 mx-auto mb-2" />
+                  <p className="text-sm">{projectsError}</p>
+                </div>
+              ) : projects.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <FolderOpen className="w-8 h-8 mx-auto mb-2" />
+                  <p className="text-sm">No projects yet</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {projects.map((project) => (
+                    <div
+                      key={project.id}
+                      className="border border-gray-200 rounded-lg p-3 hover:border-gray-300 transition-colors group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 rounded-full bg-blue-500" />
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-gray-900 truncate">
+                            {project.name}
+                          </h4>
+                          {project.config?.nickname && (
+                            <p className="text-xs text-gray-500 truncate">
+                              {project.config.nickname}
+                            </p>
+                          )}
+                        </div>
+                        <div className="relative">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenDropdown(openDropdown === project.id ? null : project.id);
+                            }}
+                          >
+                            <MoreHorizontal className="w-4 h-4 text-gray-500" />
+                          </Button>
+
+                          {/* Dropdown Content */}
+                          {openDropdown === project.id && (
+                            <>
+                              {/* Backdrop */}
+                              <div
+                                className="fixed inset-0 z-10"
+                                onClick={() => setOpenDropdown(null)}
+                              />
+
+                              {/* Menu */}
+                              <div className="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 animate-in fade-in-0 slide-in-from-top-2 duration-200">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEditProject(project);
+                                  }}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                                >
+                                  <Edit3 className="w-4 h-4" />
+                                  แก้ไข
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteProject(project);
+                                  }}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                  ลบ
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Recent Tasks */}
           <Card className="lg:col-span-2">
             <CardHeader>
@@ -213,8 +345,8 @@ export default function TaskDashboard() {
                     Your latest work items and their progress
                   </CardDescription>
                 </div>
-                <Button size="sm" className="cursor-pointer">
-                  <Plus className="w-4 h-4 mr-2" />
+                <Button size="sm" onClick={() => setShowCreateTaskModal(true)} className="flex items-center justify-center gap-2">
+                  <Plus className="w-4 h-4" />
                   New Task
                 </Button>
               </div>
@@ -276,6 +408,36 @@ export default function TaskDashboard() {
           </Card>
         </div>
       </main>
+
+      {/* Modals */}
+      <CreateProjectModal
+        open={showCreateProjectModal}
+        onOpenChange={setShowCreateProjectModal}
+        onSuccess={handleProjectCreated}
+      />
+
+      <CreateTaskFromHomeModal
+        open={showCreateTaskModal}
+        onOpenChange={setShowCreateTaskModal}
+        onSuccess={() => {
+          // Refresh tasks if needed
+        }}
+        projects={projects}
+      />
+
+      <EditWorkspaceModal
+        open={showEditModal}
+        onOpenChange={setShowEditModal}
+        onSuccess={handleProjectUpdated}
+        project={editingProject}
+      />
+
+      <DeleteWorkspaceModal
+        open={showDeleteModal}
+        onOpenChange={setShowDeleteModal}
+        onSuccess={handleProjectUpdated}
+        project={deletingProject}
+      />
     </div>
   );
 }
