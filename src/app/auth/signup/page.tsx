@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Image from "next/image";
 import { signup } from "../../../services/api";
 import axios from "axios";
 
@@ -16,12 +17,12 @@ export default function SignUpPage() {
     agreeTerms: false,
   });
 
-  const handleInputChange = (field: any, value: any) => {
+  const handleInputChange = (field: keyof typeof formData, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setError(""); // Clear error when user types
   };
 
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
 
@@ -80,22 +81,27 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-r from-indigo-50 via-white to-purple-50 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Animated background elements */}
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Subtle background elements */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-indigo-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse animation-delay-2000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse animation-delay-4000"></div>
+        <div className="absolute -top-48 -right-48 w-96 h-96 bg-gray-200 rounded-full filter blur-[100px] opacity-30"></div>
+        <div className="absolute -bottom-48 -left-48 w-96 h-96 bg-gray-300 rounded-full filter blur-[100px] opacity-30"></div>
       </div>
 
       {/* Main Card */}
-      <div className="relative bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl w-full max-w-md p-8 border border-white/20">
-        {/* Header with gradient */}
+      <div className="relative bg-white rounded-2xl shadow-md w-full max-w-md p-8 border border-gray-200">
+        {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-linear-to-r from-indigo-500 to-purple-600 mb-4 shadow-lg">
-            <span className="text-white text-2xl font-bold">IT</span>
+          <div className="w-16 h-16 mx-auto mb-4">
+            <Image
+              src="/logo.svg"
+              alt="Smart Task AI Logo"
+              width={64}
+              height={64}
+              className="w-full h-full object-contain"
+            />
           </div>
-          <h1 className="text-3xl font-bold bg-linear-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
             SMART TASK AI
           </h1>
           <p className="text-gray-600 text-lg">สร้างบัญชีใหม่</p>
@@ -148,8 +154,8 @@ export default function SignUpPage() {
                 type="text"
                 value={formData.username}
                 onChange={(e) => handleInputChange("username", e.target.value)}
-                placeholder="ชื่อผู้ใช้"
-                className="w-full h-12 pl-11 pr-4 rounded-xl bg-gray-50 border-2 border-gray-100 outline-none focus:border-indigo-500 focus:bg-white transition-all duration-200 text-gray-700 placeholder:text-gray-400 text-sm"
+                placeholder="username"
+                className="w-full h-12 pl-11 pr-4 rounded-xl bg-gray-50 border-2 border-gray-100 outline-none focus:border-gray-900 focus:bg-white transition-all duration-200 text-gray-700 placeholder:text-gray-400 text-sm"
               />
             </div>
           </div>
@@ -178,7 +184,7 @@ export default function SignUpPage() {
                 value={formData.email}
                 onChange={(e) => handleInputChange("email", e.target.value)}
                 placeholder="your@email.com"
-                className="w-full h-12 pl-11 pr-4 rounded-xl bg-gray-50 border-2 border-gray-100 outline-none focus:border-indigo-500 focus:bg-white transition-all duration-200 text-gray-700 placeholder:text-gray-400 text-sm"
+                className="w-full h-12 pl-11 pr-4 rounded-xl bg-gray-50 border-2 border-gray-100 outline-none focus:border-gray-900 focus:bg-white transition-all duration-200 text-gray-700 placeholder:text-gray-400 text-sm"
               />
             </div>
           </div>
@@ -207,7 +213,7 @@ export default function SignUpPage() {
                 value={formData.password}
                 onChange={(e) => handleInputChange("password", e.target.value)}
                 placeholder="••••••••"
-                className="w-full h-12 pl-11 pr-12 rounded-xl bg-gray-50 border-2 border-gray-100 outline-none focus:border-indigo-500 focus:bg-white transition-all duration-200 text-gray-700 text-sm"
+                className="w-full h-12 pl-11 pr-12 rounded-xl bg-gray-50 border-2 border-gray-100 outline-none focus:border-gray-900 focus:bg-white transition-all duration-200 text-gray-700 text-sm"
               />
               <button
                 type="button"
@@ -279,7 +285,7 @@ export default function SignUpPage() {
                   handleInputChange("confirmPassword", e.target.value)
                 }
                 placeholder="••••••••"
-                className="w-full h-12 pl-11 pr-12 rounded-xl bg-gray-50 border-2 border-gray-100 outline-none focus:border-indigo-500 focus:bg-white transition-all duration-200 text-gray-700 text-sm"
+                className="w-full h-12 pl-11 pr-12 rounded-xl bg-gray-50 border-2 border-gray-100 outline-none focus:border-gray-900 focus:bg-white transition-all duration-200 text-gray-700 text-sm"
               />
               <button
                 type="button"
@@ -334,20 +340,20 @@ export default function SignUpPage() {
               onChange={(e) =>
                 handleInputChange("agreeTerms", e.target.checked)
               }
-              className="mt-1 w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+              className="mt-1 w-4 h-4 rounded border-gray-300 text-gray-900 focus:ring-gray-500"
             />
             <label htmlFor="terms" className="text-sm text-gray-600">
               ฉันยอมรับ{" "}
               <a
                 href="#"
-                className="text-indigo-600 hover:text-indigo-700 font-medium"
+                className="text-gray-900 hover:text-gray-700 font-medium"
               >
                 ข้อกำหนดและเงื่อนไข
               </a>{" "}
               และ{" "}
               <a
                 href="#"
-                className="text-indigo-600 hover:text-indigo-700 font-medium"
+                className="text-gray-900 hover:text-gray-700 font-medium"
               >
                 นโยบายความเป็นส่วนตัว
               </a>
@@ -358,7 +364,7 @@ export default function SignUpPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full h-12 bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+            className="w-full h-12 bg-black hover:bg-gray-800 text-white rounded-xl font-medium shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
           >
             {isLoading ? (
               <div className="flex items-center justify-center space-x-2">
@@ -401,7 +407,7 @@ export default function SignUpPage() {
 
           {/* Social Sign Up */}
           <div className="grid grid-cols-2 gap-3">
-            <button className="h-12 flex items-center justify-center space-x-2 border-2 border-gray-200 rounded-xl hover:border-indigo-500 hover:bg-indigo-50 transition-all duration-200">
+            <button className="h-12 flex items-center justify-center space-x-2 border-2 border-gray-200 rounded-xl hover:border-gray-400 hover:bg-gray-50 transition-all duration-200">
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path
                   fill="#4285F4"
@@ -422,7 +428,7 @@ export default function SignUpPage() {
               </svg>
               <span className="text-gray-700 font-medium">Google</span>
             </button>
-            <button className="h-12 flex items-center justify-center space-x-2 border-2 border-gray-200 rounded-xl hover:border-indigo-500 hover:bg-indigo-50 transition-all duration-200">
+            <button className="h-12 flex items-center justify-center space-x-2 border-2 border-gray-200 rounded-xl hover:border-gray-400 hover:bg-gray-50 transition-all duration-200">
               <svg className="w-5 h-5" fill="#1877F2" viewBox="0 0 24 24">
                 <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
               </svg>
@@ -434,8 +440,8 @@ export default function SignUpPage() {
           <p className="text-center text-sm text-gray-600 mt-6">
             มีบัญชีอยู่แล้ว?{" "}
             <a
-              href="#"
-              className="text-indigo-600 hover:text-indigo-700 font-medium transition-colors"
+              href="/auth/login"
+              className="text-gray-900 hover:text-gray-700 font-medium transition-colors"
             >
               เข้าสู่ระบบ
             </a>
@@ -447,7 +453,7 @@ export default function SignUpPage() {
           ต้องการความช่วยเหลือ?{" "}
           <a
             href="#"
-            className="text-indigo-600 hover:text-indigo-700 font-medium"
+            className="text-gray-700 hover:text-gray-900 font-medium"
           >
             ติดต่อเรา
           </a>
