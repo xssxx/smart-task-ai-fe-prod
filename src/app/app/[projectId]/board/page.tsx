@@ -33,7 +33,11 @@ import {
   AlertCircle,
   RefreshCw,
 } from "lucide-react";
-import { listTasksByProject, Task as ApiTask, updateTask } from "@/services/api";
+import {
+  listTasksByProject,
+  Task as ApiTask,
+  updateTask,
+} from "@/services/api";
 import CreateTaskModal from "@/components/CreateTaskModal";
 import TaskDetailModal from "@/components/TaskDetailModal";
 import { toast } from "sonner";
@@ -67,7 +71,10 @@ function transformApiTask(apiTask: ApiTask): BoardTask {
     priority: apiTask.priority?.toLowerCase() || "medium",
     assignees: [],
     dueDate: apiTask.endDateTime
-      ? new Date(apiTask.endDateTime).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+      ? new Date(apiTask.endDateTime).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        })
       : "",
     comments: 0,
     attachments: 0,
@@ -76,12 +83,12 @@ function transformApiTask(apiTask: ApiTask): BoardTask {
   };
 }
 
-
 function mapApiStatus(status: ApiTask["status"] | string): string {
   if (typeof status === "string") {
     const s = status.toLowerCase();
     if (s === "todo" || s === "to do") return "todo";
-    if (s === "in_progress" || s === "inprogress" || s === "in-progress") return "in-progress";
+    if (s === "in_progress" || s === "inprogress" || s === "in-progress")
+      return "in-progress";
     if (s === "review") return "review";
     if (s === "done" || s === "completed") return "done";
   }
@@ -90,15 +97,28 @@ function mapApiStatus(status: ApiTask["status"] | string): string {
 
 function mapColumnToApiStatus(columnId: string): string {
   switch (columnId) {
-    case "todo": return "todo";
-    case "in-progress": return "in_progress";
-    case "review": return "review";
-    case "done": return "done";
-    default: return "todo";
+    case "todo":
+      return "todo";
+    case "in-progress":
+      return "in_progress";
+    case "review":
+      return "review";
+    case "done":
+      return "done";
+    default:
+      return "todo";
   }
 }
 
-function DraggableTaskCard({ task, columnId, onTaskClick }: { task: BoardTask; columnId: string; onTaskClick: (taskId: string) => void }) {
+function DraggableTaskCard({
+  task,
+  columnId,
+  onTaskClick,
+}: {
+  task: BoardTask;
+  columnId: string;
+  onTaskClick: (taskId: string) => void;
+}) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `task-${task.id}`,
     data: { task, columnId },
@@ -112,8 +132,13 @@ function DraggableTaskCard({ task, columnId, onTaskClick }: { task: BoardTask; c
 
   if (isDragging) {
     return (
-      <Card ref={setNodeRef} className="border-gray-200 opacity-30 border-dashed">
-        <CardContent className="p-4 invisible"><h4 className="font-medium">{task.title}</h4></CardContent>
+      <Card
+        ref={setNodeRef}
+        className="border-gray-200 opacity-30 border-dashed"
+      >
+        <CardContent className="p-4 invisible">
+          <h4 className="font-medium">{task.title}</h4>
+        </CardContent>
       </Card>
     );
   }
@@ -130,30 +155,71 @@ function DraggableTaskCard({ task, columnId, onTaskClick }: { task: BoardTask; c
         <div className="space-y-3">
           <div>
             <h4 className="font-medium text-gray-900 mb-1">{task.title}</h4>
-            {task.description && <p className="text-xs text-gray-600 line-clamp-2">{task.description}</p>}
+            {task.description && (
+              <p className="text-xs text-gray-600 line-clamp-2">
+                {task.description}
+              </p>
+            )}
           </div>
           {task.tags.length > 0 && (
             <div className="flex flex-wrap gap-1">
-              {task.tags.map((tag, idx) => <Badge key={idx} variant="secondary" className="text-xs px-2 py-0">{tag}</Badge>)}
+              {task.tags.map((tag, idx) => (
+                <Badge
+                  key={idx}
+                  variant="secondary"
+                  className="text-xs px-2 py-0"
+                >
+                  {tag}
+                </Badge>
+              ))}
             </div>
           )}
           <div className="flex items-center justify-between">
-            <Badge variant="outline" className={getPriorityColor(task.priority)}>{task.priority}</Badge>
-            {task.dueDate && <div className="flex items-center gap-1 text-xs text-gray-500"><Calendar className="w-3 h-3" />{task.dueDate}</div>}
+            <Badge
+              variant="outline"
+              className={getPriorityColor(task.priority)}
+            >
+              {task.priority}
+            </Badge>
+            {task.dueDate && (
+              <div className="flex items-center gap-1 text-xs text-gray-500">
+                <Calendar className="w-3 h-3" />
+                {task.dueDate}
+              </div>
+            )}
           </div>
-          {(task.assignees.length > 0 || task.comments > 0 || task.attachments > 0) && (
+          {(task.assignees.length > 0 ||
+            task.comments > 0 ||
+            task.attachments > 0) && (
             <div className="flex items-center justify-between pt-2 border-t border-gray-100">
               <div className="flex -space-x-2">
                 {task.assignees.map((assignee, idx) => (
                   <Avatar key={idx} className="w-6 h-6 border-2 border-white">
-                    <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${assignee}`} />
-                    <AvatarFallback className="text-xs">{assignee.split(" ").map((n) => n[0]).join("")}</AvatarFallback>
+                    <AvatarImage
+                      src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${assignee}`}
+                    />
+                    <AvatarFallback className="text-xs">
+                      {assignee
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")}
+                    </AvatarFallback>
                   </Avatar>
                 ))}
               </div>
               <div className="flex items-center gap-3 text-gray-500">
-                {task.comments > 0 && <div className="flex items-center gap-1"><MessageSquare className="w-3.5 h-3.5" /><span className="text-xs">{task.comments}</span></div>}
-                {task.attachments > 0 && <div className="flex items-center gap-1"><Paperclip className="w-3.5 h-3.5" /><span className="text-xs">{task.attachments}</span></div>}
+                {task.comments > 0 && (
+                  <div className="flex items-center gap-1">
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    <span className="text-xs">{task.comments}</span>
+                  </div>
+                )}
+                {task.attachments > 0 && (
+                  <div className="flex items-center gap-1">
+                    <Paperclip className="w-3.5 h-3.5" />
+                    <span className="text-xs">{task.attachments}</span>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -163,18 +229,35 @@ function DraggableTaskCard({ task, columnId, onTaskClick }: { task: BoardTask; c
   );
 }
 
-function DroppableColumn({ column, children, isOver }: { column: Column; children: React.ReactNode; isOver: boolean }) {
+function DroppableColumn({
+  column,
+  children,
+  isOver,
+}: {
+  column: Column;
+  children: React.ReactNode;
+  isOver: boolean;
+}) {
   const { setNodeRef } = useDroppable({ id: column.id });
   return (
-    <Card ref={setNodeRef} className={`h-full transition-all ${isOver ? "ring-2 ring-gray-900 ring-offset-2" : ""}`}>
+    <Card
+      ref={setNodeRef}
+      className={`h-full transition-all ${
+        isOver ? "ring-2 ring-gray-900 ring-offset-2" : ""
+      }`}
+    >
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className={`w-3 h-3 rounded-full ${column.color}`}></div>
             <CardTitle className="text-base">{column.title}</CardTitle>
-            <Badge variant="secondary" className="ml-1">{column.tasks.length}</Badge>
+            <Badge variant="secondary" className="ml-1">
+              {column.tasks.length}
+            </Badge>
           </div>
-          <Button variant="ghost" size="sm" className="h-8 w-8 p-0"><MoreHorizontal className="w-4 h-4" /></Button>
+          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+            <MoreHorizontal className="w-4 h-4" />
+          </Button>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">{children}</CardContent>
@@ -189,11 +272,25 @@ function TaskCardOverlay({ task }: { task: BoardTask }) {
         <div className="space-y-3">
           <div>
             <h4 className="font-medium text-gray-900 mb-1">{task.title}</h4>
-            {task.description && <p className="text-xs text-gray-600 line-clamp-2">{task.description}</p>}
+            {task.description && (
+              <p className="text-xs text-gray-600 line-clamp-2">
+                {task.description}
+              </p>
+            )}
           </div>
           <div className="flex items-center justify-between">
-            <Badge variant="outline" className={getPriorityColor(task.priority)}>{task.priority}</Badge>
-            {task.dueDate && <div className="flex items-center gap-1 text-xs text-gray-500"><Calendar className="w-3 h-3" />{task.dueDate}</div>}
+            <Badge
+              variant="outline"
+              className={getPriorityColor(task.priority)}
+            >
+              {task.priority}
+            </Badge>
+            {task.dueDate && (
+              <div className="flex items-center gap-1 text-xs text-gray-500">
+                <Calendar className="w-3 h-3" />
+                {task.dueDate}
+              </div>
+            )}
           </div>
         </div>
       </CardContent>
@@ -218,7 +315,10 @@ function ColumnSkeleton() {
               <div className="space-y-3">
                 <Skeleton className="h-4 w-3/4" />
                 <Skeleton className="h-3 w-full" />
-                <div className="flex justify-between"><Skeleton className="h-5 w-16" /><Skeleton className="h-4 w-12" /></div>
+                <div className="flex justify-between">
+                  <Skeleton className="h-5 w-16" />
+                  <Skeleton className="h-4 w-12" />
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -228,14 +328,18 @@ function ColumnSkeleton() {
   );
 }
 
-
 export default function BoardPage() {
   const params = useParams();
   const projectId = params.projectId as string;
 
   const [columns, setColumns] = useState<Column[]>([
     { id: "todo", title: "To Do", color: "bg-gray-300", tasks: [] },
-    { id: "in-progress", title: "In Progress", color: "bg-blue-500", tasks: [] },
+    {
+      id: "in-progress",
+      title: "In Progress",
+      color: "bg-blue-500",
+      tasks: [],
+    },
     { id: "review", title: "Review", color: "bg-yellow-500", tasks: [] },
     { id: "done", title: "Done", color: "bg-green-500", tasks: [] },
   ]);
@@ -247,14 +351,17 @@ export default function BoardPage() {
   const [isDraggingTask, setIsDraggingTask] = useState(false);
   const [currentColumnIndex, setCurrentColumnIndex] = useState(0);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [createTaskDefaultStatus, setCreateTaskDefaultStatus] = useState("todo");
+  const [createTaskDefaultStatus, setCreateTaskDefaultStatus] =
+    useState("todo");
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 8 } })
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 250, tolerance: 8 },
+    })
   );
 
   const fetchTasks = useCallback(async () => {
@@ -265,7 +372,12 @@ export default function BoardPage() {
       const response = await listTasksByProject(projectId, 100, 0);
       const items = response.data?.data?.items ?? [];
 
-      const tasksByStatus: Record<string, BoardTask[]> = { todo: [], "in-progress": [], review: [], done: [] };
+      const tasksByStatus: Record<string, BoardTask[]> = {
+        todo: [],
+        "in-progress": [],
+        review: [],
+        done: [],
+      };
       items.forEach((apiTask) => {
         const boardTask = transformApiTask(apiTask);
         if (tasksByStatus[boardTask.status]) {
@@ -275,7 +387,9 @@ export default function BoardPage() {
         }
       });
 
-      setColumns((prev) => prev.map((col) => ({ ...col, tasks: tasksByStatus[col.id] || [] })));
+      setColumns((prev) =>
+        prev.map((col) => ({ ...col, tasks: tasksByStatus[col.id] || [] }))
+      );
     } catch (err) {
       setError("ไม่สามารถโหลด tasks ได้");
     } finally {
@@ -287,14 +401,17 @@ export default function BoardPage() {
     fetchTasks();
   }, [fetchTasks]);
 
-  const scrollToColumn = useCallback((index: number) => {
-    if (scrollContainerRef.current) {
-      const container = scrollContainerRef.current;
-      const columnWidth = container.scrollWidth / columns.length;
-      container.scrollTo({ left: columnWidth * index, behavior: "smooth" });
-      setCurrentColumnIndex(index);
-    }
-  }, [columns.length]);
+  const scrollToColumn = useCallback(
+    (index: number) => {
+      if (scrollContainerRef.current) {
+        const container = scrollContainerRef.current;
+        const columnWidth = container.scrollWidth / columns.length;
+        container.scrollTo({ left: columnWidth * index, behavior: "smooth" });
+        setCurrentColumnIndex(index);
+      }
+    },
+    [columns.length]
+  );
 
   useEffect(() => {
     const container = scrollContainerRef.current;
@@ -307,17 +424,30 @@ export default function BoardPage() {
         if (isDraggingTask) return;
         const columnWidth = container.scrollWidth / columns.length;
         const nearestIndex = Math.round(container.scrollLeft / columnWidth);
-        const clampedIndex = Math.max(0, Math.min(nearestIndex, columns.length - 1));
-        if (clampedIndex !== currentColumnIndex) setCurrentColumnIndex(clampedIndex);
-        container.scrollTo({ left: columnWidth * clampedIndex, behavior: "smooth" });
+        const clampedIndex = Math.max(
+          0,
+          Math.min(nearestIndex, columns.length - 1)
+        );
+        if (clampedIndex !== currentColumnIndex)
+          setCurrentColumnIndex(clampedIndex);
+        container.scrollTo({
+          left: columnWidth * clampedIndex,
+          behavior: "smooth",
+        });
       }, 150);
     };
     container.addEventListener("scroll", handleScroll);
-    return () => { container.removeEventListener("scroll", handleScroll); clearTimeout(scrollTimeout); };
+    return () => {
+      container.removeEventListener("scroll", handleScroll);
+      clearTimeout(scrollTimeout);
+    };
   }, [columns.length, currentColumnIndex, isDraggingTask]);
 
   const handleDragStart = (event: DragStartEvent) => {
-    const taskData = event.active.data.current as { task: BoardTask; columnId: string };
+    const taskData = event.active.data.current as {
+      task: BoardTask;
+      columnId: string;
+    };
     setActiveTask(taskData.task);
     setActiveColumnId(taskData.columnId);
     setIsDraggingTask(true);
@@ -339,17 +469,31 @@ export default function BoardPage() {
 
     const targetColumnId = over.id as string;
     if (activeColumnId !== targetColumnId) {
-      const targetColumn = columns.find(c => c.id === targetColumnId);
-      setColumns((prev) => prev.map((col) => {
-        if (col.id === activeColumnId) return { ...col, tasks: col.tasks.filter((t) => t.id !== activeTask.id) };
-        if (col.id === targetColumnId) return { ...col, tasks: [...col.tasks, { ...activeTask, status: targetColumnId }] };
-        return col;
-      }));
+      const targetColumn = columns.find((c) => c.id === targetColumnId);
+      setColumns((prev) =>
+        prev.map((col) => {
+          if (col.id === activeColumnId)
+            return {
+              ...col,
+              tasks: col.tasks.filter((t) => t.id !== activeTask.id),
+            };
+          if (col.id === targetColumnId)
+            return {
+              ...col,
+              tasks: [...col.tasks, { ...activeTask, status: targetColumnId }],
+            };
+          return col;
+        })
+      );
 
       try {
-        await updateTask(activeTask.id, { status: mapColumnToApiStatus(targetColumnId) });
+        await updateTask(activeTask.id, {
+          status: mapColumnToApiStatus(targetColumnId),
+        });
         toast.success("อัพเดท Status สำเร็จ", {
-          description: `ย้าย "${activeTask.title}" ไปยัง ${targetColumn?.title || targetColumnId}`,
+          description: `ย้าย "${activeTask.title}" ไปยัง ${
+            targetColumn?.title || targetColumnId
+          }`,
           duration: TOAST_DURATION.SUCCESS,
         });
       } catch (err) {
@@ -384,8 +528,12 @@ export default function BoardPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900">Project not found</h2>
-          <p className="text-gray-600 mt-2">Please select a project from the sidebar</p>
+          <h2 className="text-xl font-semibold text-gray-900">
+            Project not found
+          </h2>
+          <p className="text-gray-600 mt-2">
+            Please select a project from the sidebar
+          </p>
         </div>
       </div>
     );
@@ -398,14 +546,27 @@ export default function BoardPage() {
           {/* Header with Title and Action Buttons */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
             <div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Board</h2>
-              <p className="text-gray-600 text-sm sm:text-base">Manage your tasks with a visual kanban board</p>
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+                Board
+              </h2>
+              <p className="text-gray-600 text-sm sm:text-base">
+                Manage your tasks with a visual kanban board
+              </p>
             </div>
 
             {/* Action Buttons - Right aligned */}
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-              <Button variant="outline" size="sm" onClick={fetchTasks} disabled={isLoading}>
-                <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""} sm:mr-2`} />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={fetchTasks}
+                disabled={isLoading}
+              >
+                <RefreshCw
+                  className={`w-4 h-4 ${
+                    isLoading ? "animate-spin" : ""
+                  } sm:mr-2`}
+                />
                 <span className="hidden sm:inline">Refresh</span>
               </Button>
               <Button variant="outline" size="sm">
@@ -416,7 +577,13 @@ export default function BoardPage() {
                 <Search className="w-4 h-4 sm:mr-2" />
                 <span className="hidden sm:inline">Search</span>
               </Button>
-              <Button size="sm" onClick={() => { setCreateTaskDefaultStatus("todo"); setShowCreateModal(true); }}>
+              <Button
+                size="sm"
+                onClick={() => {
+                  setCreateTaskDefaultStatus("todo");
+                  setShowCreateModal(true);
+                }}
+              >
                 <Plus className="w-4 h-4 mr-2" />
                 New Task
               </Button>
@@ -428,43 +595,99 @@ export default function BoardPage() {
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
             <AlertCircle className="w-5 h-5 text-red-500" />
             <span className="text-red-700">{error}</span>
-            <Button variant="ghost" size="sm" onClick={fetchTasks} className="ml-auto">ลองใหม่</Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={fetchTasks}
+              className="ml-auto"
+            >
+              ลองใหม่
+            </Button>
           </div>
         )}
 
         <div className="flex md:hidden items-center justify-between mb-4 px-2">
-          <Button variant="ghost" size="sm" onClick={() => scrollToColumn(Math.max(0, currentColumnIndex - 1))} disabled={currentColumnIndex === 0}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => scrollToColumn(Math.max(0, currentColumnIndex - 1))}
+            disabled={currentColumnIndex === 0}
+          >
             <ChevronLeft className="w-5 h-5" />
           </Button>
           <div className="flex gap-2">
             {columns.map((col, idx) => (
-              <button 
-                key={col.id} 
-                onClick={() => scrollToColumn(idx)} 
-                className={`board-nav-dot ${idx === currentColumnIndex ? 'active' : ''}`}
+              <button
+                key={col.id}
+                onClick={() => scrollToColumn(idx)}
+                className={`board-nav-dot ${
+                  idx === currentColumnIndex ? "active" : ""
+                }`}
               />
             ))}
           </div>
-          <Button variant="ghost" size="sm" onClick={() => scrollToColumn(Math.min(columns.length - 1, currentColumnIndex + 1))} disabled={currentColumnIndex === columns.length - 1}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() =>
+              scrollToColumn(
+                Math.min(columns.length - 1, currentColumnIndex + 1)
+              )
+            }
+            disabled={currentColumnIndex === columns.length - 1}
+          >
             <ChevronRight className="w-5 h-5" />
           </Button>
         </div>
 
-        <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd} onDragCancel={handleDragCancel}>
-          <div ref={scrollContainerRef} className={`flex gap-4 overflow-x-auto pb-4 md:overflow-x-visible md:snap-none ${isDraggingTask ? "" : "snap-x snap-mandatory scroll-smooth"}`} style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
-            {isLoading ? (
-              [1, 2, 3, 4].map((i) => <div key={i} className="shrink-0 w-[85vw] md:w-80 snap-center"><ColumnSkeleton /></div>)
-            ) : (
-              columns.map((column) => (
-                <div key={column.id} className="shrink-0 w-[85vw] md:w-80 snap-center">
-                  <DroppableColumn column={column} isOver={overColumnId === column.id}>
-                    {column.tasks.map((task) => <DraggableTaskCard key={task.id} task={task} columnId={column.id} onTaskClick={handleTaskClick} />)}
-                  </DroppableColumn>
-                </div>
-              ))
-            )}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCorners}
+          onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
+          onDragEnd={handleDragEnd}
+          onDragCancel={handleDragCancel}
+        >
+          <div
+            ref={scrollContainerRef}
+            className={`flex gap-4 overflow-x-auto pb-4 md:overflow-x-visible md:snap-none ${
+              isDraggingTask ? "" : "snap-x snap-mandatory scroll-smooth"
+            }`}
+            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          >
+            {isLoading
+              ? [1, 2, 3, 4].map((i) => (
+                  <div
+                    key={i}
+                    className="shrink-0 w-[85vw] md:w-80 snap-center"
+                  >
+                    <ColumnSkeleton />
+                  </div>
+                ))
+              : columns.map((column) => (
+                  <div
+                    key={column.id}
+                    className="shrink-0 w-[85vw] md:w-80 snap-center"
+                  >
+                    <DroppableColumn
+                      column={column}
+                      isOver={overColumnId === column.id}
+                    >
+                      {column.tasks.map((task) => (
+                        <DraggableTaskCard
+                          key={task.id}
+                          task={task}
+                          columnId={column.id}
+                          onTaskClick={handleTaskClick}
+                        />
+                      ))}
+                    </DroppableColumn>
+                  </div>
+                ))}
           </div>
-          <DragOverlay>{activeTask ? <TaskCardOverlay task={activeTask} /> : null}</DragOverlay>
+          <DragOverlay>
+            {activeTask ? <TaskCardOverlay task={activeTask} /> : null}
+          </DragOverlay>
         </DndContext>
 
         <CreateTaskModal

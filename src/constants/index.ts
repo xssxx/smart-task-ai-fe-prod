@@ -16,8 +16,8 @@ export const STATUS_OPTIONS = [
 
 // Toast Duration (in milliseconds)
 export const TOAST_DURATION = {
-  SUCCESS: 4000,
-  ERROR: 4000,
+  SUCCESS: 500,
+  ERROR: 3000,
 } as const;
 
 // Auth Cookie Settings
