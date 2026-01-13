@@ -1,60 +1,122 @@
 "use client"
 
-import { CalendarDateTime } from "@internationalized/date";
+import { CalendarDateTime, Time } from "@internationalized/date";
 import { format } from "date-fns";
 import { CalendarIcon, ClockIcon } from "lucide-react";
-import { useRef, useState } from "react";
-import { DateValue, TimeValue, useDateSegment, useInteractOutside, useLocale, useTimeField } from "react-aria";
-import { DateFieldState, DatePickerStateOptions, DateSegment as IDateSegment, useDatePickerState, useTimeFieldState } from "react-stately";
+import { useRef, useState, useCallback } from "react";
+import { DateValue, TimeValue, useInteractOutside } from "react-aria";
+import { DatePickerStateOptions, useDatePickerState } from "react-stately";
 import { cn } from "@/lib/utils";
 import { Button } from "./button";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 import { Toggle } from "./toggle";
 import { Calendar } from "./calendar";
 
-interface DateSegmentProps {
-  segment: IDateSegment;
-  state: DateFieldState;
+interface TimeInputSegmentProps {
+  value: number;
+  onChange: (value: number) => void;
+  max: number;
+  min?: number;
 }
 
-function DateSegment({ segment, state }: DateSegmentProps) {
-  const ref = useRef(null);
+function TimeInputSegment({ value, onChange, max, min = 0 }: TimeInputSegmentProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [inputValue, setInputValue] = useState("");
+  const [isFocused, setIsFocused] = useState(false);
 
-  const {
-    segmentProps: { ...segmentProps },
-  } = useDateSegment(segment, state, ref);
+  const displayValue = isFocused && inputValue !== ""
+    ? inputValue
+    : value.toString().padStart(2, "0");
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Tab") {
+      return;
+    }
+    if (e.key === "Backspace" || e.key === "Delete") {
+      e.preventDefault();
+      setInputValue("");
+      onChange(min);
+      return;
+    }
+    if (!/^[0-9]$/.test(e.key)) {
+      e.preventDefault();
+      return;
+    }
+
+    e.preventDefault();
+
+    const newInputValue = inputValue + e.key;
+
+    if (newInputValue.length >= 2) {
+      const numValue = parseInt(newInputValue, 10);
+      const clampedValue = Math.max(min, Math.min(max, numValue));
+      onChange(clampedValue);
+      setInputValue("");
+    } else {
+      const numValue = parseInt(newInputValue, 10);
+      const maxFirstDigit = Math.floor(max / 10);
+      
+      if (numValue > maxFirstDigit) {
+        const clampedValue = Math.max(min, Math.min(max, numValue));
+        onChange(clampedValue);
+        setInputValue("");
+      } else {
+        setInputValue(newInputValue);
+      }
+    }
+  };
+
+  const handleFocus = () => {
+    setIsFocused(true);
+    setInputValue("");
+  };
+
+  const handleBlur = () => {
+    setIsFocused(false);
+    if (inputValue !== "") {
+      const numValue = parseInt(inputValue, 10);
+      const clampedValue = Math.max(min, Math.min(max, numValue));
+      onChange(clampedValue);
+    }
+    setInputValue("");
+  };
 
   return (
-    <div
-      {...segmentProps}
-      ref={ref}
+    <input
+      ref={inputRef}
+      type="text"
+      inputMode="numeric"
+      value={displayValue}
+      onChange={() => {}}
+      onKeyDown={handleKeyDown}
+      onFocus={handleFocus}
+      onBlur={handleBlur}
       className={cn(
-        "focus:rounded-[2px] focus:bg-accent focus:text-accent-foreground focus:outline-none",
-        segment.type !== "literal" ? "px-px" : "",
-        segment.isPlaceholder ? "text-muted-foreground" : ""
+        "w-6 text-center bg-transparent outline-none",
+        "focus:rounded-[2px] focus:bg-accent focus:text-accent-foreground"
       )}
-    >
-      {segment.text}
-    </div>
+      maxLength={2}
+    />
   );
 }
 
-function TimeField({ hasTime, onHasTimeChange, disabled, ...props }: {
+function TimeField({ hasTime, onHasTimeChange, disabled, value, onChange }: {
   disabled: boolean
   hasTime: boolean
   onHasTimeChange: (hasTime: boolean) => void
   value: TimeValue | null
   onChange: (value: TimeValue | null) => void
 }) {
-  const ref = useRef<HTMLDivElement | null>(null);
+  const hour = value?.hour ?? 0;
+  const minute = value?.minute ?? 0;
 
-  const { locale } = useLocale();
-  const state = useTimeFieldState({
-    ...props,
-    locale,
-  });
+  const handleHourChange = useCallback((newHour: number) => {
+    onChange(new Time(newHour, minute));
+  }, [minute, onChange]);
 
-  useTimeField(props, state, ref);
+  const handleMinuteChange = useCallback((newMinute: number) => {
+    onChange(new Time(hour, newMinute));
+  }, [hour, onChange]);
 
   return (
     <div className={cn("flex items-center space-x-2 mt-1", disabled ? "cursor-not-allowed opacity-70" : "")}>
@@ -69,13 +131,20 @@ function TimeField({ hasTime, onHasTimeChange, disabled, ...props }: {
         <ClockIcon size='16px' />
       </Toggle>
       {hasTime && (
-        <div
-          ref={ref}
-          className="inline-flex h-10 w-full flex-1 rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-        >
-          {state.segments.map((segment, i) => (
-            <DateSegment key={i} segment={segment} state={state} />
-          ))}
+        <div className="inline-flex h-10 w-full flex-1 items-center rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+          <TimeInputSegment
+            value={hour}
+            onChange={handleHourChange}
+            max={23}
+            min={0}
+          />
+          <span className="px-0.5">:</span>
+          <TimeInputSegment
+            value={minute}
+            onChange={handleMinuteChange}
+            max={59}
+            min={0}
+          />
         </div>
       )}
     </div>
@@ -121,10 +190,14 @@ const DateTimePicker = (props: DatePickerProps) => {
   }
 
   const state = useDatePickerState(datePickerProps)
-  
+
   useInteractOutside({
     ref: contentRef,
-    onInteractOutside: () => {
+    onInteractOutside: (e) => {
+      const target = e.target as Node;
+      if (contentRef.current?.contains(target)) {
+        return;
+      }
       setOpen(false);
     },
   });

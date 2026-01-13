@@ -13,7 +13,7 @@ export function PageLoader({ message = "กำลังโหลด...", isExiti
       isExiting ? 'loading-fade-out' : 'loading-fade-in'
     }`}>
       <div className="flex flex-col items-center gap-3">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+        <Loader2 className="w-12 h-12 animate-spin text-gray-900" />
         <p className="text-sm text-gray-600 font-medium">{message}</p>
       </div>
     </div>
@@ -24,7 +24,7 @@ export function InlineLoader({ message }: { message?: string }) {
   return (
     <div className="flex items-center justify-center py-8 animate-in fade-in-0 duration-300">
       <div className="flex flex-col items-center gap-2">
-        <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-gray-700" />
         {message && <p className="text-sm text-gray-500">{message}</p>}
       </div>
     </div>

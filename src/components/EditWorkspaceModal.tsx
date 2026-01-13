@@ -97,7 +97,6 @@ export default function EditWorkspaceModal({
       onOpenChange(false);
       onSuccess?.();
     } catch (err) {
-      console.error("Error updating project:", err);
       setError("ไม่สามารถอัพเดท Workspace ได้ กรุณาลองใหม่อีกครั้ง");
     } finally {
       setIsLoading(false);

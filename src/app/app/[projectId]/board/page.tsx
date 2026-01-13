@@ -278,7 +278,6 @@ export default function BoardPage() {
       setColumns((prev) => prev.map((col) => ({ ...col, tasks: tasksByStatus[col.id] || [] })));
     } catch (err) {
       setError("ไม่สามารถโหลด tasks ได้");
-      console.error("Error fetching tasks:", err);
     } finally {
       setIsLoading(false);
     }
@@ -354,7 +353,6 @@ export default function BoardPage() {
           duration: TOAST_DURATION.SUCCESS,
         });
       } catch (err) {
-        console.error("Failed to update task status:", err);
         toast.error("อัพเดท Status ไม่สำเร็จ", {
           description: "เกิดข้อผิดพลาด กำลังโหลดข้อมูลใหม่...",
           duration: TOAST_DURATION.ERROR,
@@ -407,15 +405,15 @@ export default function BoardPage() {
             {/* Action Buttons - Right aligned */}
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               <Button variant="outline" size="sm" onClick={fetchTasks} disabled={isLoading}>
-                <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
+                <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""} sm:mr-2`} />
                 <span className="hidden sm:inline">Refresh</span>
               </Button>
               <Button variant="outline" size="sm">
-                <Filter className="w-4 h-4 mr-2" />
+                <Filter className="w-4 h-4 sm:mr-2" />
                 <span className="hidden sm:inline">Filter</span>
               </Button>
               <Button variant="outline" size="sm">
-                <Search className="w-4 h-4 mr-2" />
+                <Search className="w-4 h-4 sm:mr-2" />
                 <span className="hidden sm:inline">Search</span>
               </Button>
               <Button size="sm" onClick={() => { setCreateTaskDefaultStatus("todo"); setShowCreateModal(true); }}>
@@ -461,7 +459,6 @@ export default function BoardPage() {
                 <div key={column.id} className="shrink-0 w-[85vw] md:w-80 snap-center">
                   <DroppableColumn column={column} isOver={overColumnId === column.id}>
                     {column.tasks.map((task) => <DraggableTaskCard key={task.id} task={task} columnId={column.id} onTaskClick={handleTaskClick} />)}
-                    <Button variant="ghost" className="w-full justify-start text-gray-600 hover:text-gray-900" onClick={() => { setCreateTaskDefaultStatus(column.id === "in-progress" ? "in_progress" : column.id); setShowCreateModal(true); }}><Plus className="w-4 h-4 mr-2" />Add task</Button>
                   </DroppableColumn>
                 </div>
               ))

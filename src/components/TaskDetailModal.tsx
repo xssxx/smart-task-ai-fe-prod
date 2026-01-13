@@ -87,11 +87,7 @@ export default function TaskDetailModal({
       setIsLoading(true);
       setError(null);
       
-      // Show info toast when loading (will use 2 seconds)
-      toast.info("กำลังโหลดข้อมูล Task", {
-        description: "กรุณารอสักครู่...",
-        duration: TOAST_DURATION.INFO,
-      });
+      // Removed blue loading toast - will be replaced with notification system later
       
       const response = await getTaskById(taskId);
       const task = response.data?.data;
@@ -126,7 +122,6 @@ export default function TaskDetailModal({
         });
       }
     } catch (err) {
-      console.error("Error fetching task:", err);
       setError("ไม่สามารถโหลดข้อมูล Task ได้");
     } finally {
       setIsLoading(false);
@@ -169,7 +164,6 @@ export default function TaskDetailModal({
       });
       onSuccess();
     } catch (err) {
-      console.error("Error updating task:", err);
       setError("ไม่สามารถบันทึก Task ได้ กรุณาลองใหม่");
       toast.error("บันทึก Task ไม่สำเร็จ", {
         description: "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง",
@@ -206,7 +200,6 @@ export default function TaskDetailModal({
       onOpenChange(false);
       onSuccess();
     } catch (err) {
-      console.error("Error deleting task:", err);
       setError("ไม่สามารถลบ Task ได้ กรุณาลองใหม่");
       toast.error("ลบ Task ไม่สำเร็จ", {
         description: "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง",

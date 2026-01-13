@@ -65,11 +65,7 @@ export default function CreateTaskModal({
       setIsLoading(true);
       setError(null);
       
-      // Show info toast when creating (will use 2 seconds)
-      toast.info("กำลังสร้าง Task", {
-        description: "กรุณารอสักครู่...",
-        duration: TOAST_DURATION.INFO,
-      });
+      // Removed blue loading toast - will be replaced with notification system later
       
       const payload: CreateTaskRequest = {
         name: formData.name.trim(),
@@ -102,7 +98,6 @@ export default function CreateTaskModal({
       onOpenChange(false);
       onSuccess();
     } catch (err) {
-      console.error("Error creating task:", err);
       setError("ไม่สามารถสร้าง Task ได้ กรุณาลองใหม่");
       toast.error("สร้าง Task ไม่สำเร็จ", {
         description: "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง",

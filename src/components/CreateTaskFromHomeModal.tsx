@@ -98,7 +98,6 @@ export default function CreateTaskFromHomeModal({
       onOpenChange(false);
       onSuccess();
     } catch (err) {
-      console.error("Error creating task:", err);
       setError("ไม่สามารถสร้าง Task ได้ กรุณาลองใหม่");
     } finally {
       setIsLoading(false);
