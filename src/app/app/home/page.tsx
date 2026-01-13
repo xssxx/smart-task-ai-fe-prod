@@ -30,7 +30,7 @@ import CreateProjectModal from "@/components/CreateProjectModal";
 import CreateTaskFromHomeModal from "@/components/CreateTaskFromHomeModal";
 import EditWorkspaceModal from "@/components/EditWorkspaceModal";
 import DeleteWorkspaceModal from "@/components/DeleteWorkspaceModal";
-import { getPriorityColor, getStatusColor } from "@/constants";
+import { getPriorityColor, getStatusColor, WORKSPACE_COLORS } from "@/constants";
 
 export default function HomePage() {
   const [tasks] = useState([
@@ -102,7 +102,6 @@ export default function HomePage() {
       setProjects(Array.isArray(items) ? items : []);
     } catch (err) {
       setProjectsError("Failed to load projects");
-      console.error("Error fetching projects:", err);
     } finally {
       setProjectsLoading(false);
     }
@@ -262,13 +261,13 @@ export default function HomePage() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {projects.map((project) => (
+                  {projects.map((project, index) => (
                     <div
                       key={project.id}
                       className="border border-gray-200 rounded-lg p-3 hover:border-gray-300 transition-colors group"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-2 h-2 rounded-full bg-blue-500" />
+                        <div className={`w-2 h-2 rounded-full ${WORKSPACE_COLORS[index % WORKSPACE_COLORS.length]}`} />
                         <div className="flex-1 min-w-0">
                           <h4 className="font-medium text-gray-900 truncate">
                             {project.name}
