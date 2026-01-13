@@ -62,14 +62,11 @@ export default function SignUpPage() {
         confirm_password: formData.confirmPassword,
       };
 
-      const response = await signup(payload);
+      await signup(payload);
 
       // Success - redirect or show success message
-      console.log("Registration successful:", response.data);
-      // You can add redirect here: router.push('/login') or show success message
       alert("สมัครสมาชิกสำเร็จ!");
     } catch (err) {
-      console.error("Registration error:", err);
       if (axios.isAxiosError(err)) {
         setError(
           err.response?.data?.message || "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง"

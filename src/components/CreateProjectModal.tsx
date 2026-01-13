@@ -89,7 +89,6 @@ export default function CreateProjectModal({
       onOpenChange(false);
       onSuccess?.();
     } catch (err) {
-      console.error("Error creating project:", err);
       setError("ไม่สามารถสร้าง Workspace ได้ กรุณาลองใหม่อีกครั้ง");
     } finally {
       setIsLoading(false);

@@ -122,8 +122,6 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
       
       // Update active state based on current pathname
       updateActiveStateFromPath(pathname, mappedWorkspaces);
-    } catch (err) {
-      console.error("Error fetching projects:", err);
     } finally {
       setLoading(false);
     }
@@ -350,7 +348,7 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
 
                     {/* Workspace Items */}
                     {expandedWorkspaces.has(workspace.id) && (
-                      <div className="ml-6 space-y-1 mt-1">
+                      <div className="ml-6 space-y-1 mt-1 animate-in slide-in-from-top-2 fade-in-0 duration-200">
                         {workspace.items.map((item) => {
                           const Icon = item.icon;
                           const isActive = activeItem === item.id;
