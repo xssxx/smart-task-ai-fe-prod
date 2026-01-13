@@ -16,8 +16,22 @@ export interface TaskAction {
   name: string;
 }
 
+// LLM Message structure from API
+export interface LLMMessageData {
+  type: "task_list" | "text";
+  meta?: string;
+  tasks?: Array<{
+    name: string;
+    priority: "high" | "medium" | "low";
+    status: "todo" | "in_progress" | "done";
+    description: string;
+    start_datetime: string;
+    end_datetime: string;
+  }>;
+}
+
 export interface SendMessageResponse {
-  message: string;
+  message: LLMMessageData;
   task_actions?: TaskAction[];
 }
 

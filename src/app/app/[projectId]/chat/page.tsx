@@ -38,49 +38,33 @@ import {
   Flag,
 } from "lucide-react";
 import { sendChatMessage, createTask, CreateTaskRequest } from "@/services/api";
-import { ChatMessage, Message, ProposedTask } from "@/types/chat";
+import {
+  ChatMessage,
+  Message,
+  ProposedTask,
+  LLMMessageData,
+} from "@/types/chat";
 import { getActionBadgeColor } from "@/constants";
 import { format } from "date-fns";
 import { th } from "date-fns/locale";
 
-// Remove [TEXT][/TEXT] tags from content
-function cleanTextTags(content: string): string {
-  return content
-    .replace(/\[TEXT\]/g, "")
-    .replace(/\[\/TEXT\]/g, "")
-    .trim();
-}
-
-// Parse [TASKS] from LLM response
-function parseTasksFromResponse(content: string): {
+// Process LLM message data from JSON response
+function processLLMMessage(messageData: LLMMessageData): {
   text: string;
   tasks: ProposedTask[];
 } {
-  const tasksMatch = content.match(/\[TASKS\]([\s\S]*?)\[\/TASKS\]/);
+  const text = messageData.meta || "";
 
-  if (!tasksMatch) {
-    // No tasks, just clean text tags
-    return { text: cleanTextTags(content), tasks: [] };
+  if (messageData.type === "task_list" && messageData.tasks) {
+    const tasks: ProposedTask[] = messageData.tasks.map((task, idx) => ({
+      ...task,
+      id: `proposed-${Date.now()}-${idx}`,
+      userAction: "pending" as const,
+    }));
+    return { text, tasks };
   }
 
-  const textContent = content
-    .replace(/\[TASKS\][\s\S]*?\[\/TASKS\]/, "")
-    .trim();
-
-  try {
-    const tasksJson = JSON.parse(tasksMatch[1]);
-    const tasks: ProposedTask[] = tasksJson.map(
-      (task: Omit<ProposedTask, "id" | "userAction">, idx: number) => ({
-        ...task,
-        id: `proposed-${Date.now()}-${idx}`,
-        userAction: "pending" as const,
-      })
-    );
-    // Clean text tags from the text content
-    return { text: cleanTextTags(textContent), tasks };
-  } catch {
-    return { text: cleanTextTags(content), tasks: [] };
-  }
+  return { text, tasks: [] };
 }
 
 // Priority badge colors
@@ -170,11 +154,15 @@ function TaskProposalCard({
             <div className="flex flex-col sm:flex-row sm:flex-wrap gap-1 sm:gap-3 text-xs text-gray-500">
               <div className="flex items-center gap-1">
                 <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                <span className="text-[11px] sm:text-xs">{formatDateTime(task.start_datetime)}</span>
+                <span className="text-[11px] sm:text-xs">
+                  {formatDateTime(task.start_datetime)}
+                </span>
               </div>
               <div className="flex items-center gap-1">
                 <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                <span className="text-[11px] sm:text-xs">ถึง {formatDateTime(task.end_datetime)}</span>
+                <span className="text-[11px] sm:text-xs">
+                  ถึง {formatDateTime(task.end_datetime)}
+                </span>
               </div>
             </div>
           </div>
@@ -483,8 +471,8 @@ export default function AIChatPage() {
         session_history: sessionHistory,
       });
 
-      const rawMessage = response.data.data.message;
-      const { text, tasks } = parseTasksFromResponse(rawMessage);
+      const messageData = response.data.data.message;
+      const { text, tasks } = processLLMMessage(messageData);
 
       const aiResponse: ChatMessage = {
         id: Date.now().toString(),
