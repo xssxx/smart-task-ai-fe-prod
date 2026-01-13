@@ -27,6 +27,18 @@ export interface ApiResponse<T> {
   data: T;
 }
 
+// Proposed Task from LLM (before user accepts)
+export interface ProposedTask {
+  id: string;
+  name: string;
+  priority: "high" | "medium" | "low";
+  status: "todo" | "in_progress" | "done";
+  description: string;
+  start_datetime: string;
+  end_datetime: string;
+  userAction?: "accepted" | "rejected" | "pending";
+}
+
 // UI-specific types
 export interface ChatMessage {
   id: string;
@@ -34,4 +46,5 @@ export interface ChatMessage {
   content: string;
   timestamp: Date;
   taskActions?: TaskAction[];
+  proposedTasks?: ProposedTask[];
 }

@@ -61,7 +61,6 @@ export default function SignInPage() {
         }
       }
     } catch (err) {
-      console.error("Sign in failed:", err);
       setError("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
     } finally {
       setIsLoading(false);

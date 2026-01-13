@@ -40,7 +40,6 @@ export default function DeleteWorkspaceModal({
       onOpenChange(false);
       onSuccess?.();
     } catch (err) {
-      console.error("Error deleting project:", err);
       setError("ไม่สามารถลบ Workspace ได้ กรุณาลองใหม่อีกครั้ง");
     } finally {
       setIsDeleting(false);
