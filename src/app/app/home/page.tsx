@@ -111,12 +111,29 @@ export default function HomePage() {
     fetchProjects();
   }, []);
 
+  // Listen for project updates from other components
+  useEffect(() => {
+    const handleProjectsUpdated = () => {
+      fetchProjects();
+    };
+
+    window.addEventListener('projectsUpdated', handleProjectsUpdated);
+    return () => {
+      window.removeEventListener('projectsUpdated', handleProjectsUpdated);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleProjectCreated = () => {
     fetchProjects();
+    // Dispatch event to notify other components
+    window.dispatchEvent(new CustomEvent('projectsUpdated'));
   };
 
   const handleProjectUpdated = () => {
     fetchProjects();
+    // Dispatch event to notify other components
+    window.dispatchEvent(new CustomEvent('projectsUpdated'));
   };
 
   const handleEditProject = (project: Project) => {

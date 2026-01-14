@@ -139,7 +139,23 @@ export default function TaskDetailModal({
   const handleSave = async () => {
     if (!formData.name.trim()) {
       setError("กรุณากรอกชื่อ Task");
+      toast.error("ข้อมูลไม่ครบถ้วน", {
+        description: "กรุณากรอกชื่อ Task",
+        duration: TOAST_DURATION.ERROR,
+      });
       return;
+    }
+
+    // Validate date range
+    if (startDateTime.date && endDateTime.date) {
+      if (endDateTime.date <= startDateTime.date) {
+        setError("วันเวลาสิ้นสุดต้องมากกว่าวันเวลาเริ่มต้น");
+        toast.error("ข้อมูลไม่ถูกต้อง", {
+          description: "วันเวลาสิ้นสุดต้องมากกว่าวันเวลาเริ่มต้น",
+          duration: TOAST_DURATION.ERROR,
+        });
+        return;
+      }
     }
 
     try {
@@ -193,6 +209,9 @@ export default function TaskDetailModal({
     setFormData((prev) => ({ ...prev, [field]: value }));
     setError(null);
   };
+
+  // Check if date range is valid
+  const isDateRangeInvalid = startDateTime.date && endDateTime.date && endDateTime.date <= startDateTime.date;
 
   const handleClose = () => {
     setIsEditing(false);
@@ -385,6 +404,11 @@ export default function TaskDetailModal({
                   </Button>
                 )}
               </div>
+              {isDateRangeInvalid && (
+                <p className="text-xs text-red-600">
+                  วันเวลาสิ้นสุดต้องมากกว่าวันเวลาเริ่มต้น
+                </p>
+              )}
             </div>
 
             {/* Location */}
