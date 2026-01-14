@@ -51,7 +51,7 @@ export default function CreateTaskModal({
     location: "",
   });
 
-  const needsProjectSelection = !projectId && projects && projects.length > 0;
+  const needsProjectSelection = !projectId;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,6 +71,18 @@ export default function CreateTaskModal({
         duration: TOAST_DURATION.ERROR,
       });
       return;
+    }
+
+    // Validate date range
+    if (startDateTime.date && endDateTime.date) {
+      if (endDateTime.date <= startDateTime.date) {
+        setError("วันเวลาสิ้นสุดต้องมากกว่าวันเวลาเริ่มต้น");
+        toast.error("ข้อมูลไม่ถูกต้อง", {
+          description: "วันเวลาสิ้นสุดต้องมากกว่าวันเวลาเริ่มต้น",
+          duration: TOAST_DURATION.ERROR,
+        });
+        return;
+      }
     }
 
     const targetProjectId = projectId || selectedProjectId;
@@ -114,7 +126,7 @@ export default function CreateTaskModal({
         description: `Task "${payload.name}" ถูกสร้างเรียบร้อยแล้ว`,
         duration: TOAST_DURATION.SUCCESS,
       });
-      onOpenChange(false);
+      handleClose(false);
       onSuccess();
     } catch (err) {
       setError("ไม่สามารถสร้าง Task ได้ กรุณาลองใหม่");
@@ -132,8 +144,31 @@ export default function CreateTaskModal({
     setError(null);
   };
 
+  // Check if date range is valid
+  const isDateRangeInvalid = startDateTime.date && endDateTime.date && endDateTime.date <= startDateTime.date;
+
+  const handleClose = (open: boolean) => {
+    if (!open && !isLoading) {
+      // Reset form and error when closing
+      setFormData({
+        name: "",
+        description: "",
+        priority: "medium",
+        location: "",
+      });
+      setStartDateTime({ hasTime: true });
+      setEndDateTime({ hasTime: true });
+      setRecurringDays(undefined);
+      if (needsProjectSelection) {
+        setSelectedProjectId("");
+      }
+      setError(null);
+    }
+    onOpenChange(open);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[500px] max-w-[95vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>สร้าง Task ใหม่</DialogTitle>
@@ -152,17 +187,23 @@ export default function CreateTaskModal({
               <Select
                 value={selectedProjectId}
                 onValueChange={setSelectedProjectId}
-                disabled={isLoading}
+                disabled={isLoading || !projects || projects.length === 0}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="เลือก Project" />
+                  <SelectValue placeholder={projects && projects.length > 0 ? "เลือก Project" : "ไม่มี Project"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {projects!.map((project) => (
-                    <SelectItem key={project.id} value={project.id}>
-                      {project.name}
-                    </SelectItem>
-                  ))}
+                  {projects && projects.length > 0 ? (
+                    projects.map((project) => (
+                      <SelectItem key={project.id} value={project.id}>
+                        {project.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className="px-2 py-1.5 text-sm text-gray-500">
+                      ไม่มี Project
+                    </div>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -263,6 +304,11 @@ export default function CreateTaskModal({
                 </Button>
               )}
             </div>
+            {isDateRangeInvalid && (
+              <p className="text-xs text-red-600">
+                วันเวลาสิ้นสุดต้องมากกว่าวันเวลาเริ่มต้น
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -293,7 +339,7 @@ export default function CreateTaskModal({
             <Button
               type="button"
               variant="outline"
-              onClick={() => onOpenChange(false)}
+              onClick={() => handleClose(false)}
               disabled={isLoading}
               className="w-full sm:w-auto order-2 sm:order-1"
             >

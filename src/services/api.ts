@@ -76,7 +76,7 @@ export interface UpdateProjectRequest {
 }
 
 export const updateProject = (projectId: string, payload: UpdateProjectRequest) => {
-  return apiClient.put<{ success: boolean; message: string; data: Project; error: unknown }>(`/api/projects/${projectId}`, payload);
+  return apiClient.patch<{ success: boolean; message: string; data: Project; error: unknown }>(`/api/projects/${projectId}`, payload);
 };
 
 export const deleteProject = (projectId: string) => {
