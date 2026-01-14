@@ -76,7 +76,7 @@ export interface UpdateProjectRequest {
 }
 
 export const updateProject = (projectId: string, payload: UpdateProjectRequest) => {
-  return apiClient.put<{ success: boolean; message: string; data: Project; error: unknown }>(`/api/projects/${projectId}`, payload);
+  return apiClient.patch<{ success: boolean; message: string; data: Project; error: unknown }>(`/api/projects/${projectId}`, payload);
 };
 
 export const deleteProject = (projectId: string) => {
@@ -126,10 +126,10 @@ export interface CreateTaskRequest {
   name: string;
   description?: string;
   priority?: string;
-  start_date_time?: string;
-  end_date_time?: string;
+  start_datetime?: string;
+  end_datetime?: string;
   location?: string;
-  status?: string;
+  recurring_days?: number;
 }
 
 export const createTask = (projectId: string, payload: CreateTaskRequest) => {
@@ -143,10 +143,11 @@ export interface UpdateTaskRequest {
   name?: string;
   description?: string;
   priority?: string;
-  start_date_time?: string;
-  end_date_time?: string;
+  start_datetime?: string;
+  end_datetime?: string;
   location?: string;
   status?: string;
+  recurring_days?: number;
 }
 
 export const updateTask = (taskId: string, payload: UpdateTaskRequest) => {

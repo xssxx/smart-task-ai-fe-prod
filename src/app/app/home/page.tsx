@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 import { listProjects, Project } from "@/services/api";
 import CreateProjectModal from "@/components/CreateProjectModal";
-import CreateTaskFromHomeModal from "@/components/CreateTaskFromHomeModal";
+import CreateTaskModal from "@/components/CreateTaskModal";
 import EditWorkspaceModal from "@/components/EditWorkspaceModal";
 import DeleteWorkspaceModal from "@/components/DeleteWorkspaceModal";
 import { getPriorityColor, getStatusColor, WORKSPACE_COLORS } from "@/constants";
@@ -111,12 +111,29 @@ export default function HomePage() {
     fetchProjects();
   }, []);
 
+  // Listen for project updates from other components
+  useEffect(() => {
+    const handleProjectsUpdated = () => {
+      fetchProjects();
+    };
+
+    window.addEventListener('projectsUpdated', handleProjectsUpdated);
+    return () => {
+      window.removeEventListener('projectsUpdated', handleProjectsUpdated);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleProjectCreated = () => {
     fetchProjects();
+    // Dispatch event to notify other components
+    window.dispatchEvent(new CustomEvent('projectsUpdated'));
   };
 
   const handleProjectUpdated = () => {
     fetchProjects();
+    // Dispatch event to notify other components
+    window.dispatchEvent(new CustomEvent('projectsUpdated'));
   };
 
   const handleEditProject = (project: Project) => {
@@ -415,13 +432,13 @@ export default function HomePage() {
         onSuccess={handleProjectCreated}
       />
 
-      <CreateTaskFromHomeModal
+      <CreateTaskModal
         open={showCreateTaskModal}
         onOpenChange={setShowCreateTaskModal}
+        projects={projects}
         onSuccess={() => {
           // Refresh tasks if needed
         }}
-        projects={projects}
       />
 
       <EditWorkspaceModal

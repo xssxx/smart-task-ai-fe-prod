@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Pencil, Loader2, Trash2 } from "lucide-react";
+import { Pencil, Loader2, Trash2, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -40,6 +40,8 @@ interface TaskData {
   status: string;
   start_datetime: string | null;
   end_datetime: string | null;
+  location: string | null;
+  recurring_days: number | null;
 }
 
 export default function TaskDetailModal({
@@ -66,6 +68,8 @@ export default function TaskDetailModal({
     status: "todo",
     start_datetime: null,
     end_datetime: null,
+    location: null,
+    recurring_days: null,
   });
 
   useEffect(() => {
@@ -101,6 +105,8 @@ export default function TaskDetailModal({
         
         const startDateTimeValue = (rawTask.start_datetime || rawTask.startDateTime) as string | null;
         const endDateTimeValue = (rawTask.end_datetime || rawTask.endDateTime) as string | null;
+        const locationValue = (rawTask.location) as string | null;
+        const recurringDaysValue = (rawTask.recurring_days || rawTask.recurringDays) as number | null;
         
         setFormData({
           id: task.id,
@@ -110,6 +116,8 @@ export default function TaskDetailModal({
           status: statusValue === 'in_progress' || statusValue === 'inprogress' ? 'in_progress' : statusValue,
           start_datetime: startDateTimeValue || null,
           end_datetime: endDateTimeValue || null,
+          location: locationValue || null,
+          recurring_days: recurringDaysValue || null,
         });
         
         setStartDateTime({
@@ -131,7 +139,23 @@ export default function TaskDetailModal({
   const handleSave = async () => {
     if (!formData.name.trim()) {
       setError("กรุณากรอกชื่อ Task");
+      toast.error("ข้อมูลไม่ครบถ้วน", {
+        description: "กรุณากรอกชื่อ Task",
+        duration: TOAST_DURATION.ERROR,
+      });
       return;
+    }
+
+    // Validate date range
+    if (startDateTime.date && endDateTime.date) {
+      if (endDateTime.date <= startDateTime.date) {
+        setError("วันเวลาสิ้นสุดต้องมากกว่าวันเวลาเริ่มต้น");
+        toast.error("ข้อมูลไม่ถูกต้อง", {
+          description: "วันเวลาสิ้นสุดต้องมากกว่าวันเวลาเริ่มต้น",
+          duration: TOAST_DURATION.ERROR,
+        });
+        return;
+      }
     }
 
     try {
@@ -149,10 +173,16 @@ export default function TaskDetailModal({
       }
       
       if (startDateTime.date) {
-        payload.start_date_time = startDateTime.date.toISOString();
+        payload.start_datetime = startDateTime.date.toISOString();
       }
       if (endDateTime.date) {
-        payload.end_date_time = endDateTime.date.toISOString();
+        payload.end_datetime = endDateTime.date.toISOString();
+      }
+      if (formData.location?.trim()) {
+        payload.location = formData.location.trim();
+      }
+      if (formData.recurring_days && formData.recurring_days > 0) {
+        payload.recurring_days = formData.recurring_days;
       }
 
       await updateTask(formData.id, payload);
@@ -162,6 +192,7 @@ export default function TaskDetailModal({
         description: `Task "${formData.name}" ถูกอัพเดทเรียบร้อยแล้ว`,
         duration: TOAST_DURATION.SUCCESS,
       });
+      onOpenChange(false);
       onSuccess();
     } catch (err) {
       setError("ไม่สามารถบันทึก Task ได้ กรุณาลองใหม่");
@@ -178,6 +209,9 @@ export default function TaskDetailModal({
     setFormData((prev) => ({ ...prev, [field]: value }));
     setError(null);
   };
+
+  // Check if date range is valid
+  const isDateRangeInvalid = startDateTime.date && endDateTime.date && endDateTime.date <= startDateTime.date;
 
   const handleClose = () => {
     setIsEditing(false);
@@ -278,7 +312,7 @@ export default function TaskDetailModal({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Priority</Label>
+                <Label>Priority <span className="text-red-500">*</span></Label>
                 <Select
                   value={formData.priority}
                   onValueChange={(value) => handleChange("priority", value)}
@@ -321,22 +355,90 @@ export default function TaskDetailModal({
             {/* Start DateTime */}
             <div className="space-y-2">
               <Label>วันเวลาเริ่มต้น</Label>
-              <DateTimePicker
-                value={startDateTime}
-                onChange={setStartDateTime}
-                isDisabled={!isEditing || isSaving}
-                placeholder="เลือกวันเวลาเริ่มต้น"
-              />
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <DateTimePicker
+                    value={startDateTime}
+                    onChange={setStartDateTime}
+                    isDisabled={!isEditing || isSaving}
+                    placeholder="เลือกวันเวลาเริ่มต้น"
+                  />
+                </div>
+                {isEditing && startDateTime.date && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setStartDateTime({ date: null, hasTime: true })}
+                    disabled={isSaving}
+                    className="shrink-0"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
             </div>
 
             {/* End DateTime */}
             <div className="space-y-2">
               <Label>วันเวลาสิ้นสุด</Label>
-              <DateTimePicker
-                value={endDateTime}
-                onChange={setEndDateTime}
-                isDisabled={!isEditing || isSaving}
-                placeholder="เลือกวันเวลาสิ้นสุด"
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <DateTimePicker
+                    value={endDateTime}
+                    onChange={setEndDateTime}
+                    isDisabled={!isEditing || isSaving}
+                    placeholder="เลือกวันเวลาสิ้นสุด"
+                  />
+                </div>
+                {isEditing && endDateTime.date && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setEndDateTime({ date: null, hasTime: true })}
+                    disabled={isSaving}
+                    className="shrink-0"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
+              {isDateRangeInvalid && (
+                <p className="text-xs text-red-600">
+                  วันเวลาสิ้นสุดต้องมากกว่าวันเวลาเริ่มต้น
+                </p>
+              )}
+            </div>
+
+            {/* Location */}
+            <div className="space-y-2">
+              <Label htmlFor="location">สถานที่</Label>
+              <Input
+                id="location"
+                value={formData.location || ""}
+                onChange={(e) => handleChange("location", e.target.value)}
+                placeholder="เช่น ห้องประชุม A, Online"
+                disabled={!isEditing || isSaving}
+                className={!isEditing ? "bg-gray-50" : ""}
+              />
+            </div>
+
+            {/* Recurring Days */}
+            <div className="space-y-2">
+              <Label htmlFor="recurringDays">ทำซ้ำทุกๆ (วัน)</Label>
+              <Input
+                id="recurringDays"
+                type="number"
+                min="0"
+                value={formData.recurring_days ?? ""}
+                onChange={(e) => setFormData((prev) => ({ 
+                  ...prev, 
+                  recurring_days: e.target.value ? parseInt(e.target.value) : null 
+                }))}
+                placeholder="เช่น 7 สำหรับทำซ้ำทุกสัปดาห์"
+                disabled={!isEditing || isSaving}
+                className={!isEditing ? "bg-gray-50" : ""}
               />
             </div>
 

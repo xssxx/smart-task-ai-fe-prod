@@ -16,22 +16,10 @@ export interface TaskAction {
   name: string;
 }
 
-// LLM Message structure from API
-export interface LLMMessageData {
-  type: "task_list" | "text";
-  meta?: string;
-  tasks?: Array<{
-    name: string;
-    priority: "high" | "medium" | "low";
-    status: "todo" | "in_progress" | "done";
-    description: string;
-    start_datetime: string;
-    end_datetime: string;
-  }>;
-}
-
 export interface SendMessageResponse {
-  message: LLMMessageData;
+  type: "text" | "task_actions";
+  message: string;
+  tasks?: BackendTask[];
   task_actions?: TaskAction[];
 }
 
@@ -51,6 +39,18 @@ export interface ProposedTask {
   start_datetime: string;
   end_datetime: string;
   userAction?: "accepted" | "rejected" | "pending";
+}
+
+// Backend task format (from API response)
+export interface BackendTask {
+  name: string;
+  description?: string;
+  priority?: string;
+  start_datetime?: string;
+  end_datetime?: string;
+  location?: string;
+  recurring_days?: number;
+  recurring_until?: string;
 }
 
 // UI-specific types

@@ -242,11 +242,11 @@ function DroppableColumn({
   return (
     <Card
       ref={setNodeRef}
-      className={`h-full transition-all ${
+      className={`h-full flex flex-col transition-all ${
         isOver ? "ring-2 ring-gray-900 ring-offset-2" : ""
       }`}
     >
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-3 shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className={`w-3 h-3 rounded-full ${column.color}`}></div>
@@ -260,7 +260,7 @@ function DroppableColumn({
           </Button>
         </div>
       </CardHeader>
-      <CardContent className="space-y-3">{children}</CardContent>
+      <CardContent className="space-y-3 flex-1 overflow-y-auto">{children}</CardContent>
     </Card>
   );
 }
@@ -540,9 +540,9 @@ export default function BoardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <main className="p-6 max-w-[1600px] mx-auto">
-        <div className="mb-6">
+    <div className="h-full bg-gray-50 flex flex-col overflow-hidden">
+      <main className="flex-1 flex flex-col p-6 max-w-[1600px] mx-auto w-full overflow-hidden">
+        <div className="mb-6 shrink-0">
           {/* Header with Title and Action Buttons */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
             <div>
@@ -592,7 +592,7 @@ export default function BoardPage() {
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 shrink-0">
             <AlertCircle className="w-5 h-5 text-red-500" />
             <span className="text-red-700">{error}</span>
             <Button
@@ -606,7 +606,7 @@ export default function BoardPage() {
           </div>
         )}
 
-        <div className="flex md:hidden items-center justify-between mb-4 px-2">
+        <div className="flex md:hidden items-center justify-between mb-4 px-2 shrink-0">
           <Button
             variant="ghost"
             size="sm"
@@ -650,7 +650,7 @@ export default function BoardPage() {
         >
           <div
             ref={scrollContainerRef}
-            className={`flex gap-4 overflow-x-auto pb-4 md:overflow-x-visible md:snap-none ${
+            className={`flex-1 flex gap-4 overflow-x-auto overflow-y-hidden pb-4 md:overflow-x-visible md:snap-none ${
               isDraggingTask ? "" : "snap-x snap-mandatory scroll-smooth"
             }`}
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
@@ -659,7 +659,7 @@ export default function BoardPage() {
               ? [1, 2, 3, 4].map((i) => (
                   <div
                     key={i}
-                    className="shrink-0 w-[85vw] md:w-80 snap-center"
+                    className="shrink-0 w-[85vw] md:w-80 snap-center h-full"
                   >
                     <ColumnSkeleton />
                   </div>
@@ -667,7 +667,7 @@ export default function BoardPage() {
               : columns.map((column) => (
                   <div
                     key={column.id}
-                    className="shrink-0 w-[85vw] md:w-80 snap-center"
+                    className="shrink-0 w-[85vw] md:w-80 snap-center h-full"
                   >
                     <DroppableColumn
                       column={column}
@@ -695,7 +695,6 @@ export default function BoardPage() {
           onOpenChange={setShowCreateModal}
           onSuccess={fetchTasks}
           projectId={projectId}
-          defaultStatus={createTaskDefaultStatus}
         />
 
         <TaskDetailModal
