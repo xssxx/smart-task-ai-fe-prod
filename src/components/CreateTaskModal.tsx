@@ -17,18 +17,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
-import { createTask, CreateTaskRequest } from "@/services/api";
+import { Loader2, X } from "lucide-react";
+import { createTask, CreateTaskRequest, Project } from "@/services/api";
 import { toast } from "sonner";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
-import { PRIORITY_OPTIONS, STATUS_OPTIONS, TOAST_DURATION } from "@/constants";
+import { PRIORITY_OPTIONS, TOAST_DURATION } from "@/constants";
 
 interface CreateTaskModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
-  projectId: string;
-  defaultStatus?: string;
+  projectId?: string;
+  projects?: Project[];
 }
 
 export default function CreateTaskModal({
@@ -36,19 +36,22 @@ export default function CreateTaskModal({
   onOpenChange,
   onSuccess,
   projectId,
-  defaultStatus = "todo",
+  projects,
 }: CreateTaskModalProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [startDateTime, setStartDateTime] = useState<{ date?: Date | null, hasTime: boolean }>({ hasTime: true });
   const [endDateTime, setEndDateTime] = useState<{ date?: Date | null, hasTime: boolean }>({ hasTime: true });
+  const [recurringDays, setRecurringDays] = useState<number | undefined>(undefined);
+  const [selectedProjectId, setSelectedProjectId] = useState<string>(projectId || "");
   const [formData, setFormData] = useState<CreateTaskRequest>({
     name: "",
     description: "",
     priority: "medium",
-    status: defaultStatus,
     location: "",
   });
+
+  const needsProjectSelection = !projectId && projects && projects.length > 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,11 +64,24 @@ export default function CreateTaskModal({
       return;
     }
 
+    if (needsProjectSelection && !selectedProjectId) {
+      setError("กรุณาเลือก Project");
+      toast.error("ข้อมูลไม่ครบถ้วน", {
+        description: "กรุณาเลือก Project",
+        duration: TOAST_DURATION.ERROR,
+      });
+      return;
+    }
+
+    const targetProjectId = projectId || selectedProjectId;
+    if (!targetProjectId) {
+      setError("ไม่พบ Project ID");
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
-      
-      // Removed blue loading toast - will be replaced with notification system later
       
       const payload: CreateTaskRequest = {
         name: formData.name.trim(),
@@ -73,23 +89,26 @@ export default function CreateTaskModal({
       
       if (formData.description?.trim()) payload.description = formData.description.trim();
       if (formData.priority) payload.priority = formData.priority;
-      if (formData.status) payload.status = formData.status;
-      if (startDateTime.date) payload.start_date_time = startDateTime.date.toISOString();
-      if (endDateTime.date) payload.end_date_time = endDateTime.date.toISOString();
+      if (startDateTime.date) payload.start_datetime = startDateTime.date.toISOString();
+      if (endDateTime.date) payload.end_datetime = endDateTime.date.toISOString();
       if (formData.location?.trim()) payload.location = formData.location.trim();
+      if (recurringDays && recurringDays > 0) payload.recurring_days = recurringDays;
 
-      await createTask(projectId, payload);
+      await createTask(targetProjectId, payload);
       
       // Reset form
       setFormData({
         name: "",
         description: "",
         priority: "medium",
-        status: defaultStatus,
         location: "",
       });
       setStartDateTime({ hasTime: true });
       setEndDateTime({ hasTime: true });
+      setRecurringDays(undefined);
+      if (needsProjectSelection) {
+        setSelectedProjectId("");
+      }
       
       toast.success("สร้าง Task สำเร็จ", {
         description: `Task "${payload.name}" ถูกสร้างเรียบร้อยแล้ว`,
@@ -113,7 +132,6 @@ export default function CreateTaskModal({
     setError(null);
   };
 
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px] max-w-[95vw] max-h-[90vh] overflow-y-auto">
@@ -125,6 +143,28 @@ export default function CreateTaskModal({
           {error && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
               {error}
+            </div>
+          )}
+
+          {needsProjectSelection && (
+            <div className="space-y-2">
+              <Label>Project <span className="text-red-500">*</span></Label>
+              <Select
+                value={selectedProjectId}
+                onValueChange={setSelectedProjectId}
+                disabled={isLoading}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="เลือก Project" />
+                </SelectTrigger>
+                <SelectContent>
+                  {projects!.map((project) => (
+                    <SelectItem key={project.id} value={project.id}>
+                      {project.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
 
@@ -151,68 +191,78 @@ export default function CreateTaskModal({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Priority</Label>
-              <Select
-                value={formData.priority}
-                onValueChange={(value) => handleChange("priority", value)}
-                disabled={isLoading}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="เลือก Priority" />
-                </SelectTrigger>
-                <SelectContent>
-                  {PRIORITY_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Status</Label>
-              <Select
-                value={formData.status}
-                onValueChange={(value) => handleChange("status", value)}
-                disabled={isLoading}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="เลือก Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  {STATUS_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-2">
+            <Label>Priority <span className="text-red-500">*</span></Label>
+            <Select
+              value={formData.priority}
+              onValueChange={(value) => handleChange("priority", value)}
+              disabled={isLoading}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="เลือก Priority" />
+              </SelectTrigger>
+              <SelectContent>
+                {PRIORITY_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Start DateTime */}
           <div className="space-y-2">
             <Label>วันเวลาเริ่มต้น</Label>
-            <DateTimePicker
-              value={startDateTime}
-              onChange={setStartDateTime}
-              isDisabled={isLoading}
-              placeholder="เลือกวันเวลาเริ่มต้น"
-            />
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <DateTimePicker
+                  value={startDateTime}
+                  onChange={setStartDateTime}
+                  isDisabled={isLoading}
+                  placeholder="เลือกวันเวลาเริ่มต้น"
+                />
+              </div>
+              {startDateTime.date && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setStartDateTime({ date: null, hasTime: true })}
+                  disabled={isLoading}
+                  className="shrink-0"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* End DateTime */}
           <div className="space-y-2">
             <Label>วันเวลาสิ้นสุด</Label>
-            <DateTimePicker
-              value={endDateTime}
-              onChange={setEndDateTime}
-              isDisabled={isLoading}
-              placeholder="เลือกวันเวลาสิ้นสุด"
-            />
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <DateTimePicker
+                  value={endDateTime}
+                  onChange={setEndDateTime}
+                  isDisabled={isLoading}
+                  placeholder="เลือกวันเวลาสิ้นสุด"
+                />
+              </div>
+              {endDateTime.date && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setEndDateTime({ date: null, hasTime: true })}
+                  disabled={isLoading}
+                  className="shrink-0"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -222,6 +272,19 @@ export default function CreateTaskModal({
               value={formData.location}
               onChange={(e) => handleChange("location", e.target.value)}
               placeholder="เช่น ห้องประชุม A, Online"
+              disabled={isLoading}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="recurringDays">ทำซ้ำทุกๆ (วัน)</Label>
+            <Input
+              id="recurringDays"
+              type="number"
+              min="0"
+              value={recurringDays ?? ""}
+              onChange={(e) => setRecurringDays(e.target.value ? parseInt(e.target.value) : undefined)}
+              placeholder="เช่น 7 สำหรับทำซ้ำทุกสัปดาห์"
               disabled={isLoading}
             />
           </div>

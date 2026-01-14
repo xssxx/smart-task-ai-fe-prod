@@ -17,7 +17,9 @@ export interface TaskAction {
 }
 
 export interface SendMessageResponse {
+  type: "text" | "task_actions";
   message: string;
+  tasks?: BackendTask[];
   task_actions?: TaskAction[];
 }
 
@@ -37,6 +39,18 @@ export interface ProposedTask {
   start_datetime: string;
   end_datetime: string;
   userAction?: "accepted" | "rejected" | "pending";
+}
+
+// Backend task format (from API response)
+export interface BackendTask {
+  name: string;
+  description?: string;
+  priority?: string;
+  start_datetime?: string;
+  end_datetime?: string;
+  location?: string;
+  recurring_days?: number;
+  recurring_until?: string;
 }
 
 // UI-specific types

@@ -126,10 +126,10 @@ export interface CreateTaskRequest {
   name: string;
   description?: string;
   priority?: string;
-  start_date_time?: string;
-  end_date_time?: string;
+  start_datetime?: string;
+  end_datetime?: string;
   location?: string;
-  status?: string;
+  recurring_days?: number;
 }
 
 export const createTask = (projectId: string, payload: CreateTaskRequest) => {
@@ -143,10 +143,11 @@ export interface UpdateTaskRequest {
   name?: string;
   description?: string;
   priority?: string;
-  start_date_time?: string;
-  end_date_time?: string;
+  start_datetime?: string;
+  end_datetime?: string;
   location?: string;
   status?: string;
+  recurring_days?: number;
 }
 
 export const updateTask = (taskId: string, payload: UpdateTaskRequest) => {

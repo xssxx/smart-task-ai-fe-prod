@@ -16,7 +16,7 @@ export const STATUS_OPTIONS = [
 
 // Toast Duration (in milliseconds)
 export const TOAST_DURATION = {
-  SUCCESS: 500,
+  SUCCESS: 2000,
   ERROR: 3000,
 } as const;
 

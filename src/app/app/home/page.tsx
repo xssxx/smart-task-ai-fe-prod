@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 import { listProjects, Project } from "@/services/api";
 import CreateProjectModal from "@/components/CreateProjectModal";
-import CreateTaskFromHomeModal from "@/components/CreateTaskFromHomeModal";
+import CreateTaskModal from "@/components/CreateTaskModal";
 import EditWorkspaceModal from "@/components/EditWorkspaceModal";
 import DeleteWorkspaceModal from "@/components/DeleteWorkspaceModal";
 import { getPriorityColor, getStatusColor, WORKSPACE_COLORS } from "@/constants";
@@ -415,13 +415,13 @@ export default function HomePage() {
         onSuccess={handleProjectCreated}
       />
 
-      <CreateTaskFromHomeModal
+      <CreateTaskModal
         open={showCreateTaskModal}
         onOpenChange={setShowCreateTaskModal}
+        projects={projects}
         onSuccess={() => {
           // Refresh tasks if needed
         }}
-        projects={projects}
       />
 
       <EditWorkspaceModal
