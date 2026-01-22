@@ -1,17 +1,17 @@
 // Task Priority Options
 export const PRIORITY_OPTIONS = [
-  { value: "low", label: "Low" },
-  { value: "medium", label: "Medium" },
-  { value: "high", label: "High" },
-  { value: "urgent", label: "Urgent" },
+  { value: "low", label: "ต่ำ" },
+  { value: "medium", label: "ปานกลาง" },
+  { value: "high", label: "สูง" },
+  { value: "urgent", label: "ด่วนมาก" },
 ] as const;
 
 // Task Status Options
 export const STATUS_OPTIONS = [
-  { value: "todo", label: "To Do" },
-  { value: "in_progress", label: "In Progress" },
-  { value: "review", label: "Review" },
-  { value: "done", label: "Done" },
+  { value: "todo", label: "รอดำเนินการ" },
+  { value: "in_progress", label: "กำลังดำเนินการ" },
+  { value: "review", label: "รอตรวจสอบ" },
+  { value: "done", label: "เสร็จสิ้น" },
 ] as const;
 
 // Toast Duration (in milliseconds)
@@ -33,6 +33,8 @@ export const ROUTES = {
   LOGIN: "/auth/login",
   SIGNUP: "/auth/signup",
   CALLBACK: "/auth/callback",
+  PROFILE_SETUP: "/auth/profile-setup",
+  PROFILE: "/app/profile",
 } as const;
 
 // Workspace Colors for Sidebar

@@ -161,9 +161,9 @@ export default function HomePage() {
       <main className="p-6 max-w-7xl mx-auto">
         {/* Page Header */}
         <div className="mb-6">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h2>
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">แดชบอร์ด</h2>
           <p className="text-gray-600">
-            Welcome back! Here&apos;s what&apos;s happening with your projects today.
+            ยินดีต้อนรับกลับมา! นี่คือสิ่งที่เกิดขึ้นกับโปรเจกต์ของคุณวันนี้
           </p>
         </div>
 
@@ -172,7 +172,7 @@ export default function HomePage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-gray-600">
-                Total Tasks
+                งานทั้งหมด
               </CardTitle>
               <BarChart3 className="w-4 h-4 text-gray-400" />
             </CardHeader>
@@ -182,7 +182,7 @@ export default function HomePage() {
               </div>
               <p className="text-xs text-green-600 flex items-center mt-1">
                 <TrendingUp className="w-3 h-3 mr-1" />
-                +12% from last week
+                +12% จากสัปดาห์ที่แล้ว
               </p>
             </CardContent>
           </Card>
@@ -190,7 +190,7 @@ export default function HomePage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-gray-600">
-                Completed
+                เสร็จสิ้น
               </CardTitle>
               <CheckCircle2 className="w-4 h-4 text-green-500" />
             </CardHeader>
@@ -199,8 +199,7 @@ export default function HomePage() {
                 {stats.completed}
               </div>
               <p className="text-xs text-gray-600 mt-1">
-                {Math.round((stats.completed / stats.total) * 100)}% completion
-                rate
+                อัตราความสำเร็จ {Math.round((stats.completed / stats.total) * 100)}%
               </p>
             </CardContent>
           </Card>
@@ -208,7 +207,7 @@ export default function HomePage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-gray-600">
-                In Progress
+                กำลังดำเนินการ
               </CardTitle>
               <Clock className="w-4 h-4 text-blue-500" />
             </CardHeader>
@@ -216,14 +215,14 @@ export default function HomePage() {
               <div className="text-2xl font-bold text-gray-900">
                 {stats.inProgress}
               </div>
-              <p className="text-xs text-gray-600 mt-1">Active work items</p>
+              <p className="text-xs text-gray-600 mt-1">งานที่กำลังทำอยู่</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-gray-600">
-                To Do
+                รอดำเนินการ
               </CardTitle>
               <AlertCircle className="w-4 h-4 text-orange-500" />
             </CardHeader>
@@ -231,7 +230,7 @@ export default function HomePage() {
               <div className="text-2xl font-bold text-gray-900">
                 {stats.todo}
               </div>
-              <p className="text-xs text-gray-600 mt-1">Pending tasks</p>
+              <p className="text-xs text-gray-600 mt-1">งานที่รอดำเนินการ</p>
             </CardContent>
           </Card>
         </div>
@@ -243,11 +242,11 @@ export default function HomePage() {
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle>Workspaces</CardTitle>
-                  <CardDescription>Your active projects</CardDescription>
+                  <CardDescription>Workspace ที่สามารถใช้ได้</CardDescription>
                 </div>
                 <Button size="sm" variant="outline" onClick={() => setShowCreateProjectModal(true)} className="flex items-center justify-center gap-2">
                   <Plus className="w-4 h-4" />
-                  New
+                  สร้างใหม่
                 </Button>
               </div>
             </CardHeader>
@@ -311,22 +310,22 @@ export default function HomePage() {
                           {/* Dropdown Content */}
                           {openDropdown === project.id && (
                             <>
-                              {/* Backdrop */}
+                              {/* Backdrop with fade animation */}
                               <div
-                                className="fixed inset-0 z-10"
+                                className="fixed inset-0 z-10 animate-in fade-in-0 duration-200"
                                 onClick={() => setOpenDropdown(null)}
                               />
 
-                              {/* Menu */}
-                              <div className="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 animate-in fade-in-0 slide-in-from-top-2 duration-200">
+                              {/* Menu with slide and fade animation */}
+                              <div className="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 animate-in fade-in-0 slide-in-from-top-2 duration-200 origin-top-right">
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleEditProject(project);
                                   }}
-                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-all duration-150 hover:translate-x-1"
                                 >
-                                  <Edit3 className="w-4 h-4" />
+                                  <Edit3 className="w-4 h-4 transition-transform hover:scale-110" />
                                   แก้ไข
                                 </button>
                                 <button
@@ -334,9 +333,9 @@ export default function HomePage() {
                                     e.stopPropagation();
                                     handleDeleteProject(project);
                                   }}
-                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-all duration-150 hover:translate-x-1"
                                 >
-                                  <Trash2 className="w-4 h-4" />
+                                  <Trash2 className="w-4 h-4 transition-transform hover:scale-110" />
                                   ลบ
                                 </button>
                               </div>
@@ -356,14 +355,14 @@ export default function HomePage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Recent Tasks</CardTitle>
+                  <CardTitle>งานล่าสุด</CardTitle>
                   <CardDescription>
-                    Your latest work items and their progress
+                    รายการงานล่าสุดและความคืบหน้า
                   </CardDescription>
                 </div>
                 <Button size="sm" onClick={() => setShowCreateTaskModal(true)} className="flex items-center justify-center gap-2">
                   <Plus className="w-4 h-4" />
-                  New Task
+                  สร้างงานใหม่
                 </Button>
               </div>
             </CardHeader>
@@ -412,7 +411,7 @@ export default function HomePage() {
                     </div>
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-xs text-gray-600">
-                        <span>Progress</span>
+                        <span>ความคืบหน้า</span>
                         <span className="font-medium">{task.progress}%</span>
                       </div>
                       <Progress value={task.progress} className="h-2" />

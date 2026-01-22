@@ -106,13 +106,13 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
           {
             id: `board-${project.id}`,
             icon: FolderKanban,
-            label: "Board",
+            label: "บอร์ด",
             to: `/app/${project.id}/board`,
           },
           {
             id: `chat-${project.id}`,
             icon: MessageCircle,
-            label: "Chat AI",
+            label: "แชท AI",
             to: `/app/${project.id}/chat`,
           },
         ],
@@ -189,8 +189,8 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
   };
 
   const menuItems = [
-    { id: "home", icon: Home, label: "Home", href: "#" },
-    { id: "my-calendar", icon: Calendar, label: "My Calendar", href: "#" },
+    { id: "home", icon: Home, label: "หน้าแรก", href: "#" },
+    { id: "my-calendar", icon: Calendar, label: "ปฏิทินของฉัน", href: "#" },
   ];
 
   return (
@@ -198,7 +198,7 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
       {/* Mobile hamburger button */}
       <button
         onClick={onToggle}
-        className="md:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-md border border-gray-200"
+        className="md:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg"
         aria-label="Toggle menu"
       >
         {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -222,10 +222,10 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
         `}
       >
         <div className="p-4 pt-16 md:pt-4">
-          {/* Logo */}
-          <div className="flex items-center gap-2 mb-6">
+          {/* Logo - Show only on desktop */}
+          <div className="hidden md:flex items-center gap-2 mb-6">
             <Image src="/logo.svg" alt="Smart Task AI" width={32} height={32} className="object-contain" />
-            <h1 className="text-xl font-semi-bold text-gray-900">Smart Task</h1>
+            <h1 className="text-2xl font-momo text-gray-900">Smart Task</h1>
           </div>
 
           {/* Main Menu */}
@@ -311,7 +311,7 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
                           onClick={(e) => {
                             e.stopPropagation();
                             setOpenDropdown(openDropdown === workspace.id ? null : workspace.id);
@@ -323,14 +323,14 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
                         {/* Dropdown Content */}
                         {openDropdown === workspace.id && (
                           <>
-                            {/* Backdrop */}
+                            {/* Backdrop with fade animation */}
                             <div
-                              className="fixed inset-0 z-10"
+                              className="fixed inset-0 z-10 animate-in fade-in-0 duration-200"
                               onClick={() => setOpenDropdown(null)}
                             />
                             
-                            {/* Menu */}
-                            <div className="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 animate-in fade-in-0 slide-in-from-top-2 duration-200">
+                            {/* Menu with slide and fade animation */}
+                            <div className="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 animate-in fade-in-0 slide-in-from-top-2 duration-200 origin-top-right">
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();

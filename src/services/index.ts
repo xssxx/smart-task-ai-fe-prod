@@ -10,6 +10,13 @@ const apiClient = axios.create({
   },
 });
 
+// Helper function to set token in cookie
+export const setTokenToCookie = (token: string): void => {
+  if (typeof window !== "undefined") {
+    document.cookie = `${AUTH_COOKIE.NAME}=${token}; path=${AUTH_COOKIE.PATH}; max-age=${AUTH_COOKIE.MAX_AGE}`;
+  }
+};
+
 // Helper function to get token from cookie
 export const getTokenFromCookie = (): string | null => {
   if (typeof window === "undefined") return null;

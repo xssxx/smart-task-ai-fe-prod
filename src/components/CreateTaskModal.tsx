@@ -73,7 +73,6 @@ export default function CreateTaskModal({
       return;
     }
 
-    // Validate date range
     if (startDateTime.date && endDateTime.date) {
       if (endDateTime.date <= startDateTime.date) {
         setError("วันเวลาสิ้นสุดต้องมากกว่าวันเวลาเริ่มต้น");
@@ -108,7 +107,6 @@ export default function CreateTaskModal({
 
       await createTask(targetProjectId, payload);
       
-      // Reset form
       setFormData({
         name: "",
         description: "",
@@ -144,12 +142,10 @@ export default function CreateTaskModal({
     setError(null);
   };
 
-  // Check if date range is valid
   const isDateRangeInvalid = startDateTime.date && endDateTime.date && endDateTime.date <= startDateTime.date;
 
   const handleClose = (open: boolean) => {
     if (!open && !isLoading) {
-      // Reset form and error when closing
       setFormData({
         name: "",
         description: "",
@@ -252,7 +248,6 @@ export default function CreateTaskModal({
             </Select>
           </div>
 
-          {/* Start DateTime */}
           <div className="space-y-2">
             <Label>วันเวลาเริ่มต้น</Label>
             <div className="flex gap-2">
@@ -279,7 +274,6 @@ export default function CreateTaskModal({
             </div>
           </div>
 
-          {/* End DateTime */}
           <div className="space-y-2">
             <Label>วันเวลาสิ้นสุด</Label>
             <div className="flex gap-2">

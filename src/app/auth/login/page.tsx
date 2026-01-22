@@ -2,7 +2,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase/client";
-import { signin } from "@/services/api";
+import { signin, getProfile } from "@/services/api";
 import { AUTH_COOKIE, ROUTES } from "@/constants";
 
 export default function SignInPage() {
@@ -55,7 +55,16 @@ export default function SignInPage() {
         const token = res.data.data?.token || res.data.token;
         if (token) {
           document.cookie = `${AUTH_COOKIE.NAME}=${token}; path=${AUTH_COOKIE.PATH}; max-age=${AUTH_COOKIE.MAX_AGE}`;
-          window.location.href = ROUTES.HOME;
+
+          // Check if profile exists
+          try {
+            await getProfile();
+            // Profile exists, go to home
+            window.location.href = ROUTES.HOME;
+          } catch {
+            // Profile doesn't exist, go to profile setup
+            window.location.href = ROUTES.PROFILE_SETUP;
+          }
         } else {
           setError("เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");
         }
@@ -88,8 +97,8 @@ export default function SignInPage() {
               className="w-full h-full object-contain"
             />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            SMART TASK AI
+          <h1 className="text-3xl font-momo text-gray-900 mb-2">
+            Smart Task
           </h1>
           <p className="text-gray-600 text-lg">ยินดีต้อนรับกลับมา</p>
         </div>
@@ -141,7 +150,7 @@ export default function SignInPage() {
                 type="text"
                 value={formData.email}
                 onChange={(e) => handleInputChange("email", e.target.value)}
-                placeholder="your@email.com or username"
+                placeholder="อีเมลหรือชื่อผู้ใช้"
                 className="w-full h-12 pl-11 pr-4 rounded-xl bg-gray-50 border-2 border-gray-100 outline-none focus:border-gray-900 focus:bg-white transition-all duration-200 text-gray-700 placeholder:text-gray-400 text-sm"
               />
             </div>

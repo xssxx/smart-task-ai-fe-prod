@@ -25,6 +25,8 @@ import { ChatMessage, Message, ProposedTask } from "@/types/chat";
 import { getActionBadgeColor, PRIORITY_OPTIONS } from "@/constants";
 import { format } from "date-fns";
 import { th } from "date-fns/locale";
+import { formatDateTime } from "@/lib/date-utils";
+import { getPriorityLabel } from "@/lib/task-utils";
 import {
   Dialog,
   DialogContent,
@@ -55,29 +57,6 @@ function getPriorityColor(priority: string) {
       return "bg-green-100 text-green-700 border-green-200";
     default:
       return "bg-gray-100 text-gray-700 border-gray-200";
-  }
-}
-
-function getPriorityLabel(priority: string) {
-  switch (priority) {
-    case "high":
-      return "สูง";
-    case "medium":
-      return "ปานกลาง";
-    case "low":
-      return "ต่ำ";
-    default:
-      return priority;
-  }
-}
-
-// Format datetime for display
-function formatDateTime(dateString: string) {
-  try {
-    const date = new Date(dateString);
-    return format(date, "d MMM yyyy HH:mm", { locale: th });
-  } catch {
-    return dateString;
   }
 }
 
@@ -360,7 +339,7 @@ function TaskProposalCard({
                   onClick={() => onAccept(task)}
                 >
                   <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1" />
-                  <span className="hidden sm:inline">Accept</span>
+                  <span className="hidden sm:inline">ยอมรับ</span>
                 </Button>
                 <Button
                   size="sm"
@@ -369,7 +348,7 @@ function TaskProposalCard({
                   onClick={() => onEdit(task)}
                 >
                   <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1" />
-                  <span className="hidden sm:inline">Edit</span>
+                  <span className="hidden sm:inline">แก้ไข</span>
                 </Button>
                 <Button
                   size="sm"
@@ -378,7 +357,7 @@ function TaskProposalCard({
                   onClick={() => onReject(task)}
                 >
                   <X className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1" />
-                  <span className="hidden sm:inline">Reject</span>
+                  <span className="hidden sm:inline">ปฏิเสธ</span>
                 </Button>
               </div>
             )}

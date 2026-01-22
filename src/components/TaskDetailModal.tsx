@@ -91,13 +91,10 @@ export default function TaskDetailModal({
       setIsLoading(true);
       setError(null);
       
-      // Removed blue loading toast - will be replaced with notification system later
-      
       const response = await getTaskById(taskId);
       const task = response.data?.data;
       
       if (task) {
-        // Type assertion for API response with flexible field names
         const rawTask = task as unknown as Record<string, unknown>;
         const statusValue = typeof rawTask.status === 'string' 
           ? rawTask.status.toLowerCase() 
@@ -146,7 +143,6 @@ export default function TaskDetailModal({
       return;
     }
 
-    // Validate date range
     if (startDateTime.date && endDateTime.date) {
       if (endDateTime.date <= startDateTime.date) {
         setError("วันเวลาสิ้นสุดต้องมากกว่าวันเวลาเริ่มต้น");
@@ -210,7 +206,6 @@ export default function TaskDetailModal({
     setError(null);
   };
 
-  // Check if date range is valid
   const isDateRangeInvalid = startDateTime.date && endDateTime.date && endDateTime.date <= startDateTime.date;
 
   const handleClose = () => {
@@ -352,7 +347,6 @@ export default function TaskDetailModal({
               </div>
             </div>
 
-            {/* Start DateTime */}
             <div className="space-y-2">
               <Label>วันเวลาเริ่มต้น</Label>
               <div className="flex gap-2">
@@ -379,7 +373,6 @@ export default function TaskDetailModal({
               </div>
             </div>
 
-            {/* End DateTime */}
             <div className="space-y-2">
               <Label>วันเวลาสิ้นสุด</Label>
               <div className="flex gap-2">
@@ -411,7 +404,6 @@ export default function TaskDetailModal({
               )}
             </div>
 
-            {/* Location */}
             <div className="space-y-2">
               <Label htmlFor="location">สถานที่</Label>
               <Input
@@ -424,7 +416,6 @@ export default function TaskDetailModal({
               />
             </div>
 
-            {/* Recurring Days */}
             <div className="space-y-2">
               <Label htmlFor="recurringDays">ทำซ้ำทุกๆ (วัน)</Label>
               <Input

@@ -42,6 +42,7 @@ import CreateTaskModal from "@/components/CreateTaskModal";
 import TaskDetailModal from "@/components/TaskDetailModal";
 import { toast } from "sonner";
 import { getPriorityColor, TOAST_DURATION } from "@/constants";
+import { mapApiStatus, mapColumnToApiStatus } from "@/lib/task-utils";
 
 interface BoardTask {
   id: string;
@@ -81,33 +82,6 @@ function transformApiTask(apiTask: ApiTask): BoardTask {
     tags: [],
     status: mapApiStatus(apiTask.status),
   };
-}
-
-function mapApiStatus(status: ApiTask["status"] | string): string {
-  if (typeof status === "string") {
-    const s = status.toLowerCase();
-    if (s === "todo" || s === "to do") return "todo";
-    if (s === "in_progress" || s === "inprogress" || s === "in-progress")
-      return "in-progress";
-    if (s === "review") return "review";
-    if (s === "done" || s === "completed") return "done";
-  }
-  return "todo";
-}
-
-function mapColumnToApiStatus(columnId: string): string {
-  switch (columnId) {
-    case "todo":
-      return "todo";
-    case "in-progress":
-      return "in_progress";
-    case "review":
-      return "review";
-    case "done":
-      return "done";
-    default:
-      return "todo";
-  }
 }
 
 function DraggableTaskCard({
@@ -333,15 +307,15 @@ export default function BoardPage() {
   const projectId = params.projectId as string;
 
   const [columns, setColumns] = useState<Column[]>([
-    { id: "todo", title: "To Do", color: "bg-gray-300", tasks: [] },
+    { id: "todo", title: "รอดำเนินการ", color: "bg-gray-300", tasks: [] },
     {
       id: "in-progress",
-      title: "In Progress",
+      title: "กำลังดำเนินการ",
       color: "bg-blue-500",
       tasks: [],
     },
-    { id: "review", title: "Review", color: "bg-yellow-500", tasks: [] },
-    { id: "done", title: "Done", color: "bg-green-500", tasks: [] },
+    { id: "review", title: "รอตรวจสอบ", color: "bg-yellow-500", tasks: [] },
+    { id: "done", title: "เสร็จสิ้น", color: "bg-green-500", tasks: [] },
   ]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -529,11 +503,8 @@ export default function BoardPage() {
         <div className="text-center">
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-gray-900">
-            Project not found
+            ไม่พบโปรเจกต์
           </h2>
-          <p className="text-gray-600 mt-2">
-            Please select a project from the sidebar
-          </p>
         </div>
       </div>
     );
@@ -547,10 +518,10 @@ export default function BoardPage() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
             <div>
               <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-                Board
+                บอร์ด
               </h2>
               <p className="text-gray-600 text-sm sm:text-base">
-                Manage your tasks with a visual kanban board
+                จัดการงานของคุณด้วยบอร์ด Kanban
               </p>
             </div>
 
@@ -567,15 +538,15 @@ export default function BoardPage() {
                     isLoading ? "animate-spin" : ""
                   } sm:mr-2`}
                 />
-                <span className="hidden sm:inline">Refresh</span>
+                <span className="hidden sm:inline">รีเฟรช</span>
               </Button>
               <Button variant="outline" size="sm">
                 <Filter className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">Filter</span>
+                <span className="hidden sm:inline">ตัวกรอง</span>
               </Button>
               <Button variant="outline" size="sm">
                 <Search className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">Search</span>
+                <span className="hidden sm:inline">ค้นหา</span>
               </Button>
               <Button
                 size="sm"
@@ -585,7 +556,7 @@ export default function BoardPage() {
                 }}
               >
                 <Plus className="w-4 h-4 mr-2" />
-                New Task
+                สร้างงานใหม่
               </Button>
             </div>
           </div>

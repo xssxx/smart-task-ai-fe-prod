@@ -69,7 +69,6 @@ export default function DeleteWorkspaceModal({
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Error Message */}
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
               {error}
@@ -77,7 +76,7 @@ export default function DeleteWorkspaceModal({
           )}
 
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-sm text-red-700">
+            <p className="text-sm text-red-700">
               คุณแน่ใจหรือไม่ที่จะลบ workspace <strong>&quot;{project.name}&quot;</strong>?
             </p>
             <p className="text-xs text-red-600 mt-2">

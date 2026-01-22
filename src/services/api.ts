@@ -2,10 +2,24 @@ import apiClient, { clearAuthCookie } from ".";
 import { SigninRequest } from "@/types/auth/signin";
 import { SignupRequest } from "@/types/auth/signup";
 import { SendMessageRequest, SendMessageResponse, ApiResponse } from "@/types/chat";
+import { CreateProfileRequest, CreateProfileResponse } from "@/types/profile";
 import { ROUTES } from "@/constants";
 
 export const signup = (payload: SignupRequest) => {
   return apiClient.post("/api/signup", payload);
+};
+
+// Profile API
+export const createProfile = (payload: CreateProfileRequest) => {
+  return apiClient.post<{ success: boolean; message: string; data: CreateProfileResponse; error: unknown }>("/api/profiles", payload);
+};
+
+export const getProfile = () => {
+  return apiClient.get<{ success: boolean; message: string; data: { account_id: string; first_name: string; last_name: string; nickname?: string; avatar_path?: string; state: string; created_at: string; updated_at: string }; error: unknown }>("/api/profiles");
+};
+
+export const updateProfile = (payload: { first_name: string; last_name: string; nickname?: string; avatar_path?: string }) => {
+  return apiClient.patch<{ success: boolean; message: string; data: { account_id: string; first_name: string; last_name: string; nickname?: string; avatar_path?: string; state: string; created_at: string; updated_at: string }; error: unknown }>("/api/profiles", payload);
 };
 
 export const signin = (payload: SigninRequest) => {

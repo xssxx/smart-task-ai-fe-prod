@@ -5,6 +5,7 @@
 
 @theme inline {
   --font-sans: var(--font-kanit), sans-serif;
+  --font-momo: var(--font-momo), cursive;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -261,4 +262,9 @@
 /* Specific overrides for common elements */
 input, textarea, select, button {
   font-family: var(--font-kanit), sans-serif !important;
+}
+
+/* Momo Signature font for logo */
+.font-momo {
+  font-family: var(--font-momo), cursive !important;
 }

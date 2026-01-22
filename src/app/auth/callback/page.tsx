@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
+import { getProfile } from "@/services/api";
 import { AUTH_COOKIE, ROUTES } from "@/constants";
 
 export default function AuthCallback() {
@@ -41,7 +42,15 @@ export default function AuthCallback() {
       // Save token to cookie
       document.cookie = `${AUTH_COOKIE.NAME}=${token}; path=${AUTH_COOKIE.PATH}; max-age=${AUTH_COOKIE.MAX_AGE}`;
 
-      router.replace(ROUTES.HOME);
+      // Check if profile exists
+      try {
+        await getProfile();
+        // Profile exists, go to home
+        router.replace(ROUTES.HOME);
+      } catch {
+        // Profile doesn't exist, go to profile setup
+        router.replace(ROUTES.PROFILE_SETUP);
+      }
     };
 
     handleCallback();
