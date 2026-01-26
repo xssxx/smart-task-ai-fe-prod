@@ -6,6 +6,12 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Plus,
   Home,
   FolderKanban,
@@ -56,7 +62,6 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [deletingProject, setDeletingProject] = useState<Project | null>(null);
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   // Function to determine active item and expanded workspace based on pathname
   const updateActiveStateFromPath = (path: string, workspaceList: Workspace[]) => {
@@ -167,13 +172,11 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
   const handleEditProject = (project: Project) => {
     setEditingProject(project);
     setShowEditModal(true);
-    setOpenDropdown(null);
   };
 
   const handleDeleteProject = (project: Project) => {
     setDeletingProject(project);
     setShowDeleteModal(true);
-    setOpenDropdown(null);
   };
 
   const toggleWorkspace = (workspaceId: string) => {
@@ -195,19 +198,19 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
 
   return (
     <>
-      {/* Mobile hamburger button */}
+      {/* Mobile hamburger button - แสดงเมื่อมี pagination (< 1024px) */}
       <button
         onClick={onToggle}
-        className="md:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg"
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-md"
         aria-label="Toggle menu"
       >
         {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
       </button>
 
-      {/* Overlay for mobile */}
+      {/* Overlay for mobile/tablet */}
       {isOpen && (
         <div
-          className="md:hidden fixed inset-0 bg-black/50 z-30"
+          className="lg:hidden fixed inset-0 bg-black/50 z-30"
           onClick={onToggle}
         />
       )}
@@ -215,15 +218,15 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
       {/* Sidebar */}
       <aside
         className={`
-          fixed md:relative z-40
+          fixed lg:relative z-40
           w-64 bg-white border-r border-gray-200 h-screen overflow-y-auto shrink-0
           transform transition-transform duration-300 ease-in-out
-          ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+          ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
         `}
       >
-        <div className="p-4 pt-16 md:pt-4">
+        <div className="p-4 pt-16 lg:pt-4">
           {/* Logo - Show only on desktop */}
-          <div className="hidden md:flex items-center gap-2 mb-6">
+          <div className="hidden lg:flex items-center gap-2 mb-6">
             <Image src="/logo.svg" alt="Smart Task AI" width={32} height={32} className="object-contain" />
             <h1 className="text-2xl font-momo text-gray-900">Smart Task</h1>
           </div>
@@ -306,61 +309,47 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
                         </span>
                       </button>
                       
-                      {/* Dropdown Menu */}
-                      <div className="relative">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setOpenDropdown(openDropdown === workspace.id ? null : workspace.id);
-                          }}
-                        >
-                          <MoreHorizontal className="w-4 h-4 text-gray-500" />
-                        </Button>
-
-                        {/* Dropdown Content */}
-                        {openDropdown === workspace.id && (
-                          <>
-                            {/* Backdrop with fade animation */}
-                            <div
-                              className="fixed inset-0 z-10 animate-in fade-in-0 duration-200"
-                              onClick={() => setOpenDropdown(null)}
-                            />
-                            
-                            {/* Menu with slide and fade animation */}
-                            <div className="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 animate-in fade-in-0 slide-in-from-top-2 duration-200 origin-top-right">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  const project = projects.find(p => p.id === workspace.id);
-                                  if (project) {
-                                    handleEditProject(project);
-                                  }
-                                }}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                              >
-                                <Edit3 className="w-4 h-4" />
-                                แก้ไข
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  const project = projects.find(p => p.id === workspace.id);
-                                  if (project) {
-                                    handleDeleteProject(project);
-                                  }
-                                }}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                                ลบ
-                              </button>
-                            </div>
-                          </>
-                        )}
-                      </div>
+                      {/* Workspace Actions Dropdown */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <MoreHorizontal className="w-4 h-4 text-gray-500" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-40">
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const project = projects.find(p => p.id === workspace.id);
+                              if (project) {
+                                handleEditProject(project);
+                              }
+                            }}
+                            className="cursor-pointer"
+                          >
+                            <Edit3 className="w-4 h-4 mr-2" />
+                            แก้ไข
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const project = projects.find(p => p.id === workspace.id);
+                              if (project) {
+                                handleDeleteProject(project);
+                              }
+                            }}
+                            className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            ลบ
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
 
                     {/* Workspace Items */}

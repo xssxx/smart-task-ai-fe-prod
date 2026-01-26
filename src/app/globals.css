@@ -268,3 +268,25 @@ input, textarea, select, button {
 .font-momo {
   font-family: var(--font-momo), cursive !important;
 }
+
+/* Board column responsive width */
+.board-column {
+  width: 88vw;
+  flex-shrink: 0;
+}
+
+/* Tablet Landscape and Desktop (1024px+) */
+@media (min-width: 1024px) {
+  .board-column {
+    width: var(--column-width);
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: 100%;
+  }
+  
+  .board-column.single {
+    width: 100%;
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
+}

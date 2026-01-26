@@ -13,6 +13,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   CheckCircle2,
   Clock,
   AlertCircle,
@@ -90,7 +96,6 @@ export default function HomePage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [deletingProject, setDeletingProject] = useState<Project | null>(null);
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   const fetchProjects = async () => {
     try {
@@ -139,13 +144,11 @@ export default function HomePage() {
   const handleEditProject = (project: Project) => {
     setEditingProject(project);
     setShowEditModal(true);
-    setOpenDropdown(null);
   };
 
   const handleDeleteProject = (project: Project) => {
     setDeletingProject(project);
     setShowDeleteModal(true);
-    setOpenDropdown(null);
   };
 
   const stats = {
@@ -294,54 +297,42 @@ export default function HomePage() {
                             </p>
                           )}
                         </div>
-                        <div className="relative">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setOpenDropdown(openDropdown === project.id ? null : project.id);
-                            }}
-                          >
-                            <MoreHorizontal className="w-4 h-4 text-gray-500" />
-                          </Button>
-
-                          {/* Dropdown Content */}
-                          {openDropdown === project.id && (
-                            <>
-                              {/* Backdrop with fade animation */}
-                              <div
-                                className="fixed inset-0 z-10 animate-in fade-in-0 duration-200"
-                                onClick={() => setOpenDropdown(null)}
-                              />
-
-                              {/* Menu with slide and fade animation */}
-                              <div className="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 animate-in fade-in-0 slide-in-from-top-2 duration-200 origin-top-right">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleEditProject(project);
-                                  }}
-                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-all duration-150 hover:translate-x-1"
-                                >
-                                  <Edit3 className="w-4 h-4 transition-transform hover:scale-110" />
-                                  แก้ไข
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDeleteProject(project);
-                                  }}
-                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-all duration-150 hover:translate-x-1"
-                                >
-                                  <Trash2 className="w-4 h-4 transition-transform hover:scale-110" />
-                                  ลบ
-                                </button>
-                              </div>
-                            </>
-                          )}
-                        </div>
+                        
+                        {/* Project Actions Dropdown */}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <MoreHorizontal className="w-4 h-4 text-gray-500" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-40">
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditProject(project);
+                              }}
+                              className="cursor-pointer"
+                            >
+                              <Edit3 className="w-4 h-4 mr-2" />
+                              แก้ไข
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteProject(project);
+                              }}
+                              className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              ลบ
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </div>
                   ))}

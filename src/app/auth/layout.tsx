@@ -14,6 +14,7 @@ const momoSignature = Momo_Signature({
   variable: "--font-momo",
   subsets: ["latin"],
   weight: ["400"],
+  adjustFontFallback: false,
 });
 
 export const metadata: Metadata = {
