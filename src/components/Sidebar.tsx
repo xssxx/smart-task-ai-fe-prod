@@ -201,7 +201,7 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
       {/* Mobile hamburger button - แสดงเมื่อมี pagination (< 1024px) */}
       <button
         onClick={onToggle}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-md"
+        className="lg:hidden fixed top-7 left-4 z-50 p-2 bg-white rounded-lg flex items-center justify-center"
         aria-label="Toggle menu"
       >
         {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -219,15 +219,15 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
       <aside
         className={`
           fixed lg:relative z-40
-          w-64 bg-white border-r border-gray-200 h-screen overflow-y-auto shrink-0
+          w-72 bg-white border-r border-gray-200 h-screen overflow-y-auto shrink-0
           transform transition-transform duration-300 ease-in-out
           ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
         `}
       >
-        <div className="p-4 pt-16 lg:pt-4">
+        <div className="p-5 pt-16 lg:pt-5">
           {/* Logo - Show only on desktop */}
-          <div className="hidden lg:flex items-center gap-2 mb-6">
-            <Image src="/logo.svg" alt="Smart Task AI" width={32} height={32} className="object-contain" />
+          <div className="hidden lg:flex items-center gap-3 mb-8">
+            <Image src="/logo.svg" alt="Smart Task AI" width={40} height={40} className="object-contain" />
             <h1 className="text-2xl font-momo text-gray-900">Smart Task</h1>
           </div>
 
@@ -240,14 +240,14 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
                 <LinkWithLoading
                   key={item.id}
                   href="/app/home"
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-base font-medium transition-colors ${
                     isActive
                       ? "bg-gray-100 text-gray-900"
                       : "text-gray-600 hover:bg-gray-50"
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <Icon className="w-5 h-5" />
+                    <Icon className="w-6 h-6" />
                     <span>{item.label}</span>
                   </div>
                 </LinkWithLoading>
@@ -260,33 +260,33 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
 
           {/* Workspaces */}
           <div>
-            <div className="flex items-center justify-between mb-2 px-3">
-              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            <div className="flex items-center justify-between mb-3 px-4">
+              <span className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
                 Workspaces
               </span>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-6 w-6"
+                className="h-7 w-7"
                 onClick={() => setShowCreateModal(true)}
               >
-                <Plus className="w-4 h-4 text-gray-500" />
+                <Plus className="w-5 h-5 text-gray-500" />
               </Button>
             </div>
 
             <div className="space-y-1">
               {loading ? (
-                <div className="space-y-2 px-3">
+                <div className="space-y-2 px-4">
                   {[1, 2, 3].map((i) => (
                     <div key={i} className="flex items-center gap-2 py-2">
-                      <Skeleton className="w-4 h-4 rounded" />
-                      <Skeleton className="w-2 h-2 rounded-full" />
-                      <Skeleton className="h-4 flex-1" />
+                      <Skeleton className="w-5 h-5 rounded" />
+                      <Skeleton className="w-3 h-3 rounded-full" />
+                      <Skeleton className="h-5 flex-1" />
                     </div>
                   ))}
                 </div>
               ) : workspaces.length === 0 ? (
-                <p className="text-sm text-gray-500 px-3 py-2">No projects yet</p>
+                <p className="text-base text-gray-500 px-4 py-2">No projects yet</p>
               ) : (
                 workspaces.map((workspace) => (
                   <div key={workspace.id} className="group">
@@ -294,15 +294,15 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => toggleWorkspace(workspace.id)}
-                        className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+                        className="flex-1 flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-100 transition-colors"
                       >
                         <ChevronRight
-                          className={`w-4 h-4 transition-transform ${
+                          className={`w-5 h-5 transition-transform ${
                             expandedWorkspaces.has(workspace.id) ? "rotate-90" : ""
                           }`}
                         />
                         <div
-                          className={`w-2 h-2 rounded-full ${workspace.color}`}
+                          className={`w-3 h-3 rounded-full ${workspace.color}`}
                         ></div>
                         <span className="flex-1 text-left truncate">
                           {workspace.name}
@@ -315,10 +315,10 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
+                            className="h-9 w-9 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
                             onClick={(e) => e.stopPropagation()}
                           >
-                            <MoreHorizontal className="w-4 h-4 text-gray-500" />
+                            <MoreHorizontal className="w-5 h-5 text-gray-500" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-40">
@@ -343,7 +343,7 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
                                 handleDeleteProject(project);
                               }
                             }}
-                            className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
+                            className="cursor-pointer text-rose-600 focus:text-rose-600 focus:bg-rose-50"
                           >
                             <Trash2 className="w-4 h-4 mr-2" />
                             ลบ
@@ -354,7 +354,7 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
 
                     {/* Workspace Items */}
                     {expandedWorkspaces.has(workspace.id) && (
-                      <div className="ml-6 space-y-1 mt-1 animate-in slide-in-from-top-2 fade-in-0 duration-200">
+                      <div className="ml-8 space-y-1 mt-1 animate-in slide-in-from-top-2 fade-in-0 duration-200">
                         {workspace.items.map((item) => {
                           const Icon = item.icon;
                           const isActive = activeItem === item.id;
@@ -362,13 +362,13 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
                             <LinkWithLoading
                               key={item.id}
                               href={item.to ?? "#"}
-                              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-base transition-colors ${
                                 isActive
                                   ? "bg-gray-100 text-gray-900 font-medium"
                                   : "text-gray-500 hover:bg-gray-50"
                               }`}
                             >
-                              <Icon className="w-4 h-4" />
+                              <Icon className="w-5 h-5" />
                               <span>{item.label}</span>
                             </LinkWithLoading>
                           );

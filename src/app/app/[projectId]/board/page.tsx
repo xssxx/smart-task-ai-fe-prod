@@ -318,15 +318,15 @@ export default function BoardPage() {
   const projectId = params.projectId as string;
 
   const [columns, setColumns] = useState<Column[]>([
-    { id: "todo", title: "รอดำเนินการ", color: "bg-gray-300", tasks: [] },
+    { id: "todo", title: "รอดำเนินการ", color: "bg-zinc-500", tasks: [] },
     {
-      id: "in-progress",
+      id: "in_progress",
       title: "กำลังดำเนินการ",
-      color: "bg-blue-500",
+      color: "bg-sky-500",
       tasks: [],
     },
-    { id: "review", title: "รอตรวจสอบ", color: "bg-yellow-500", tasks: [] },
-    { id: "done", title: "เสร็จสิ้น", color: "bg-green-500", tasks: [] },
+    { id: "in_review", title: "รอตรวจสอบ", color: "bg-yellow-500", tasks: [] },
+    { id: "done", title: "เสร็จสิ้น", color: "bg-lime-500", tasks: [] },
   ]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -345,7 +345,7 @@ export default function BoardPage() {
   );
   const [isApplyingFilter, setIsApplyingFilter] = useState(false);
   const [visibleStatuses, setVisibleStatuses] = useState<Set<string>>(
-    new Set(["todo", "in-progress", "review", "done"])
+    new Set(["todo", "in_progress", "in_review", "done"])
   );
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -366,8 +366,8 @@ export default function BoardPage() {
 
       const tasksByStatus: Record<string, BoardTask[]> = {
         todo: [],
-        "in-progress": [],
-        review: [],
+        in_progress: [],
+        in_review: [],
         done: [],
       };
       items.forEach((apiTask) => {
@@ -549,15 +549,15 @@ export default function BoardPage() {
         return newColumns.reverse();
       }
       return [
-        { id: "todo", title: "รอดำเนินการ", color: "bg-gray-300", tasks: [] },
+        { id: "todo", title: "รอดำเนินการ", color: "bg-zinc-500", tasks: [] },
         {
-          id: "in-progress",
+          id: "in_progress",
           title: "กำลังดำเนินการ",
-          color: "bg-blue-500",
+          color: "bg-sky-500",
           tasks: [],
         },
-        { id: "review", title: "รอตรวจสอบ", color: "bg-yellow-500", tasks: [] },
-        { id: "done", title: "เสร็จสิ้น", color: "bg-green-500", tasks: [] },
+        { id: "in_review", title: "รอตรวจสอบ", color: "bg-yellow-500", tasks: [] },
+        { id: "done", title: "เสร็จสิ้น", color: "bg-lime-500", tasks: [] },
       ].map((col) => {
         const existingCol = prev.find((c) => c.id === col.id);
         return existingCol ? { ...col, tasks: existingCol.tasks } : col;
@@ -585,7 +585,7 @@ export default function BoardPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <AlertCircle className="w-12 h-12 text-rose-500 mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-gray-900">
             ไม่พบโปรเจกต์
           </h2>
@@ -601,10 +601,10 @@ export default function BoardPage() {
           {/* Header with Title and Action Buttons */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
             <div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-2">
                 บอร์ด
               </h2>
-              <p className="text-gray-600 text-sm sm:text-base">
+              <p className="text-base sm:text-lg text-gray-600">
                 จัดการงานของคุณด้วยบอร์ด Kanban
               </p>
             </div>
@@ -613,7 +613,7 @@ export default function BoardPage() {
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               <Button
                 variant="outline"
-                size="sm"
+                size="default"
                 onClick={fetchTasks}
                 disabled={isLoading}
               >
@@ -628,7 +628,7 @@ export default function BoardPage() {
               {/* Filter Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="default">
                     <Filter className="w-4 h-4 sm:mr-2" />
                     <span className="hidden sm:inline">ตัวกรอง</span>
                     {visibleStatuses.size < 4 && (
@@ -719,9 +719,9 @@ export default function BoardPage() {
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 shrink-0">
-            <AlertCircle className="w-5 h-5 text-red-500" />
-            <span className="text-red-700">{error}</span>
+          <div className="mb-6 p-4 bg-rose-50 border border-rose-200 rounded-lg flex items-center gap-2 shrink-0">
+            <AlertCircle className="w-5 h-5 text-rose-500" />
+            <span className="text-rose-700">{error}</span>
             <Button
               variant="ghost"
               size="sm"

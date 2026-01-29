@@ -107,10 +107,10 @@ export default function ProfileSetupPage() {
 
                 {/* Error Message */}
                 {error && (
-                    <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 mb-4">
+                    <div className="bg-rose-50 border-2 border-rose-200 rounded-xl p-4 mb-4">
                         <div className="flex items-center space-x-2">
                             <svg
-                                className="w-5 h-5 text-red-600"
+                                className="w-5 h-5 text-rose-600"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
@@ -122,7 +122,7 @@ export default function ProfileSetupPage() {
                                     d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                                 />
                             </svg>
-                            <p className="text-red-700 text-sm font-medium">{error}</p>
+                            <p className="text-rose-700 text-sm font-medium">{error}</p>
                         </div>
                     </div>
                 )}
@@ -132,7 +132,7 @@ export default function ProfileSetupPage() {
                     {/* First Name Input */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                            ชื่อ <span className="text-red-500">*</span>
+                            ชื่อ <span className="text-rose-500">*</span>
                         </label>
                         <div className="relative">
                             <svg
@@ -161,7 +161,7 @@ export default function ProfileSetupPage() {
                     {/* Last Name Input */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                            นามสกุล <span className="text-red-500">*</span>
+                            นามสกุล <span className="text-rose-500">*</span>
                         </label>
                         <div className="relative">
                             <svg
@@ -283,7 +283,7 @@ export default function ProfileSetupPage() {
 
                 {/* Info */}
                 <p className="text-center text-xs text-gray-500 mt-6">
-                    <span className="text-red-500">*</span> หมายถึงช่องที่จำเป็นต้องกรอก
+                    <span className="text-rose-500">*</span> หมายถึงช่องที่จำเป็นต้องกรอก
                 </p>
             </div>
         </div>

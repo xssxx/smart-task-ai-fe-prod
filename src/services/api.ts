@@ -22,6 +22,51 @@ export const updateProfile = (payload: { first_name: string; last_name: string; 
   return apiClient.patch<{ success: boolean; message: string; data: { account_id: string; first_name: string; last_name: string; nickname?: string; avatar_path?: string; state: string; created_at: string; updated_at: string }; error: unknown }>("/api/profiles", payload);
 };
 
+// Dashboard types
+export interface TaskStatistics {
+  todo: number;
+  in_progress: number;
+  in_review: number;
+  done: number;
+}
+
+export interface TaskWithProject {
+  id: string;
+  name: string;
+  description?: string;
+  priority: string;
+  status: string;
+  start_datetime?: string;
+  end_datetime?: string;
+  project: {
+    id: string;
+    name: string;
+  };
+}
+
+export interface UnscheduledTasksResponse {
+  items: TaskWithProject[];
+  total: number;
+}
+
+export interface TodayTasksResponse {
+  items: TaskWithProject[];
+  total: number;
+}
+
+// Dashboard API
+export const getTaskStatistics = () => {
+  return apiClient.get<{ success: boolean; message: string; data: TaskStatistics; error: unknown }>("/api/dashboard/statistics");
+};
+
+export const getUnscheduledTasks = () => {
+  return apiClient.get<{ success: boolean; message: string; data: UnscheduledTasksResponse; error: unknown }>("/api/dashboard/unscheduled-tasks");
+};
+
+export const getTodayTasks = () => {
+  return apiClient.get<{ success: boolean; message: string; data: TodayTasksResponse; error: unknown }>("/api/dashboard/today-tasks");
+};
+
 export const signin = (payload: SigninRequest) => {
   return apiClient.post("/api/login", payload);
 };
@@ -112,8 +157,8 @@ export interface Task {
   recurringUntil: string;
   status: {
     Todo: string;
-    InProgess: string;
-    Review: string;
+    InProgress: string;
+    InReview: string;
     Done: string;
   };
   createdAt: string;
