@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { AUTH_COOKIE, ROUTES } from "@/constants";
-import { randomUUID } from "crypto";
+import { v4 as uuidv4 } from "uuid";
 
 export default function AuthCallback() {
   const router = useRouter();
@@ -30,7 +30,7 @@ export default function AuthCallback() {
       if (!existingAccount) {
         await supabase.from("accounts").insert({
           id: user.id,
-          node_id: randomUUID(),
+          node_id: uuidv4(),
           email: user.email,
           username: null,
           password: "",
