@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { getProfile } from "@/services/api";
 import { AUTH_COOKIE, ROUTES } from "@/constants";
-import { v4 as uuidv4 } from "uuid";
+import { uuidv7 } from "uuidv7";
 
 export default function AuthCallback() {
   const router = useRouter();
@@ -31,7 +31,7 @@ export default function AuthCallback() {
       if (!existingAccount) {
         await supabase.from("accounts").insert({
           id: user.id,
-          node_id: uuidv4(),
+          node_id: uuidv7(),
           email: user.email,
           username: null,
           password: "",
