@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, Suspense } from "react";
-import { Kanit } from "next/font/google";
+import { Kanit, Momo_Signature } from "next/font/google";
 import "../globals.css";
 import Navbar from "@/components/Navbar";
 import Sidebar from "@/components/Sidebar";
@@ -16,6 +16,13 @@ const kanit = Kanit({
   style: ["normal", "italic"],
 });
 
+const momoSignature = Momo_Signature({
+  variable: "--font-momo",
+  subsets: ["latin"],
+  weight: ["400"],
+  adjustFontFallback: false,
+});
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -28,7 +35,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${kanit.variable} antialiased font-sans`}
+        className={`${kanit.variable} ${momoSignature.variable} antialiased font-sans`}
         suppressHydrationWarning
       >
         <Suspense fallback={<PageLoader />}>

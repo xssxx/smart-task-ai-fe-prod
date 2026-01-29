@@ -45,7 +45,6 @@ export default function EditWorkspaceModal({
     domain_knowledge: "",
   });
 
-  // Reset form when project changes
   useEffect(() => {
     if (project) {
       setFormData({
@@ -84,7 +83,6 @@ export default function EditWorkspaceModal({
         name: formData.name.trim(),
       };
 
-      // Add config if any advanced fields are filled
       if (formData.nickname || formData.context || formData.domain_knowledge) {
         payload.config = {};
         if (formData.nickname) payload.config.nickname = formData.nickname;
@@ -123,18 +121,16 @@ export default function EditWorkspaceModal({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Error Message */}
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
+            <div className="bg-rose-50 border border-rose-200 rounded-lg p-3 text-sm text-rose-700">
               {error}
             </div>
           )}
 
-          {/* Name Field (Required) */}
           <div className="space-y-2">
-            <Label htmlFor="name" className="text-sm font-medium">
-              ชื่อ Workspace <span className="text-red-500">*</span>
-            </Label>
+              <Label htmlFor="name">
+                ชื่อ Workspace <span className="text-rose-500">*</span>
+              </Label>
             <Input
               id="name"
               placeholder="เช่น My Project, Work Tasks"
@@ -145,7 +141,6 @@ export default function EditWorkspaceModal({
             />
           </div>
 
-          {/* Advanced Settings Toggle */}
           <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
             <CollapsibleTrigger asChild>
               <button
@@ -162,10 +157,8 @@ export default function EditWorkspaceModal({
               </button>
             </CollapsibleTrigger>
 
-            {/* Advanced Fields */}
             <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
               <div className="space-y-4 pt-4 mt-2 border-t border-gray-100">
-                {/* Nickname Field */}
                 <div className="space-y-2">
                   <Label htmlFor="nickname">ชื่อเล่น AI</Label>
                   <Input
@@ -180,7 +173,6 @@ export default function EditWorkspaceModal({
                   </p>
                 </div>
 
-                {/* Context Field */}
                 <div className="space-y-2">
                   <Label htmlFor="context">Context</Label>
                   <Textarea
@@ -196,7 +188,6 @@ export default function EditWorkspaceModal({
                   </p>
                 </div>
 
-                {/* Domain Knowledge Field */}
                 <div className="space-y-2">
                   <Label htmlFor="domain_knowledge">Domain Knowledge</Label>
                   <Textarea

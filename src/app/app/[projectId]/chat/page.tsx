@@ -25,6 +25,8 @@ import { ChatMessage, Message, ProposedTask } from "@/types/chat";
 import { getActionBadgeColor, PRIORITY_OPTIONS } from "@/constants";
 import { format } from "date-fns";
 import { th } from "date-fns/locale";
+import { formatDateTime } from "@/lib/date-utils";
+import { getPriorityLabel } from "@/lib/task-utils";
 import {
   Dialog,
   DialogContent,
@@ -43,43 +45,7 @@ import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-
-// Priority badge colors
-function getPriorityColor(priority: string) {
-  switch (priority) {
-    case "high":
-      return "bg-red-100 text-red-700 border-red-200";
-    case "medium":
-      return "bg-yellow-100 text-yellow-700 border-yellow-200";
-    case "low":
-      return "bg-green-100 text-green-700 border-green-200";
-    default:
-      return "bg-gray-100 text-gray-700 border-gray-200";
-  }
-}
-
-function getPriorityLabel(priority: string) {
-  switch (priority) {
-    case "high":
-      return "สูง";
-    case "medium":
-      return "ปานกลาง";
-    case "low":
-      return "ต่ำ";
-    default:
-      return priority;
-  }
-}
-
-// Format datetime for display
-function formatDateTime(dateString: string) {
-  try {
-    const date = new Date(dateString);
-    return format(date, "d MMM yyyy HH:mm", { locale: th });
-  } catch {
-    return dateString;
-  }
-}
+import { getPriorityColor } from "@/constants";
 
 // Edit Proposed Task Modal Component
 interface EditProposedTaskModalProps {
@@ -132,7 +98,7 @@ function EditProposedTaskModal({ task, isOpen, onClose, onSave }: EditProposedTa
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="name">ชื่อ Task <span className="text-red-500">*</span></Label>
+            <Label htmlFor="name">ชื่อ Task <span className="text-rose-500">*</span></Label>
             <Input
               id="name"
               value={editedTask.name}
@@ -155,7 +121,7 @@ function EditProposedTaskModal({ task, isOpen, onClose, onSave }: EditProposedTa
           </div>
 
           <div className="space-y-2">
-            <Label>Priority <span className="text-red-500">*</span></Label>
+            <Label>Priority <span className="text-rose-500">*</span></Label>
             <Select
               value={editedTask.priority}
               onValueChange={(value: "high" | "medium" | "low") =>
@@ -287,7 +253,7 @@ function TaskProposalCard({
         task.userAction === "accepted"
           ? "border-green-300 bg-green-50"
           : task.userAction === "rejected"
-          ? "border-red-300 bg-red-50 opacity-60"
+          ? "border-rose-300 bg-rose-50 opacity-60"
           : "border-gray-200 hover:border-gray-300"
       }`}
     >
@@ -336,7 +302,7 @@ function TaskProposalCard({
                 className={`text-xs ${
                   task.userAction === "accepted"
                     ? "bg-green-100 text-green-700 border-green-300"
-                    : "bg-red-100 text-red-700 border-red-300"
+                    : "bg-rose-100 text-rose-700 border-rose-300"
                 }`}
               >
                 {task.userAction === "accepted" ? (
@@ -360,7 +326,7 @@ function TaskProposalCard({
                   onClick={() => onAccept(task)}
                 >
                   <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1" />
-                  <span className="hidden sm:inline">Accept</span>
+                  <span className="hidden sm:inline">ยอมรับ</span>
                 </Button>
                 <Button
                   size="sm"
@@ -369,16 +335,16 @@ function TaskProposalCard({
                   onClick={() => onEdit(task)}
                 >
                   <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1" />
-                  <span className="hidden sm:inline">Edit</span>
+                  <span className="hidden sm:inline">แก้ไข</span>
                 </Button>
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-7 sm:h-8 px-2 sm:px-3 text-xs sm:text-sm text-red-600 border-red-300 hover:bg-red-50 flex-1"
+                  className="h-7 sm:h-8 px-2 sm:px-3 text-xs sm:text-sm text-rose-600 border-rose-300 hover:bg-rose-50 flex-1"
                   onClick={() => onReject(task)}
                 >
                   <X className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1" />
-                  <span className="hidden sm:inline">Reject</span>
+                  <span className="hidden sm:inline">ปฏิเสธ</span>
                 </Button>
               </div>
             )}
@@ -694,12 +660,12 @@ export default function AIChatPage() {
 
           {/* Error Banner */}
           {error && (
-            <div className="mx-6 mt-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
-              <AlertCircle className="w-5 h-5 text-red-500" />
-              <span className="text-red-700">{error}</span>
+            <div className="mx-6 mt-4 p-4 bg-rose-50 border border-rose-200 rounded-lg flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-rose-500" />
+              <span className="text-rose-700">{error}</span>
               <button
                 onClick={() => setError(null)}
-                className="ml-auto text-red-500 hover:text-red-700"
+                className="ml-auto text-rose-500 hover:text-rose-700"
               >
                 ✕
               </button>

@@ -20,6 +20,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Plus,
   Calendar,
@@ -32,6 +41,8 @@ import {
   ChevronRight,
   AlertCircle,
   RefreshCw,
+  ArrowUpDown,
+  Check,
 } from "lucide-react";
 import {
   listTasksByProject,
@@ -42,6 +53,7 @@ import CreateTaskModal from "@/components/CreateTaskModal";
 import TaskDetailModal from "@/components/TaskDetailModal";
 import { toast } from "sonner";
 import { getPriorityColor, TOAST_DURATION } from "@/constants";
+import { mapApiStatus, mapColumnToApiStatus } from "@/lib/task-utils";
 
 interface BoardTask {
   id: string;
@@ -81,33 +93,6 @@ function transformApiTask(apiTask: ApiTask): BoardTask {
     tags: [],
     status: mapApiStatus(apiTask.status),
   };
-}
-
-function mapApiStatus(status: ApiTask["status"] | string): string {
-  if (typeof status === "string") {
-    const s = status.toLowerCase();
-    if (s === "todo" || s === "to do") return "todo";
-    if (s === "in_progress" || s === "inprogress" || s === "in-progress")
-      return "in-progress";
-    if (s === "review") return "review";
-    if (s === "done" || s === "completed") return "done";
-  }
-  return "todo";
-}
-
-function mapColumnToApiStatus(columnId: string): string {
-  switch (columnId) {
-    case "todo":
-      return "todo";
-    case "in-progress":
-      return "in_progress";
-    case "review":
-      return "review";
-    case "done":
-      return "done";
-    default:
-      return "todo";
-  }
 }
 
 function DraggableTaskCard({
@@ -333,15 +318,15 @@ export default function BoardPage() {
   const projectId = params.projectId as string;
 
   const [columns, setColumns] = useState<Column[]>([
-    { id: "todo", title: "To Do", color: "bg-gray-300", tasks: [] },
+    { id: "todo", title: "รอดำเนินการ", color: "bg-zinc-500", tasks: [] },
     {
-      id: "in-progress",
-      title: "In Progress",
-      color: "bg-blue-500",
+      id: "in_progress",
+      title: "กำลังดำเนินการ",
+      color: "bg-sky-500",
       tasks: [],
     },
-    { id: "review", title: "Review", color: "bg-yellow-500", tasks: [] },
-    { id: "done", title: "Done", color: "bg-green-500", tasks: [] },
+    { id: "in_review", title: "รอตรวจสอบ", color: "bg-yellow-500", tasks: [] },
+    { id: "done", title: "เสร็จสิ้น", color: "bg-lime-500", tasks: [] },
   ]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -355,6 +340,13 @@ export default function BoardPage() {
     useState("todo");
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [sortOrder, setSortOrder] = useState<"todo-to-done" | "done-to-todo">(
+    "todo-to-done"
+  );
+  const [isApplyingFilter, setIsApplyingFilter] = useState(false);
+  const [visibleStatuses, setVisibleStatuses] = useState<Set<string>>(
+    new Set(["todo", "in_progress", "in_review", "done"])
+  );
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const sensors = useSensors(
@@ -374,8 +366,8 @@ export default function BoardPage() {
 
       const tasksByStatus: Record<string, BoardTask[]> = {
         todo: [],
-        "in-progress": [],
-        review: [],
+        in_progress: [],
+        in_review: [],
         done: [],
       };
       items.forEach((apiTask) => {
@@ -401,32 +393,42 @@ export default function BoardPage() {
     fetchTasks();
   }, [fetchTasks]);
 
+  const visibleColumns = columns.filter((col) => visibleStatuses.has(col.id));
+  const gapSize = 16;
+  const totalGaps = Math.max(0, visibleColumns.length - 1) * gapSize;
+  const safetyMargin = 8;
+  const columnWidthCalc = visibleColumns.length > 0 
+    ? `calc((100% - ${totalGaps + safetyMargin}px) / ${visibleColumns.length})` 
+    : '100%';
+
   const scrollToColumn = useCallback(
     (index: number) => {
-      if (scrollContainerRef.current) {
+      if (scrollContainerRef.current && window.innerWidth < 1024) {
         const container = scrollContainerRef.current;
-        const columnWidth = container.scrollWidth / columns.length;
+        const columnWidth = container.scrollWidth / visibleColumns.length;
         container.scrollTo({ left: columnWidth * index, behavior: "smooth" });
         setCurrentColumnIndex(index);
       }
     },
-    [columns.length]
+    [visibleColumns.length]
   );
 
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
+    const isMobileOrTabletPortrait = () => window.innerWidth < 1024;
+    
     let scrollTimeout: NodeJS.Timeout;
     const handleScroll = () => {
-      if (isDraggingTask) return;
+      if (isDraggingTask || !isMobileOrTabletPortrait()) return;
       clearTimeout(scrollTimeout);
       scrollTimeout = setTimeout(() => {
-        if (isDraggingTask) return;
-        const columnWidth = container.scrollWidth / columns.length;
+        if (isDraggingTask || !isMobileOrTabletPortrait()) return;
+        const columnWidth = container.scrollWidth / visibleColumns.length;
         const nearestIndex = Math.round(container.scrollLeft / columnWidth);
         const clampedIndex = Math.max(
           0,
-          Math.min(nearestIndex, columns.length - 1)
+          Math.min(nearestIndex, visibleColumns.length - 1)
         );
         if (clampedIndex !== currentColumnIndex)
           setCurrentColumnIndex(clampedIndex);
@@ -436,12 +438,23 @@ export default function BoardPage() {
         });
       }, 150);
     };
+    
+    const handleResize = () => {
+      if (!isMobileOrTabletPortrait()) {
+        container.scrollTo({ left: 0, behavior: "auto" });
+        setCurrentColumnIndex(0);
+      }
+    };
+    
     container.addEventListener("scroll", handleScroll);
+    window.addEventListener("resize", handleResize);
+    
     return () => {
       container.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleResize);
       clearTimeout(scrollTimeout);
     };
-  }, [columns.length, currentColumnIndex, isDraggingTask]);
+  }, [visibleColumns.length, currentColumnIndex, isDraggingTask]);
 
   const handleDragStart = (event: DragStartEvent) => {
     const taskData = event.active.data.current as {
@@ -523,17 +536,59 @@ export default function BoardPage() {
     setShowDetailModal(true);
   };
 
+  const handleSortChange = async (order: "todo-to-done" | "done-to-todo") => {
+    setSortOrder(order);
+    setIsApplyingFilter(true);
+
+    // Simulate loading delay for better UX
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    setColumns((prev) => {
+      const newColumns = [...prev];
+      if (order === "done-to-todo") {
+        return newColumns.reverse();
+      }
+      return [
+        { id: "todo", title: "รอดำเนินการ", color: "bg-zinc-500", tasks: [] },
+        {
+          id: "in_progress",
+          title: "กำลังดำเนินการ",
+          color: "bg-sky-500",
+          tasks: [],
+        },
+        { id: "in_review", title: "รอตรวจสอบ", color: "bg-yellow-500", tasks: [] },
+        { id: "done", title: "เสร็จสิ้น", color: "bg-lime-500", tasks: [] },
+      ].map((col) => {
+        const existingCol = prev.find((c) => c.id === col.id);
+        return existingCol ? { ...col, tasks: existingCol.tasks } : col;
+      });
+    });
+
+    setIsApplyingFilter(false);
+  };
+
+  const handleStatusToggle = (statusId: string) => {
+    setVisibleStatuses((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(statusId)) {
+        if (newSet.size > 1) {
+          newSet.delete(statusId);
+        }
+      } else {
+        newSet.add(statusId);
+      }
+      return newSet;
+    });
+  };
+
   if (!projectId) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <AlertCircle className="w-12 h-12 text-rose-500 mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-gray-900">
-            Project not found
+            ไม่พบโปรเจกต์
           </h2>
-          <p className="text-gray-600 mt-2">
-            Please select a project from the sidebar
-          </p>
         </div>
       </div>
     );
@@ -541,16 +596,16 @@ export default function BoardPage() {
 
   return (
     <div className="h-full bg-gray-50 flex flex-col overflow-hidden">
-      <main className="flex-1 flex flex-col p-6 max-w-[1600px] mx-auto w-full overflow-hidden">
-        <div className="mb-6 shrink-0">
+      <main className="flex-1 flex flex-col p-4 lg:p-6 w-full overflow-hidden">
+        <div className="mb-4 lg:mb-6 shrink-0">
           {/* Header with Title and Action Buttons */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
             <div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-                Board
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-2">
+                บอร์ด
               </h2>
-              <p className="text-gray-600 text-sm sm:text-base">
-                Manage your tasks with a visual kanban board
+              <p className="text-base sm:text-lg text-gray-600">
+                จัดการงานของคุณด้วยบอร์ด Kanban
               </p>
             </div>
 
@@ -558,7 +613,7 @@ export default function BoardPage() {
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               <Button
                 variant="outline"
-                size="sm"
+                size="default"
                 onClick={fetchTasks}
                 disabled={isLoading}
               >
@@ -567,15 +622,87 @@ export default function BoardPage() {
                     isLoading ? "animate-spin" : ""
                   } sm:mr-2`}
                 />
-                <span className="hidden sm:inline">Refresh</span>
+                <span className="hidden sm:inline">รีเฟรช</span>
               </Button>
-              <Button variant="outline" size="sm">
-                <Filter className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">Filter</span>
-              </Button>
+
+              {/* Filter Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="default">
+                    <Filter className="w-4 h-4 sm:mr-2" />
+                    <span className="hidden sm:inline">ตัวกรอง</span>
+                    {visibleStatuses.size < 4 && (
+                      <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-xs">
+                        {visibleStatuses.size}
+                      </Badge>
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-64">
+                  {/* Sort Section */}
+                  <DropdownMenuLabel className="flex items-center gap-2">
+                    <ArrowUpDown className="w-4 h-4" />
+                    เรียงลำดับคอลัมน์
+                  </DropdownMenuLabel>
+                  <DropdownMenuItem
+                    onClick={() => handleSortChange("todo-to-done")}
+                    className="cursor-pointer"
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <span>รอดำเนินการ → เสร็จสิ้น</span>
+                      {sortOrder === "todo-to-done" && (
+                        <Check className="w-4 h-4 text-green-600" />
+                      )}
+                    </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleSortChange("done-to-todo")}
+                    className="cursor-pointer"
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <span>เสร็จสิ้น → รอดำเนินการ</span>
+                      {sortOrder === "done-to-todo" && (
+                        <Check className="w-4 h-4 text-green-600" />
+                      )}
+                    </div>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuSeparator />
+
+                  {/* Status Filter Section */}
+                  <DropdownMenuLabel className="flex items-center gap-2">
+                    <Filter className="w-4 h-4" />
+                    แสดง Status
+                  </DropdownMenuLabel>
+                  {columns.map((column) => (
+                    <DropdownMenuItem
+                      key={column.id}
+                      className="cursor-pointer"
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        handleStatusToggle(column.id);
+                      }}
+                    >
+                      <div className="flex items-center gap-3 w-full">
+                        <Checkbox
+                          checked={visibleStatuses.has(column.id)}
+                          onCheckedChange={() => handleStatusToggle(column.id)}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                        <div className={`w-2 h-2 rounded-full ${column.color}`} />
+                        <span className="flex-1">{column.title}</span>
+                        <Badge variant="secondary" className="text-xs">
+                          {column.tasks.length}
+                        </Badge>
+                      </div>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
               <Button variant="outline" size="sm">
                 <Search className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">Search</span>
+                <span className="hidden sm:inline">ค้นหา</span>
               </Button>
               <Button
                 size="sm"
@@ -585,16 +712,16 @@ export default function BoardPage() {
                 }}
               >
                 <Plus className="w-4 h-4 mr-2" />
-                New Task
+                สร้างงานใหม่
               </Button>
             </div>
           </div>
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 shrink-0">
-            <AlertCircle className="w-5 h-5 text-red-500" />
-            <span className="text-red-700">{error}</span>
+          <div className="mb-6 p-4 bg-rose-50 border border-rose-200 rounded-lg flex items-center gap-2 shrink-0">
+            <AlertCircle className="w-5 h-5 text-rose-500" />
+            <span className="text-rose-700">{error}</span>
             <Button
               variant="ghost"
               size="sm"
@@ -606,7 +733,7 @@ export default function BoardPage() {
           </div>
         )}
 
-        <div className="flex md:hidden items-center justify-between mb-4 px-2 shrink-0">
+        <div className="flex lg:hidden items-center justify-between mb-4 px-2 shrink-0">
           <Button
             variant="ghost"
             size="sm"
@@ -616,7 +743,7 @@ export default function BoardPage() {
             <ChevronLeft className="w-5 h-5" />
           </Button>
           <div className="flex gap-2">
-            {columns.map((col, idx) => (
+            {visibleColumns.map((col, idx) => (
               <button
                 key={col.id}
                 onClick={() => scrollToColumn(idx)}
@@ -631,10 +758,10 @@ export default function BoardPage() {
             size="sm"
             onClick={() =>
               scrollToColumn(
-                Math.min(columns.length - 1, currentColumnIndex + 1)
+                Math.min(visibleColumns.length - 1, currentColumnIndex + 1)
               )
             }
-            disabled={currentColumnIndex === columns.length - 1}
+            disabled={currentColumnIndex === visibleColumns.length - 1}
           >
             <ChevronRight className="w-5 h-5" />
           </Button>
@@ -650,24 +777,28 @@ export default function BoardPage() {
         >
           <div
             ref={scrollContainerRef}
-            className={`flex-1 flex gap-4 overflow-x-auto overflow-y-hidden pb-4 md:overflow-x-visible md:snap-none ${
-              isDraggingTask ? "" : "snap-x snap-mandatory scroll-smooth"
+            className={`flex-1 flex gap-3 lg:gap-4 overflow-y-hidden pb-4 overflow-x-auto lg:overflow-x-hidden ${
+              isDraggingTask ? "" : "snap-x snap-mandatory scroll-smooth lg:snap-none"
             }`}
-            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+            style={{ 
+              scrollbarWidth: "none", 
+              msOverflowStyle: "none",
+              ['--column-width' as string]: columnWidthCalc,
+            }}
           >
-            {isLoading
-              ? [1, 2, 3, 4].map((i) => (
+            {isLoading || isApplyingFilter
+              ? [1, 2, 3, 4].slice(0, visibleStatuses.size).map((i) => (
                   <div
                     key={i}
-                    className="shrink-0 w-[85vw] md:w-80 snap-center h-full"
+                    className={`board-column shrink-0 snap-center h-full ${visibleStatuses.size === 1 ? 'single' : ''}`}
                   >
                     <ColumnSkeleton />
                   </div>
                 ))
-              : columns.map((column) => (
+              : visibleColumns.map((column) => (
                   <div
                     key={column.id}
-                    className="shrink-0 w-[85vw] md:w-80 snap-center h-full"
+                    className={`board-column shrink-0 snap-center h-full ${visibleColumns.length === 1 ? 'single' : ''}`}
                   >
                     <DroppableColumn
                       column={column}

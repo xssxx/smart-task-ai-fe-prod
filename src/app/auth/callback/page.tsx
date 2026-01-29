@@ -3,8 +3,9 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
+import { getProfile } from "@/services/api";
 import { AUTH_COOKIE, ROUTES } from "@/constants";
-import { v4 as uuidv4 } from "uuid";
+import { uuidv7 } from "uuidv7";
 
 export default function AuthCallback() {
   const router = useRouter();
@@ -30,7 +31,7 @@ export default function AuthCallback() {
       if (!existingAccount) {
         await supabase.from("accounts").insert({
           id: user.id,
-          node_id: uuidv4(),
+          node_id: uuidv7(),
           email: user.email,
           username: null,
           password: "",
@@ -43,7 +44,15 @@ export default function AuthCallback() {
       // Save token to cookie
       document.cookie = `${AUTH_COOKIE.NAME}=${token}; path=${AUTH_COOKIE.PATH}; max-age=${AUTH_COOKIE.MAX_AGE}`;
 
-      router.replace(ROUTES.HOME);
+      // Check if profile exists
+      try {
+        await getProfile();
+        // Profile exists, go to home
+        router.replace(ROUTES.HOME);
+      } catch {
+        // Profile doesn't exist, go to profile setup
+        router.replace(ROUTES.PROFILE_SETUP);
+      }
     };
 
     handleCallback();

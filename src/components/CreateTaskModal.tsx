@@ -73,7 +73,6 @@ export default function CreateTaskModal({
       return;
     }
 
-    // Validate date range
     if (startDateTime.date && endDateTime.date) {
       if (endDateTime.date <= startDateTime.date) {
         setError("วันเวลาสิ้นสุดต้องมากกว่าวันเวลาเริ่มต้น");
@@ -108,7 +107,6 @@ export default function CreateTaskModal({
 
       await createTask(targetProjectId, payload);
       
-      // Reset form
       setFormData({
         name: "",
         description: "",
@@ -144,12 +142,10 @@ export default function CreateTaskModal({
     setError(null);
   };
 
-  // Check if date range is valid
   const isDateRangeInvalid = startDateTime.date && endDateTime.date && endDateTime.date <= startDateTime.date;
 
   const handleClose = (open: boolean) => {
     if (!open && !isLoading) {
-      // Reset form and error when closing
       setFormData({
         name: "",
         description: "",
@@ -176,14 +172,14 @@ export default function CreateTaskModal({
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+            <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-rose-700 text-sm">
               {error}
             </div>
           )}
 
           {needsProjectSelection && (
             <div className="space-y-2">
-              <Label>Project <span className="text-red-500">*</span></Label>
+              <Label>Project <span className="text-rose-500">*</span></Label>
               <Select
                 value={selectedProjectId}
                 onValueChange={setSelectedProjectId}
@@ -210,7 +206,7 @@ export default function CreateTaskModal({
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="name">ชื่อ Task <span className="text-red-500">*</span></Label>
+            <Label htmlFor="name">ชื่อ Task <span className="text-rose-500">*</span></Label>
             <Input
               id="name"
               value={formData.name}
@@ -233,7 +229,7 @@ export default function CreateTaskModal({
           </div>
 
           <div className="space-y-2">
-            <Label>Priority <span className="text-red-500">*</span></Label>
+            <Label>Priority <span className="text-rose-500">*</span></Label>
             <Select
               value={formData.priority}
               onValueChange={(value) => handleChange("priority", value)}
@@ -252,7 +248,6 @@ export default function CreateTaskModal({
             </Select>
           </div>
 
-          {/* Start DateTime */}
           <div className="space-y-2">
             <Label>วันเวลาเริ่มต้น</Label>
             <div className="flex gap-2">
@@ -279,7 +274,6 @@ export default function CreateTaskModal({
             </div>
           </div>
 
-          {/* End DateTime */}
           <div className="space-y-2">
             <Label>วันเวลาสิ้นสุด</Label>
             <div className="flex gap-2">
@@ -305,7 +299,7 @@ export default function CreateTaskModal({
               )}
             </div>
             {isDateRangeInvalid && (
-              <p className="text-xs text-red-600">
+              <p className="text-xs text-rose-600">
                 วันเวลาสิ้นสุดต้องมากกว่าวันเวลาเริ่มต้น
               </p>
             )}

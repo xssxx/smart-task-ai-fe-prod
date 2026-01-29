@@ -8,6 +8,8 @@ const ROUTES = {
   LOGIN: "/auth/login",
   SIGNUP: "/auth/signup",
   CALLBACK: "/auth/callback",
+  PROFILE_SETUP: "/auth/profile-setup",
+  PROFILE: "/app/profile",
 } as const;
 
 // Public routes that don't require authentication
@@ -38,11 +40,12 @@ export function proxy(req: NextRequest) {
     return NextResponse.redirect(new URL(ROUTES.LOGIN, req.url));
   }
 
-  // If user is authenticated and trying to access auth pages (except callback), redirect to home
+  // If user is authenticated and trying to access auth pages (except callback and profile-setup), redirect to home
   if (
     isAuthenticated &&
     pathname.startsWith("/auth") &&
-    pathname !== ROUTES.CALLBACK
+    pathname !== ROUTES.CALLBACK &&
+    pathname !== ROUTES.PROFILE_SETUP
   ) {
     return NextResponse.redirect(new URL(ROUTES.HOME, req.url));
   }
