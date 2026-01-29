@@ -259,7 +259,7 @@ export default function TaskDetailModal({
                   variant="ghost"
                   size="sm"
                   onClick={() => setShowDeleteConfirm(true)}
-                  className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                  className="text-rose-500 hover:text-rose-600 hover:bg-rose-50"
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>
@@ -275,13 +275,13 @@ export default function TaskDetailModal({
         ) : (
           <div className="space-y-4 mt-4">
             {error && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-rose-700 text-sm">
                 {error}
               </div>
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="name">ชื่อ Task <span className="text-red-500">*</span></Label>
+              <Label htmlFor="name">ชื่อ Task <span className="text-rose-500">*</span></Label>
               <Input
                 id="name"
                 value={formData.name}
@@ -307,7 +307,7 @@ export default function TaskDetailModal({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Priority <span className="text-red-500">*</span></Label>
+                <Label>Priority <span className="text-rose-500">*</span></Label>
                 <Select
                   value={formData.priority}
                   onValueChange={(value) => handleChange("priority", value)}
@@ -398,7 +398,7 @@ export default function TaskDetailModal({
                 )}
               </div>
               {isDateRangeInvalid && (
-                <p className="text-xs text-red-600">
+                <p className="text-xs text-rose-600">
                   วันเวลาสิ้นสุดต้องมากกว่าวันเวลาเริ่มต้น
                 </p>
               )}
@@ -471,7 +471,7 @@ export default function TaskDetailModal({
       <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
-            <DialogTitle className="text-red-600">ยืนยันการลบ Task</DialogTitle>
+            <DialogTitle className="text-rose-600">ยืนยันการลบ Task</DialogTitle>
             <DialogDescription>
               คุณต้องการลบ Task &quot;{formData.name}&quot; หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้
             </DialogDescription>

@@ -16,8 +16,8 @@ export default function NotFoundPage() {
             <div className="w-24 h-24 md:w-32 md:h-32 bg-gray-100 rounded-full flex items-center justify-center">
               <FileQuestion className="w-12 h-12 md:w-16 md:h-16 text-gray-400" />
             </div>
-            <div className="absolute -bottom-1 -right-1 w-8 h-8 md:w-10 md:h-10 bg-red-100 rounded-full flex items-center justify-center">
-              <Search className="w-4 h-4 md:w-5 md:h-5 text-red-500" />
+            <div className="absolute -bottom-1 -right-1 w-8 h-8 md:w-10 md:h-10 bg-rose-100 rounded-full flex items-center justify-center">
+              <Search className="w-4 h-4 md:w-5 md:h-5 text-rose-500" />
             </div>
           </div>
         </div>
