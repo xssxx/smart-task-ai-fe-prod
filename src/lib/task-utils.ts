@@ -8,8 +8,8 @@ export function mapApiStatus(status: ApiTask["status"] | string): string {
     const s = status.toLowerCase();
     if (s === "todo" || s === "to do") return "todo";
     if (s === "in_progress" || s === "inprogress" || s === "in-progress")
-      return "in-progress";
-    if (s === "review") return "review";
+      return "in_progress";
+    if (s === "in_review" || s === "in-review") return "in_review";
     if (s === "done" || s === "completed") return "done";
   }
   return "todo";
@@ -21,8 +21,8 @@ export function mapApiStatus(status: ApiTask["status"] | string): string {
 export function mapColumnToApiStatus(columnId: string): string {
   const statusMap: Record<string, string> = {
     "todo": "todo",
-    "in-progress": "in_progress",
-    "review": "review",
+    "in_progress": "in_progress",
+    "in_review": "in_review",
     "done": "done",
   };
   return statusMap[columnId] || "todo";
@@ -49,7 +49,8 @@ export function getStatusLabel(status: string): string {
     "todo": "รอดำเนินการ",
     "in_progress": "กำลังดำเนินการ",
     "in-progress": "กำลังดำเนินการ",
-    "review": "รอตรวจสอบ",
+    "in_review": "รอตรวจสอบ",
+    "in-review": "รอตรวจสอบ",
     "done": "เสร็จสิ้น",
     "completed": "เสร็จสิ้น",
   };

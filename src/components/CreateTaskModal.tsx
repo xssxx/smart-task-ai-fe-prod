@@ -172,14 +172,14 @@ export default function CreateTaskModal({
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+            <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-rose-700 text-sm">
               {error}
             </div>
           )}
 
           {needsProjectSelection && (
             <div className="space-y-2">
-              <Label>Project <span className="text-red-500">*</span></Label>
+              <Label>Project <span className="text-rose-500">*</span></Label>
               <Select
                 value={selectedProjectId}
                 onValueChange={setSelectedProjectId}
@@ -206,7 +206,7 @@ export default function CreateTaskModal({
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="name">ชื่อ Task <span className="text-red-500">*</span></Label>
+            <Label htmlFor="name">ชื่อ Task <span className="text-rose-500">*</span></Label>
             <Input
               id="name"
               value={formData.name}
@@ -229,7 +229,7 @@ export default function CreateTaskModal({
           </div>
 
           <div className="space-y-2">
-            <Label>Priority <span className="text-red-500">*</span></Label>
+            <Label>Priority <span className="text-rose-500">*</span></Label>
             <Select
               value={formData.priority}
               onValueChange={(value) => handleChange("priority", value)}
@@ -299,7 +299,7 @@ export default function CreateTaskModal({
               )}
             </div>
             {isDateRangeInvalid && (
-              <p className="text-xs text-red-600">
+              <p className="text-xs text-rose-600">
                 วันเวลาสิ้นสุดต้องมากกว่าวันเวลาเริ่มต้น
               </p>
             )}

@@ -122,14 +122,14 @@ export default function EditWorkspaceModal({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
+            <div className="bg-rose-50 border border-rose-200 rounded-lg p-3 text-sm text-rose-700">
               {error}
             </div>
           )}
 
           <div className="space-y-2">
               <Label htmlFor="name">
-                ชื่อ Workspace <span className="text-red-500">*</span>
+                ชื่อ Workspace <span className="text-rose-500">*</span>
               </Label>
             <Input
               id="name"
