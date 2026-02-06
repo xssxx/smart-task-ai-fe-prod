@@ -32,7 +32,7 @@ import { TaskStatusChart } from "@/components/TaskStatusChart";
 import UnscheduledTasksSection from "@/components/UnscheduledTasksSection";
 import TodayTasksSection from "@/components/TodayTasksSection";
 import TaskDetailModal from "@/components/TaskDetailModal";
-import { toast } from "sonner"; 
+import { toast } from "sonner";
 
 export default function HomePage() {
   // New state for dashboard data
@@ -53,7 +53,7 @@ export default function HomePage() {
   // Keep projects state for CreateTaskModal
   const [projects, setProjects] = useState<Project[]>([]);
   const [showCreateTaskModal, setShowCreateTaskModal] = useState(false);
-  
+
   // Task detail modal state
   const [showTaskDetailModal, setShowTaskDetailModal] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -180,9 +180,13 @@ export default function HomePage() {
     <div className="min-h-screen bg-gray-50 text-base">
       {/* Main Content */}
       <main className="p-6 max-w-[1600px] mx-auto">
-        {/* Page Header */}
-        <div className="mb-8">
-          <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-3">แดชบอร์ด</h2>
+        {/* Page Title */}
+        <h1 className="text-3xl font-semibold text-gray-900 mb-2 lg:hidden">
+          แดชบอร์ด
+        </h1>
+        
+        {/* Page Subtitle */}
+        <div className="mb-6">
           <p className="text-lg text-gray-600">
             ยินดีต้อนรับกลับมา! นี่คือสิ่งที่เกิดขึ้นกับโปรเจกต์ของคุณวันนี้
           </p>

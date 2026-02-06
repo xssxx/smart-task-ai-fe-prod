@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+
+import { useState, useEffect, memo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -23,27 +24,29 @@ import { toast } from "sonner";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { PRIORITY_OPTIONS, TOAST_DURATION } from "@/constants";
 
-interface CreateTaskModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSuccess: () => void;
-  projectId?: string;
-  projects?: Project[];
+interface CreateTaskDialogProps {
+  isOpen: boolean;
+  prefilledDate: Date | null;
+  prefilledStartDate?: Date | null;
+  projects: Project[];
+  onClose: () => void;
+  onCreate: () => void;
 }
 
-export default function CreateTaskModal({
-  open,
-  onOpenChange,
-  onSuccess,
-  projectId,
+function CreateTaskDialog({
+  isOpen,
+  prefilledDate,
+  prefilledStartDate,
   projects,
-}: CreateTaskModalProps) {
+  onClose,
+  onCreate,
+}: CreateTaskDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [startDateTime, setStartDateTime] = useState<{ date?: Date | null, hasTime: boolean }>({ hasTime: true });
-  const [endDateTime, setEndDateTime] = useState<{ date?: Date | null, hasTime: boolean }>({ hasTime: true });
+  const [startDateTime, setStartDateTime] = useState<{ date?: Date | null; hasTime: boolean }>({ hasTime: true });
+  const [endDateTime, setEndDateTime] = useState<{ date?: Date | null; hasTime: boolean }>({ hasTime: true });
   const [recurringDays, setRecurringDays] = useState<number | undefined>(undefined);
-  const [selectedProjectId, setSelectedProjectId] = useState<string>(projectId || "");
+  const [selectedProjectId, setSelectedProjectId] = useState<string>("");
   const [formData, setFormData] = useState<CreateTaskRequest>({
     name: "",
     description: "",
@@ -51,10 +54,25 @@ export default function CreateTaskModal({
     location: "",
   });
 
-  const needsProjectSelection = !projectId;
+  // Pre-fill dates when dialog opens
+  useEffect(() => {
+    if (isOpen) {
+      // Pre-fill end_datetime from clicked slot
+      if (prefilledDate) {
+        setEndDateTime({ date: prefilledDate, hasTime: true });
+      }
+
+      // Pre-fill start_datetime if provided (for day/week view hour clicks)
+      if (prefilledStartDate) {
+        setStartDateTime({ date: prefilledStartDate, hasTime: true });
+      }
+    }
+  }, [isOpen, prefilledDate, prefilledStartDate]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    // Validate task name
     if (!formData.name.trim()) {
       setError("กรุณากรอกชื่อ Task");
       toast.error("ข้อมูลไม่ครบถ้วน", {
@@ -64,7 +82,8 @@ export default function CreateTaskModal({
       return;
     }
 
-    if (needsProjectSelection && !selectedProjectId) {
+    // Validate project selection
+    if (!selectedProjectId) {
       setError("กรุณาเลือก Project");
       toast.error("ข้อมูลไม่ครบถ้วน", {
         description: "กรุณาเลือก Project",
@@ -73,6 +92,7 @@ export default function CreateTaskModal({
       return;
     }
 
+    // Validate date range
     if (startDateTime.date && endDateTime.date) {
       if (endDateTime.date <= startDateTime.date) {
         setError("วันเวลาสิ้นสุดต้องมากกว่าวันเวลาเริ่มต้น");
@@ -82,12 +102,6 @@ export default function CreateTaskModal({
         });
         return;
       }
-    }
-
-    const targetProjectId = projectId || selectedProjectId;
-    if (!targetProjectId) {
-      setError("ไม่พบ Project ID");
-      return;
     }
 
     try {
@@ -105,8 +119,9 @@ export default function CreateTaskModal({
       if (formData.location?.trim()) payload.location = formData.location.trim();
       if (recurringDays && recurringDays > 0) payload.recurring_days = recurringDays;
 
-      await createTask(targetProjectId, payload);
+      await createTask(selectedProjectId, payload);
 
+      // Reset form
       setFormData({
         name: "",
         description: "",
@@ -116,16 +131,15 @@ export default function CreateTaskModal({
       setStartDateTime({ hasTime: true });
       setEndDateTime({ hasTime: true });
       setRecurringDays(undefined);
-      if (needsProjectSelection) {
-        setSelectedProjectId("");
-      }
+      setSelectedProjectId("");
 
       toast.success("สร้าง Task สำเร็จ", {
         description: `Task "${payload.name}" ถูกสร้างเรียบร้อยแล้ว`,
         duration: TOAST_DURATION.SUCCESS,
       });
-      handleClose(false);
-      onSuccess();
+
+      handleClose();
+      onCreate();
     } catch (err) {
       setError("ไม่สามารถสร้าง Task ได้ กรุณาลองใหม่");
       toast.error("สร้าง Task ไม่สำเร็จ", {
@@ -144,8 +158,9 @@ export default function CreateTaskModal({
 
   const isDateRangeInvalid = startDateTime.date && endDateTime.date && endDateTime.date <= startDateTime.date;
 
-  const handleClose = (open: boolean) => {
-    if (!open && !isLoading) {
+  const handleClose = () => {
+    if (!isLoading) {
+      // Reset form
       setFormData({
         name: "",
         description: "",
@@ -155,16 +170,14 @@ export default function CreateTaskModal({
       setStartDateTime({ hasTime: true });
       setEndDateTime({ hasTime: true });
       setRecurringDays(undefined);
-      if (needsProjectSelection) {
-        setSelectedProjectId("");
-      }
+      setSelectedProjectId("");
       setError(null);
+      onClose();
     }
-    onOpenChange(open);
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[500px] max-w-[95vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>สร้าง Task ใหม่</DialogTitle>
@@ -177,33 +190,31 @@ export default function CreateTaskModal({
             </div>
           )}
 
-          {needsProjectSelection && (
-            <div className="space-y-2">
-              <Label>Project <span className="text-rose-500">*</span></Label>
-              <Select
-                value={selectedProjectId}
-                onValueChange={setSelectedProjectId}
-                disabled={isLoading || !projects || projects.length === 0}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder={projects && projects.length > 0 ? "เลือก Project" : "ไม่มี Project"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {projects && projects.length > 0 ? (
-                    projects.map((project) => (
-                      <SelectItem key={project.id} value={project.id}>
-                        {project.name}
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <div className="px-2 py-1.5 text-sm text-gray-500">
-                      ไม่มี Project
-                    </div>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+          <div className="space-y-2">
+            <Label>Project <span className="text-rose-500">*</span></Label>
+            <Select
+              value={selectedProjectId}
+              onValueChange={setSelectedProjectId}
+              disabled={isLoading || !projects || projects.length === 0}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder={projects && projects.length > 0 ? "เลือก Project" : "ไม่มี Project"} />
+              </SelectTrigger>
+              <SelectContent>
+                {projects && projects.length > 0 ? (
+                  projects.map((project) => (
+                    <SelectItem key={project.id} value={project.id}>
+                      {project.name}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <div className="px-2 py-1.5 text-sm text-gray-500">
+                    ไม่มี Project
+                  </div>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
 
           <div className="space-y-2">
             <Label htmlFor="name">ชื่อ Task <span className="text-rose-500">*</span></Label>
@@ -333,7 +344,7 @@ export default function CreateTaskModal({
             <Button
               type="button"
               variant="outline"
-              onClick={() => handleClose(false)}
+              onClick={handleClose}
               disabled={isLoading}
               className="w-full sm:w-auto order-2 sm:order-1"
             >
@@ -355,3 +366,5 @@ export default function CreateTaskModal({
     </Dialog>
   );
 }
+
+export default memo(CreateTaskDialog);

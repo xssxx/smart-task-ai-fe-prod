@@ -2,6 +2,8 @@
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
+import { useProjects } from "@/hooks/useProjects";
+import type { Project } from "@/services/api";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -25,7 +27,6 @@ import {
   Trash2,
 } from "lucide-react";
 import { LinkWithLoading } from "@/components/LinkWithLoading";
-import { listProjects, Project } from "@/services/api";
 import CreateProjectModal from "@/components/CreateProjectModal";
 import EditWorkspaceModal from "@/components/EditWorkspaceModal";
 import DeleteWorkspaceModal from "@/components/DeleteWorkspaceModal";
@@ -55,29 +56,27 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
   const [activeItem, setActiveItem] = useState("");
   const [expandedWorkspaces, setExpandedWorkspaces] = useState<Set<string>>(new Set());
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [deletingProject, setDeletingProject] = useState<Project | null>(null);
 
-  // Function to determine active item and expanded workspace based on pathname
+  const { projects, loading, refetch } = useProjects();
+
   const updateActiveStateFromPath = (path: string, workspaceList: Workspace[]) => {
-    // Reset active state
     let newActiveItem = "";
     let workspaceToExpand: string | null = null;
 
-    // Check main menu items first
     if (path === "/app/home") {
       newActiveItem = "home";
+    } else if (path === "/app/calendar") {
+      newActiveItem = "my-calendar";
     } else {
-      // Match /app/{projectId}/board or /app/{projectId}/chat
       const projectMatch = path.match(/\/app\/([^/]+)\/(board|chat)/);
       if (projectMatch) {
         const projectId = projectMatch[1];
-        const section = projectMatch[2]; // "board" or "chat"
+        const section = projectMatch[2];
         const workspace = workspaceList.find(w => w.id === projectId);
         if (workspace) {
           newActiveItem = `${section}-${projectId}`;
@@ -87,95 +86,51 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
     }
 
     setActiveItem(newActiveItem);
-    
-    // Add workspace to expanded set if needed
     if (workspaceToExpand) {
       setExpandedWorkspaces(prev => new Set([...prev, workspaceToExpand]));
     }
   };
 
-  const fetchProjects = async () => {
-    try {
-      setLoading(true);
-      const response = await listProjects();
-      const items = response.data?.data?.items ?? [];
-      const projectList: Project[] = Array.isArray(items) ? items : [];
-      
-      setProjects(projectList);
-      
-      const mappedWorkspaces: Workspace[] = projectList.map((project, index) => ({
-        id: project.id,
-        name: project.name,
-        color: WORKSPACE_COLORS[index % WORKSPACE_COLORS.length],
-        items: [
-          {
-            id: `board-${project.id}`,
-            icon: FolderKanban,
-            label: "บอร์ด",
-            to: `/app/${project.id}/board`,
-          },
-          {
-            id: `chat-${project.id}`,
-            icon: MessageCircle,
-            label: "แชท AI",
-            to: `/app/${project.id}/chat`,
-          },
-        ],
-      }));
-      
-      setWorkspaces(mappedWorkspaces);
-      
-      // Update active state based on current pathname
-      updateActiveStateFromPath(pathname, mappedWorkspaces);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchProjects();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    const mappedWorkspaces: Workspace[] = projects.map((project, index) => ({
+      id: project.id,
+      name: project.name,
+      color: WORKSPACE_COLORS[index % WORKSPACE_COLORS.length],
+      items: [
+        {
+          id: `board-${project.id}`,
+          icon: FolderKanban,
+          label: "บอร์ด",
+          to: `/app/${project.id}/board`,
+        },
+        {
+          id: `chat-${project.id}`,
+          icon: MessageCircle,
+          label: "แชท AI",
+          to: `/app/${project.id}/chat`,
+        },
+      ],
+    }));
 
-  // Listen for project updates from other components
-  useEffect(() => {
-    const handleProjectsUpdated = () => {
-      fetchProjects();
-    };
-
-    window.addEventListener('projectsUpdated', handleProjectsUpdated);
-    return () => {
-      window.removeEventListener('projectsUpdated', handleProjectsUpdated);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Update active state when pathname changes
-  useEffect(() => {
-    if (workspaces.length > 0) {
-      updateActiveStateFromPath(pathname, workspaces);
-    }
-  }, [pathname, workspaces]);
+    updateActiveStateFromPath(pathname, mappedWorkspaces);
+    setWorkspaces(mappedWorkspaces);
+  }, [projects, pathname]);
 
   const handleProjectCreated = () => {
-    fetchProjects();
-    // Dispatch event to notify other components
-    window.dispatchEvent(new CustomEvent('projectsUpdated'));
+    refetch();
   };
 
   const handleProjectUpdated = () => {
-    fetchProjects();
-    // Dispatch event to notify other components
-    window.dispatchEvent(new CustomEvent('projectsUpdated'));
+    refetch();
   };
 
   const handleEditProject = (project: Project) => {
-    setEditingProject(project);
+    setEditingProject(project as Project);
     setShowEditModal(true);
   };
 
   const handleDeleteProject = (project: Project) => {
-    setDeletingProject(project);
+    setDeletingProject(project as Project);
     setShowDeleteModal(true);
   };
 
@@ -192,13 +147,13 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
   };
 
   const menuItems = [
-    { id: "home", icon: Home, label: "หน้าแรก", href: "#" },
-    { id: "my-calendar", icon: Calendar, label: "ปฏิทินของฉัน", href: "#" },
+    { id: "home", icon: Home, label: "หน้าแรก", href: "/app/home" },
+    { id: "my-calendar", icon: Calendar, label: "ปฏิทินของฉัน", href: "/app/calendar" },
   ];
 
   return (
     <>
-      {/* Mobile hamburger button - แสดงเมื่อมี pagination (< 1024px) */}
+      {/* Mobile hamburger button */}
       <button
         onClick={onToggle}
         className="lg:hidden fixed top-7 left-4 z-50 p-2 bg-white rounded-lg flex items-center justify-center"
@@ -235,16 +190,15 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
           <nav className="space-y-1 mb-6">
             {menuItems.map((item) => {
               const Icon = item.icon;
-              const isActive = activeItem === item.id || (item.id === "home" && pathname === "/app/home");
+              const isActive = activeItem === item.id || (item.id === "home" && pathname === "/app/home") || (item.id === "my-calendar" && pathname === "/app/calendar");
               return (
                 <LinkWithLoading
                   key={item.id}
-                  href="/app/home"
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-base font-medium transition-colors ${
-                    isActive
-                      ? "bg-gray-100 text-gray-900"
-                      : "text-gray-600 hover:bg-gray-50"
-                  }`}
+                  href={item.href}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-base font-medium transition-colors ${isActive
+                    ? "bg-gray-100 text-gray-900"
+                    : "text-gray-600 hover:bg-gray-50"
+                    }`}
                 >
                   <div className="flex items-center gap-3">
                     <Icon className="w-6 h-6" />
@@ -297,9 +251,8 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
                         className="flex-1 flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-100 transition-colors"
                       >
                         <ChevronRight
-                          className={`w-5 h-5 transition-transform ${
-                            expandedWorkspaces.has(workspace.id) ? "rotate-90" : ""
-                          }`}
+                          className={`w-5 h-5 transition-transform ${expandedWorkspaces.has(workspace.id) ? "rotate-90" : ""
+                            }`}
                         />
                         <div
                           className={`w-3 h-3 rounded-full ${workspace.color}`}
@@ -308,7 +261,7 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
                           {workspace.name}
                         </span>
                       </button>
-                      
+
                       {/* Workspace Actions Dropdown */}
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -362,11 +315,10 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
                             <LinkWithLoading
                               key={item.id}
                               href={item.to ?? "#"}
-                              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-base transition-colors ${
-                                isActive
-                                  ? "bg-gray-100 text-gray-900 font-medium"
-                                  : "text-gray-500 hover:bg-gray-50"
-                              }`}
+                              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-base transition-colors ${isActive
+                                ? "bg-gray-100 text-gray-900 font-medium"
+                                : "text-gray-500 hover:bg-gray-50"
+                                }`}
                             >
                               <Icon className="w-5 h-5" />
                               <span>{item.label}</span>

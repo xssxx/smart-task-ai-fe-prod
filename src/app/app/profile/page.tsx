@@ -81,7 +81,7 @@ export default function ProfilePage() {
 
       await updateProfile(payload);
       setSuccess("อัพเดทโปรไฟล์สำเร็จ");
-      
+
       // Refresh after 1 second
       setTimeout(() => {
         window.location.reload();
@@ -101,15 +101,8 @@ export default function ProfilePage() {
     return (
       <div className="min-h-screen bg-gray-50 py-8 px-4">
         <div className="max-w-4xl mx-auto">
-          {/* Header Skeleton */}
-          <div className="mb-6">
-            <Skeleton className="h-9 w-48 mb-2" />
-            <Skeleton className="h-5 w-64" />
-          </div>
-
           {/* Main Content Skeleton */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Profile Picture Skeleton - Mobile: top, Desktop: left */}
             <div className="md:col-span-1 flex flex-col items-center md:items-start">
               <Skeleton className="w-48 h-48 rounded-2xl" />
             </div>
@@ -160,10 +153,14 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">โปรไฟล์ของฉัน</h1>
-          <p className="text-gray-600 mt-2">จัดการข้อมูลส่วนตัวของคุณ</p>
+        {/* Page Title */}
+        <h1 className="text-3xl font-semibold text-gray-900 mb-2 lg:hidden">
+          โปรไฟล์ของฉัน
+        </h1>
+
+        {/* Page Subtitle */}
+        <div className="mb-6">
+          <p className="text-base text-gray-600">จัดการข้อมูลส่วนตัวของคุณ</p>
         </div>
 
         {/* Main Content - Responsive Grid */}

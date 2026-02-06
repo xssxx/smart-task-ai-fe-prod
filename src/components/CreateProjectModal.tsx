@@ -51,7 +51,7 @@ export default function CreateProjectModal({
     setError(null);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
 
@@ -75,7 +75,7 @@ export default function CreateProjectModal({
       }
 
       await createProject(payload);
-      
+
       setFormData({
         name: "",
         nickname: "",
@@ -83,7 +83,7 @@ export default function CreateProjectModal({
         domain_knowledge: "",
       });
       setShowAdvanced(false);
-      
+
       onOpenChange(false);
       onSuccess?.();
     } catch (err) {
@@ -125,9 +125,9 @@ export default function CreateProjectModal({
           )}
 
           <div className="space-y-3">
-              <Label htmlFor="name">
-                ชื่อ Workspace <span className="text-rose-500">*</span>
-              </Label>
+            <Label htmlFor="name">
+              ชื่อ Workspace <span className="text-rose-500">*</span>
+            </Label>
             <Input
               id="name"
               placeholder="เช่น My Project, Work Tasks"

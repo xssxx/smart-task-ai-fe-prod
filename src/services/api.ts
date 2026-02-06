@@ -145,24 +145,17 @@ export const deleteProject = (projectId: string) => {
 // Task types
 export interface Task {
   id: string;
-  nodeId: string;
-  projectId: string;
   name: string;
-  description: string;
+  description?: string;
   priority: string;
-  startDateTime: string;
-  endDateTime: string;
-  location: string;
-  recurringDays: number;
-  recurringUntil: string;
-  status: {
-    Todo: string;
-    InProgress: string;
-    InReview: string;
-    Done: string;
-  };
-  createdAt: string;
-  updatedAt: string;
+  status: string;
+  start_datetime?: string;
+  end_datetime?: string;
+  location?: string;
+  recurring_days?: number;
+  recurring_until?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface ListTasksResponse {

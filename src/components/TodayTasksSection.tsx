@@ -18,8 +18,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { getPriorityColor, getStatusColor } from "@/constants";
-import { TaskWithProject } from "@/services/api/dashboard";
-import { updateTask } from "@/services/api";
+import { getStatusLabel } from "@/lib/task-utils";
+import { TaskWithProject, updateTask } from "@/services/api";
 import { toast } from "sonner";
 
 interface TodayTasksSectionProps {
@@ -86,16 +86,6 @@ export default function TodayTasksSection({
     if (onTaskClick) {
       onTaskClick(taskId);
     }
-  };
-
-  const getStatusLabel = (status: string) => {
-    const statusMap: Record<string, string> = {
-      todo: "รอดำเนินการ",
-      in_progress: "กำลังดำเนินการ",
-      in_review: "รอตรวจสอบ",
-      done: "เสร็จสิ้น",
-    };
-    return statusMap[status] || status;
   };
 
   return (

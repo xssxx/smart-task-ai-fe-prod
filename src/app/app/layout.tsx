@@ -6,6 +6,7 @@ import "../globals.css";
 import Navbar from "@/components/Navbar";
 import Sidebar from "@/components/Sidebar";
 import { LoadingProvider } from "@/components/LoadingProvider";
+import { ProjectProvider } from "@/contexts";
 import { PageLoader } from "@/components/ui/page-loader";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -40,29 +41,31 @@ export default function RootLayout({
       >
         <Suspense fallback={<PageLoader />}>
           <LoadingProvider>
-            <div className="flex h-screen overflow-hidden">
-              {/* Sidebar - Fixed on the left */}
-              <Sidebar isOpen={sidebarOpen} onToggle={toggleSidebar} />
+            <ProjectProvider>
+              <div className="flex h-screen overflow-hidden">
+                {/* Sidebar - Fixed on the left */}
+                <Sidebar isOpen={sidebarOpen} onToggle={toggleSidebar} />
 
-              {/* Main content area */}
-              <div className="flex-1 flex flex-col overflow-hidden">
-                {/* Navbar - Fixed at top */}
-                <Navbar />
+                {/* Main content area */}
+                <div className="flex-1 flex flex-col overflow-hidden">
+                  {/* Navbar - Fixed at top */}
+                  <Navbar />
 
-                {/* Main scrollable content */}
-                <main className="flex-1 overflow-y-auto bg-gray-50">
-                  {children}
-                </main>
+                  {/* Main scrollable content */}
+                  <main className="flex-1 overflow-y-auto bg-gray-50">
+                    {children}
+                  </main>
+                </div>
               </div>
-            </div>
-            <Toaster 
-              position="top-right" 
-              richColors 
-              closeButton={false} 
-              duration={2000}
-              expand={false}
-              visibleToasts={9}
-            />
+              <Toaster
+                position="top-right"
+                richColors
+                closeButton={false}
+                duration={2000}
+                expand={false}
+                visibleToasts={9}
+              />
+            </ProjectProvider>
           </LoadingProvider>
         </Suspense>
       </body>
