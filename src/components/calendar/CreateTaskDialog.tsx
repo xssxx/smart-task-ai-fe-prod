@@ -46,6 +46,8 @@ function CreateTaskDialog({
   const [startDateTime, setStartDateTime] = useState<{ date?: Date | null; hasTime: boolean }>({ hasTime: true });
   const [endDateTime, setEndDateTime] = useState<{ date?: Date | null; hasTime: boolean }>({ hasTime: true });
   const [recurringDays, setRecurringDays] = useState<number | undefined>(undefined);
+  const [recurringUntil, setRecurringUntil] = useState<{ date?: Date | null; hasTime: boolean }>({ hasTime: false });
+  const [recurringEndType, setRecurringEndType] = useState<"never" | "on_date">("never");
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
   const [formData, setFormData] = useState<CreateTaskRequest>({
     name: "",
@@ -102,6 +104,19 @@ function CreateTaskDialog({
         });
         return;
       }
+
+      // Validate recurring for multi-day tasks
+      if (recurringDays && recurringDays > 0) {
+        const daysDiff = Math.ceil((endDateTime.date.getTime() - startDateTime.date.getTime()) / (1000 * 60 * 60 * 24));
+        if (recurringDays <= daysDiff) {
+          setError(`Task มีระยะเวลา ${daysDiff} วัน แต่ทำประจำทุก ${recurringDays} วัน จะทำให้เกิดการซ้ำซ้อน`);
+          toast.error("การตั้งค่าไม่เหมาะสม", {
+            description: `Task มีระยะเวลา ${daysDiff} วัน ควรตั้งทำประจำอย่างน้อย ${daysDiff + 1} วัน หรือลบการทำประจำออก`,
+            duration: TOAST_DURATION.ERROR,
+          });
+          return;
+        }
+      }
     }
 
     try {
@@ -117,7 +132,12 @@ function CreateTaskDialog({
       if (startDateTime.date) payload.start_datetime = startDateTime.date.toISOString();
       if (endDateTime.date) payload.end_datetime = endDateTime.date.toISOString();
       if (formData.location?.trim()) payload.location = formData.location.trim();
-      if (recurringDays && recurringDays > 0) payload.recurring_days = recurringDays;
+      if (recurringDays && recurringDays > 0) {
+        payload.recurring_days = recurringDays;
+        if (recurringEndType === "on_date" && recurringUntil.date) {
+          payload.recurring_until = recurringUntil.date.toISOString();
+        }
+      }
 
       await createTask(selectedProjectId, payload);
 
@@ -131,6 +151,8 @@ function CreateTaskDialog({
       setStartDateTime({ hasTime: true });
       setEndDateTime({ hasTime: true });
       setRecurringDays(undefined);
+      setRecurringUntil({ hasTime: false });
+      setRecurringEndType("never");
       setSelectedProjectId("");
 
       toast.success("สร้าง Task สำเร็จ", {
@@ -170,6 +192,8 @@ function CreateTaskDialog({
       setStartDateTime({ hasTime: true });
       setEndDateTime({ hasTime: true });
       setRecurringDays(undefined);
+      setRecurringUntil({ hasTime: false });
+      setRecurringEndType("never");
       setSelectedProjectId("");
       setError(null);
       onClose();
@@ -328,17 +352,85 @@ function CreateTaskDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="recurringDays">ทำซ้ำทุกๆ (วัน)</Label>
-            <Input
-              id="recurringDays"
-              type="number"
-              min="0"
-              value={recurringDays ?? ""}
-              onChange={(e) => setRecurringDays(e.target.value ? parseInt(e.target.value) : undefined)}
-              placeholder="เช่น 7 สำหรับทำซ้ำทุกสัปดาห์"
+            <Label htmlFor="recurringDays">ทำประจำ</Label>
+            <Select
+              value={recurringDays ? recurringDays.toString() : "0"}
+              onValueChange={(value) => {
+                const numValue = parseInt(value);
+                setRecurringDays(numValue === 0 ? undefined : numValue);
+                if (numValue === 0) {
+                  setRecurringEndType("never");
+                  setRecurringUntil({ hasTime: false });
+                }
+              }}
               disabled={isLoading}
-            />
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="ไม่ทำประจำ" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="0">ไม่ทำประจำ</SelectItem>
+                <SelectItem value="1">ทุกวัน</SelectItem>
+                <SelectItem value="7">ทุกสัปดาห์</SelectItem>
+                <SelectItem value="14">ทุก 2 สัปดาห์</SelectItem>
+                <SelectItem value="30">ทุกเดือน</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
+
+          {recurringDays && recurringDays > 0 && (
+            <>
+              <div className="space-y-2">
+                <Label>สิ้นสุดการทำประจำ</Label>
+                <Select
+                  value={recurringEndType}
+                  onValueChange={(value: "never" | "on_date") => {
+                    setRecurringEndType(value);
+                    if (value === "never") {
+                      setRecurringUntil({ hasTime: false });
+                    }
+                  }}
+                  disabled={isLoading}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="never">ไม่เลย</SelectItem>
+                    <SelectItem value="on_date">ในวันที่</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {recurringEndType === "on_date" && (
+                <div className="space-y-2">
+                  <Label>วันที่สิ้นสุด</Label>
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <DateTimePicker
+                        value={recurringUntil}
+                        onChange={setRecurringUntil}
+                        isDisabled={isLoading}
+                        placeholder="เลือกวันที่สิ้นสุดการทำประจำ"
+                      />
+                    </div>
+                    {recurringUntil.date && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setRecurringUntil({ date: null, hasTime: false })}
+                        disabled={isLoading}
+                        className="shrink-0"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
 
           <div className="flex justify-end gap-3 pt-4 flex-col sm:flex-row">
             <Button

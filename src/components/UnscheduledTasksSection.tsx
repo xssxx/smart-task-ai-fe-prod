@@ -116,7 +116,6 @@ export default function UnscheduledTasksSection({
                   className="flex items-center justify-between gap-3 md:gap-6 p-4 md:p-6 border rounded-lg hover:bg-gray-50 transition-colors min-h-[140px] cursor-pointer"
                   onClick={() => handleCardClick(task.id)}
                 >
-                  {/* Left side */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-2 text-gray-600">
                       <Folder className="w-4 h-4 shrink-0" />
@@ -226,7 +225,6 @@ export default function UnscheduledTasksSection({
         </CardContent>
       </Card>
 
-      {/* Delete Confirmation Dialog */}
       <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>

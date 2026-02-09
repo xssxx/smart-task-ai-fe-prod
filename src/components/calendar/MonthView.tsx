@@ -35,18 +35,25 @@ function MonthView({
     const grouped = new Map<string, TaskWithProject[]>();
 
     tasks.forEach((task) => {
-      if (!task.end_datetime) return;
+      const dateKey = (task as any).occurrence_date;
 
-      try {
-        const endDate = new Date(task.end_datetime);
-        const dateKey = format(endDate, "yyyy-MM-dd");
+      if (!dateKey) {
+        return;
+      }
 
-        if (!grouped.has(dateKey)) {
-          grouped.set(dateKey, []);
-        }
-        grouped.get(dateKey)!.push(task);
-      } catch (error) {
-        console.error("Invalid date format for task:", task.id, error);
+      if (!grouped.has(dateKey)) {
+        grouped.set(dateKey, []);
+      }
+      
+      const tasksForDate = grouped.get(dateKey)!;
+      const originalId = (task as any).original_id || task.id;
+      const isDuplicate = tasksForDate.some(t => {
+        const tOriginalId = (t as any).original_id || t.id;
+        return tOriginalId === originalId;
+      });
+      
+      if (!isDuplicate) {
+        tasksForDate.push(task);
       }
     });
 
@@ -66,7 +73,6 @@ function MonthView({
 
   return (
     <div className="flex flex-col h-full bg-background">
-      {/* Day names header */}
       <div className="grid grid-cols-7 border-b">
         {DAY_NAMES.map((dayName, index) => (
           <div
@@ -79,7 +85,6 @@ function MonthView({
         ))}
       </div>
 
-      {/* Calendar grid */}
       <div className={cn(
         "flex-1 grid border-b last:border-b-0",
         monthGrid.length === 4 && "grid-rows-4",
@@ -104,15 +109,13 @@ function MonthView({
                     !isCurrentMonth && "bg-muted/30"
                   )}
                   onClick={(e) => {
-                    // Only trigger date click if clicking the cell itself, not a task
-                    if (e.target === e.currentTarget || (e.target as HTMLElement).closest(".date-number")) {
-                      if (onDateClick) {
-                        onDateClick(date);
-                      }
+                    const isTaskClick = (e.target as HTMLElement).closest('[data-task-card]');
+                    
+                    if (!isTaskClick && onDateClick) {
+                      onDateClick(date);
                     }
                   }}
                 >
-                  {/* Date number */}
                   <div
                     className={cn(
                       "date-number w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center rounded-full text-xs sm:text-sm font-medium transition-all duration-300",
@@ -124,7 +127,6 @@ function MonthView({
                     {format(date, "d")}
                   </div>
 
-                  {/* Tasks */}
                   <div className="flex-1 flex flex-col gap-0.5 sm:gap-1 overflow-hidden">
                     {visibleTasks.map((task, index) => {
                       const project = getProjectForTask(task);
@@ -134,6 +136,7 @@ function MonthView({
                         <div
                           key={task.id}
                           className="animate-in fade-in slide-in-from-left-2"
+                          data-task-card
                           style={{
                             animationDelay: `${index * 80}ms`,
                             animationDuration: "400ms",
@@ -158,17 +161,21 @@ function MonthView({
                             viewMode="month"
                             onClick={(e) => {
                               e.stopPropagation();
-                              onTaskClick(task);
+                              const taskToPass = {
+                                ...task,
+                                id: (task as any).original_id || task.id,
+                              };
+                              onTaskClick(taskToPass);
                             }}
                           />
                         </div>
                       );
                     })}
 
-                    {/* Show "+N more" indicator */}
                     {remainingCount > 0 && (
                       <div
                         className="text-[10px] sm:text-xs text-muted-foreground px-1 sm:px-1.5 py-0.5 hover:text-foreground transition-colors touch-manipulation"
+                        data-task-card
                         onClick={(e) => {
                           e.stopPropagation();
                         }}

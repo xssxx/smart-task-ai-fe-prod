@@ -153,7 +153,6 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
 
   return (
     <>
-      {/* Mobile hamburger button */}
       <button
         onClick={onToggle}
         className="lg:hidden fixed top-7 left-4 z-50 p-2 bg-white rounded-lg flex items-center justify-center"
@@ -162,7 +161,6 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
         {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
       </button>
 
-      {/* Overlay for mobile/tablet */}
       {isOpen && (
         <div
           className="lg:hidden fixed inset-0 bg-black/50 z-30"
@@ -170,7 +168,6 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
         />
       )}
 
-      {/* Sidebar */}
       <aside
         className={`
           fixed lg:relative z-40
@@ -180,13 +177,11 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
         `}
       >
         <div className="p-5 pt-16 lg:pt-5">
-          {/* Logo - Show only on desktop */}
           <div className="hidden lg:flex items-center gap-3 mb-8">
             <Image src="/logo.svg" alt="Smart Task AI" width={40} height={40} className="object-contain" />
             <h1 className="text-2xl font-momo text-gray-900">Smart Task</h1>
           </div>
 
-          {/* Main Menu */}
           <nav className="space-y-1 mb-6">
             {menuItems.map((item) => {
               const Icon = item.icon;
@@ -209,10 +204,8 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
             })}
           </nav>
 
-          {/* Divider */}
           <div className="border-t border-gray-200 my-4"></div>
 
-          {/* Workspaces */}
           <div>
             <div className="flex items-center justify-between mb-3 px-4">
               <span className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
@@ -244,7 +237,6 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
               ) : (
                 workspaces.map((workspace) => (
                   <div key={workspace.id} className="group">
-                    {/* Workspace Header */}
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => toggleWorkspace(workspace.id)}
@@ -262,7 +254,6 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
                         </span>
                       </button>
 
-                      {/* Workspace Actions Dropdown */}
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button
@@ -305,7 +296,6 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
                       </DropdownMenu>
                     </div>
 
-                    {/* Workspace Items */}
                     {expandedWorkspaces.has(workspace.id) && (
                       <div className="ml-8 space-y-1 mt-1 animate-in slide-in-from-top-2 fade-in-0 duration-200">
                         {workspace.items.map((item) => {
@@ -333,19 +323,16 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
             </div>
           </div>
 
-          {/* Divider */}
           <div className="border-t border-gray-200 my-4"></div>
         </div>
       </aside>
 
-      {/* Create Project Modal */}
       <CreateProjectModal
         open={showCreateModal}
         onOpenChange={setShowCreateModal}
         onSuccess={handleProjectCreated}
       />
 
-      {/* Edit Project Modal */}
       <EditWorkspaceModal
         open={showEditModal}
         onOpenChange={setShowEditModal}
@@ -353,7 +340,6 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
         project={editingProject}
       />
 
-      {/* Delete Project Modal */}
       <DeleteWorkspaceModal
         open={showDeleteModal}
         onOpenChange={setShowDeleteModal}

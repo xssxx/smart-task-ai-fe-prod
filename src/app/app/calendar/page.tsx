@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo } from "react";
-import { addHours } from "date-fns";
+import { addHours, format } from "date-fns";
 import CalendarHeader from "@/components/calendar/CalendarHeader";
 import MonthView from "@/components/calendar/MonthView";
 import WeekView from "@/components/calendar/WeekView";
@@ -50,7 +50,6 @@ function CalendarPageContent() {
       setCreateDialogStartDate(startDate);
       setCreateDialogDate(endDate);
     } else {
-      // For month view, only pre-fill end date
       setCreateDialogStartDate(null);
       setCreateDialogDate(date);
     }
@@ -96,58 +95,86 @@ function CalendarPageContent() {
     setCreateDialogStartDate(null);
   }, []);
 
-  // Calculate tasks count based on current view mode
   const currentViewTaskCount = useMemo(() => {
-    if (viewMode === "month") {
-      // Month view: count tasks in current month
-      return tasks.filter((task) => {
-        if (!task.end_datetime) return false;
-
-        try {
-          const taskDate = new Date(task.end_datetime);
-          return (
-            taskDate.getMonth() === currentDate.getMonth() &&
-            taskDate.getFullYear() === currentDate.getFullYear()
-          );
-        } catch {
+    const deduplicateTasks = (tasksToFilter: typeof tasks) => {
+      const seenOriginalIds = new Set<string>();
+      return tasksToFilter.filter((task) => {
+        const originalId = (task as any).original_id || task.id;
+        if (seenOriginalIds.has(originalId)) {
           return false;
         }
-      }).length;
+        seenOriginalIds.add(originalId);
+        return true;
+      });
+    };
+
+    if (viewMode === "month") {
+      const tasksByDate = new Map<string, typeof tasks>();
+      
+      tasks.forEach((task) => {
+        const occurrenceDate = (task as any).occurrence_date;
+        if (!occurrenceDate) return;
+
+        try {
+          const taskDate = new Date(occurrenceDate);
+          if (
+            taskDate.getMonth() === currentDate.getMonth() &&
+            taskDate.getFullYear() === currentDate.getFullYear()
+          ) {
+            if (!tasksByDate.has(occurrenceDate)) {
+              tasksByDate.set(occurrenceDate, []);
+            }
+            tasksByDate.get(occurrenceDate)!.push(task);
+          }
+        } catch {}
+      });
+
+      let totalCount = 0;
+      tasksByDate.forEach((dayTasks) => {
+        totalCount += deduplicateTasks(dayTasks).length;
+      });
+
+      return totalCount;
     } else if (viewMode === "week") {
-      // Week view: count tasks in current week
       const weekStart = new Date(currentDate);
-      weekStart.setDate(currentDate.getDate() - currentDate.getDay() + 1); // Monday
+      weekStart.setDate(currentDate.getDate() - currentDate.getDay() + 1);
       weekStart.setHours(0, 0, 0, 0);
 
       const weekEnd = new Date(weekStart);
       weekEnd.setDate(weekStart.getDate() + 7);
 
-      return tasks.filter((task) => {
-        if (!task.start_datetime) return false;
+      const tasksByDate = new Map<string, typeof tasks>();
+      
+      tasks.forEach((task) => {
+        const occurrenceDate = (task as any).occurrence_date;
+        if (!occurrenceDate) return;
 
         try {
-          const taskDate = new Date(task.start_datetime);
-          return taskDate >= weekStart && taskDate < weekEnd;
-        } catch {
-          return false;
-        }
-      }).length;
+          const taskDate = new Date(occurrenceDate);
+          if (taskDate >= weekStart && taskDate < weekEnd) {
+            if (!tasksByDate.has(occurrenceDate)) {
+              tasksByDate.set(occurrenceDate, []);
+            }
+            tasksByDate.get(occurrenceDate)!.push(task);
+          }
+        } catch {}
+      });
+
+      let totalCount = 0;
+      tasksByDate.forEach((dayTasks) => {
+        totalCount += deduplicateTasks(dayTasks).length;
+      });
+
+      return totalCount;
     } else {
-      // Day view: count tasks on current day
-      return tasks.filter((task) => {
-        if (!task.start_datetime) return false;
+      const targetDate = format(currentDate, "yyyy-MM-dd");
 
-        try {
-          const taskDate = new Date(task.start_datetime);
-          return (
-            taskDate.getDate() === currentDate.getDate() &&
-            taskDate.getMonth() === currentDate.getMonth() &&
-            taskDate.getFullYear() === currentDate.getFullYear()
-          );
-        } catch {
-          return false;
-        }
-      }).length;
+      const dayTasks = tasks.filter((task) => {
+        const occurrenceDate = (task as any).occurrence_date;
+        return occurrenceDate === targetDate;
+      });
+
+      return deduplicateTasks(dayTasks).length;
     }
   }, [tasks, currentDate, viewMode]);
 
@@ -156,32 +183,24 @@ function CalendarPageContent() {
   return (
     <CalendarErrorBoundary>
       <div className="h-screen flex flex-col bg-gray-50 text-base">
-        {/* Main Content */}
         <main className="flex-1 flex flex-col p-3 sm:p-4 md:p-6 max-w-[1600px] mx-auto w-full">
-          {/* Page Title - Show only on mobile (< 1024px) */}
           <h1 className="text-3xl font-semibold text-gray-900 mb-2 lg:hidden">
             ปฏิทิน
           </h1>
 
-          {/* Page Subtitle */}
           <div className="mb-4">
             <p className="text-base sm:text-lg text-gray-600">
               ดูและจัดการงานของคุณในมุมมองปฏิทิน
             </p>
           </div>
 
-          {/* Calendar Content */}
           <div className="flex-1 bg-white rounded-lg border border-gray-200 overflow-y-auto flex flex-col">
-            {/* Show error state if there's an error */}
             {tasksError ? (
               <CalendarErrorState error={tasksError} onRetry={refetch} />
             ) : loading ? (
-              /* Show loading skeleton while loading */
               <CalendarSkeleton viewMode={viewMode} />
             ) : (
-              /* Show calendar content - always show calendar even with no tasks */
               <div className="flex flex-col h-full">
-                {/* Calendar Header */}
                 <div className="p-3 sm:p-4 border-b">
                   <CalendarHeader
                     currentDate={currentDate}
@@ -193,7 +212,6 @@ function CalendarPageContent() {
                   />
                 </div>
 
-                {/* Calendar Grid - conditionally render based on view mode */}
                 <div className="flex-1 relative">
                   {viewMode === "month" && (
                     <div
@@ -246,7 +264,6 @@ function CalendarPageContent() {
           </div>
         </main>
 
-        {/* Task Detail Dialog */}
         <TaskDetailDialog
           task={
             selectedTask
@@ -277,7 +294,6 @@ function CalendarPageContent() {
           onDelete={handleTaskDelete}
         />
 
-        {/* Create Task Dialog */}
         <CreateTaskDialog
           isOpen={isCreateDialogOpen}
           prefilledDate={createDialogDate}

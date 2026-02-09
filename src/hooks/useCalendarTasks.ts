@@ -1,6 +1,7 @@
 import { useCalendarTaskContext } from "@/contexts";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import type { Project } from "@/services/api";
+import { expandTasks, type ExpandedTask } from "@/lib/task-expansion-utils";
 
 export interface TaskWithProject {
   id: string;
@@ -12,6 +13,8 @@ export interface TaskWithProject {
   end_datetime?: string;
   location?: string;
   project_id: string;
+  recurring_days?: number;
+  recurring_until?: string;
   project: {
     id: string;
     name: string;
@@ -52,8 +55,12 @@ export function useCalendarTasks() {
     };
   });
 
+  const expandedTasks = useMemo(() => {
+    return expandTasks(tasksWithProject);
+  }, [tasksWithProject]);
+
   return {
-    tasks: tasksWithProject,
+    tasks: expandedTasks,
     projects: projects as Project[],
     loading,
     error,

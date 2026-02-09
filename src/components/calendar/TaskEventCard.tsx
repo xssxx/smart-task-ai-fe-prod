@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { motion, MotionConfig, AnimatePresence } from "framer-motion";
 import { getPriorityColor } from "@/constants";
+import { Repeat, Calendar } from "lucide-react";
 
 interface Task {
   id: string;
@@ -45,6 +46,8 @@ export default function TaskEventCard({
 
   // Use priority color
   const colorClasses = getPriorityColor(task.priority);
+  const isRecurring = (task as any).is_recurring || false;
+  const isMultiDay = (task as any).is_multi_day || false;
 
   return (
     <MotionConfig reducedMotion="user">
@@ -96,11 +99,18 @@ export default function TaskEventCard({
             )}
             layout="position"
           >
-            {/* Task name */}
             <div className="flex items-center justify-between w-full gap-2">
-              <p className="font-semibold truncate flex-1">
-                {task.name}
-              </p>
+              <div className="flex items-center gap-1 flex-1 min-w-0">
+                {isRecurring && (
+                  <Repeat className="w-3 h-3 shrink-0 opacity-70" />
+                )}
+                {isMultiDay && !isRecurring && (
+                  <Calendar className="w-3 h-3 shrink-0 opacity-70" />
+                )}
+                <p className="font-semibold truncate">
+                  {task.name}
+                </p>
+              </div>
               {isMonth && task.start_datetime && (
                 <span className="text-xs whitespace-nowrap">
                   {format(new Date(task.start_datetime), "h:mm a")}
@@ -108,7 +118,6 @@ export default function TaskEventCard({
               )}
             </div>
 
-            {/* Time range row */}
             {!isMonth && task.start_datetime && task.end_datetime && (
               <div className="text-sm opacity-90">
                 {format(new Date(task.start_datetime), "h:mm a")}-{format(new Date(task.end_datetime), "h:mm a")}

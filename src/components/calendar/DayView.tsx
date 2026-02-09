@@ -75,16 +75,35 @@ function DayView({
   onEmptySlotClick,
 }: DayViewProps) {
   // Filter tasks for this day
-  const dayTasks = useMemo(
+  const allDayTasks = useMemo(
     () =>
-      tasks.filter(
-        (task) =>
+      tasks.filter((task) => {
+        // Use occurrence_date if available (from expanded tasks)
+        const occurrenceDate = (task as any).occurrence_date;
+        if (occurrenceDate) {
+          return format(currentDate, "yyyy-MM-dd") === occurrenceDate;
+        }
+        // Fallback to original logic
+        return (
           task.start_datetime &&
           task.end_datetime &&
           isSameDay(parseISO(task.start_datetime), currentDate)
-      ),
+        );
+      }),
     [tasks, currentDate]
   );
+
+  const dayTasks = useMemo(() => {
+    const seenOriginalIds = new Set<string>();
+    return allDayTasks.filter((task) => {
+      const originalId = (task as any).original_id || task.id;
+      if (seenOriginalIds.has(originalId)) {
+        return false; // Skip duplicate
+      }
+      seenOriginalIds.add(originalId);
+      return true;
+    });
+  }, [allDayTasks]);
 
   // Calculate layout for overlapping tasks
   const taskLayout = useMemo(() => calculateTaskLayout(dayTasks), [dayTasks]);
@@ -192,7 +211,12 @@ function DayView({
                     viewMode="day"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onTaskClick(task);
+                      // Pass task with original_id for expanded tasks
+                      const taskToPass = {
+                        ...task,
+                        id: (task as any).original_id || task.id,
+                      };
+                      onTaskClick(taskToPass);
                     }}
                     className="h-full"
                   />

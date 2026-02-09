@@ -13,6 +13,8 @@ export interface Task {
   end_datetime?: string;
   location?: string;
   project_id: string;
+  recurring_days?: number;
+  recurring_until?: string;
 }
 
 interface CalendarTaskContextType {

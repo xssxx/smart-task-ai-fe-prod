@@ -85,11 +85,8 @@ function WeekView({
   return (
     <div className="flex flex-col h-full">
       <div className="relative flex divide-x flex-col md:flex-row">
-        {/* Time margin - hidden on mobile, shown on desktop */}
         <div className="hidden md:block sticky left-0 w-12 bg-background z-10">
-          {/* Header spacer */}
           <div className="sticky top-0 left-0 h-[33px] bg-background z-20 border-b" />
-          {/* Hour labels */}
           <div className="flex flex-col">
             {HOURS.map((hour) => (
               <div key={hour} className="relative h-32 first:mt-0">
@@ -103,14 +100,30 @@ function WeekView({
           </div>
         </div>
 
-        {/* Week days */}
         {weekDays.map((day) => {
-          const dayTasks = tasks.filter(
-            (task) =>
+          const dayDateKey = format(day, "yyyy-MM-dd");
+
+          const allDayTasks = tasks.filter((task) => {
+            const occurrenceDate = (task as any).occurrence_date;
+            if (occurrenceDate) {
+              return occurrenceDate === dayDateKey;
+            }
+            return (
               task.start_datetime &&
               task.end_datetime &&
               isSameDay(parseISO(task.start_datetime), day)
-          );
+            );
+          });
+
+          const seenOriginalIds = new Set<string>();
+          const dayTasks = allDayTasks.filter((task) => {
+            const originalId = (task as any).original_id || task.id;
+            if (seenOriginalIds.has(originalId)) {
+              return false; // Skip duplicate
+            }
+            seenOriginalIds.add(originalId);
+            return true;
+          });
 
           // Calculate layout for overlapping tasks in this day
           const taskLayout = calculateTaskLayout(dayTasks);
@@ -120,7 +133,6 @@ function WeekView({
               key={day.toISOString()}
               className="flex flex-1"
             >
-              {/* Mobile time margin */}
               <div className="block md:hidden sticky left-0 w-12 bg-background z-10">
                 <div className="sticky top-0 left-0 h-[33px] bg-background z-20 border-b" />
                 <div className="flex flex-col">
@@ -139,9 +151,7 @@ function WeekView({
                 </div>
               </div>
 
-              {/* Day content */}
               <div className="flex flex-col flex-1">
-                {/* Day header */}
                 <div className="sticky top-0 z-10 bg-background border-b h-[33px] flex items-center justify-center">
                   <div className="text-sm flex items-center justify-center gap-1">
                     <span className="text-muted-foreground">{format(day, "EEE")}</span>
@@ -149,7 +159,6 @@ function WeekView({
                   </div>
                 </div>
 
-                {/* Hour grid */}
                 <div className="relative">
                   {HOURS.map((hour) => (
                     <div
@@ -159,7 +168,6 @@ function WeekView({
                     />
                   ))}
 
-                  {/* Tasks overlay */}
                   {dayTasks.map((task) => {
                     const project = getProjectForTask(task);
                     if (!project || !task.start_datetime || !task.end_datetime)
@@ -217,7 +225,11 @@ function WeekView({
                           viewMode="week"
                           onClick={(e) => {
                             e.stopPropagation();
-                            onTaskClick(task);
+                            const taskToPass = {
+                              ...task,
+                              id: (task as any).original_id || task.id,
+                            };
+                            onTaskClick(taskToPass);
                           }}
                           className="h-full"
                         />

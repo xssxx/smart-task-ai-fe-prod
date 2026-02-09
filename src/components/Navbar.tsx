@@ -109,7 +109,6 @@ const Navbar = () => {
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
       <div className="flex items-center justify-between px-6 py-5 lg:px-8 pl-16 lg:pl-8">
-        {/* Logo - Show when sidebar is hidden (< 1024px) */}
         <div className="flex items-center gap-4 lg:hidden">
           <div className="flex items-center gap-2">
             <Image src="/logo.svg" alt="Smart Task AI" width={40} height={40} className="object-contain" />
@@ -119,7 +118,6 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* Page Title */}
         {pageTitle && (
           <div className="hidden lg:block">
             <h1 className="text-4xl font-semibold text-gray-900">
@@ -138,7 +136,6 @@ const Navbar = () => {
             <Settings className="w-5.5! h-5.5! text-gray-600 hover:text-gray-900 transition-colors" />
           </Button>
 
-          {/* User Profile Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-2 sm:gap-3 ml-1 sm:ml-2 p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 transition-colors focus:outline-none">
