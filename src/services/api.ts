@@ -9,7 +9,6 @@ export const signup = (payload: SignupRequest) => {
   return apiClient.post("/api/signup", payload);
 };
 
-// Profile API
 export const createProfile = (payload: CreateProfileRequest) => {
   return apiClient.post<{ success: boolean; message: string; data: CreateProfileResponse; error: unknown }>("/api/profiles", payload);
 };
@@ -22,7 +21,6 @@ export const updateProfile = (payload: { first_name: string; last_name: string; 
   return apiClient.patch<{ success: boolean; message: string; data: { account_id: string; first_name: string; last_name: string; nickname?: string; avatar_path?: string; state: string; created_at: string; updated_at: string }; error: unknown }>("/api/profiles", payload);
 };
 
-// Dashboard types
 export interface TaskStatistics {
   todo: number;
   in_progress: number;
@@ -54,7 +52,6 @@ export interface TodayTasksResponse {
   total: number;
 }
 
-// Dashboard API
 export const getTaskStatistics = () => {
   return apiClient.get<{ success: boolean; message: string; data: TaskStatistics; error: unknown }>("/api/dashboard/statistics");
 };
@@ -76,7 +73,6 @@ export const logout = () => {
   window.location.href = ROUTES.LOGIN;
 };
 
-// Project types
 export interface ProjectConfig {
   nickname?: string;
   context?: string;
@@ -103,7 +99,6 @@ export interface ListProjectsResponse {
   pagination: Pagination;
 }
 
-// Project API
 export const listProjects = (limit = 10, offset = 0) => {
   return apiClient.get<{ success: boolean; message: string; data: ListProjectsResponse; error: unknown }>(`/api/projects?limit=${limit}&offset=${offset}`);
 };
@@ -142,27 +137,19 @@ export const deleteProject = (projectId: string) => {
   return apiClient.delete<{ success: boolean; message: string; error: unknown }>(`/api/projects/${projectId}`);
 };
 
-// Task types
 export interface Task {
   id: string;
-  nodeId: string;
-  projectId: string;
   name: string;
-  description: string;
+  description?: string;
   priority: string;
-  startDateTime: string;
-  endDateTime: string;
-  location: string;
-  recurringDays: number;
-  recurringUntil: string;
-  status: {
-    Todo: string;
-    InProgress: string;
-    InReview: string;
-    Done: string;
-  };
-  createdAt: string;
-  updatedAt: string;
+  status: string;
+  start_datetime?: string;
+  end_datetime?: string;
+  location?: string;
+  recurring_days?: number;
+  recurring_until?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface ListTasksResponse {
@@ -170,7 +157,6 @@ export interface ListTasksResponse {
   pagination: Pagination;
 }
 
-// Task API
 export const listTasksByProject = (projectId: string, limit = 10, offset = 0) => {
   return apiClient.get<{ success: boolean; message: string; data: ListTasksResponse; error: unknown }>(
     `/api/${projectId}/tasks?limit=${limit}&offset=${offset}`
@@ -189,6 +175,7 @@ export interface CreateTaskRequest {
   end_datetime?: string;
   location?: string;
   recurring_days?: number;
+  recurring_until?: string;
 }
 
 export const createTask = (projectId: string, payload: CreateTaskRequest) => {
@@ -207,6 +194,7 @@ export interface UpdateTaskRequest {
   location?: string;
   status?: string;
   recurring_days?: number;
+  recurring_until?: string;
 }
 
 export const updateTask = (taskId: string, payload: UpdateTaskRequest) => {
@@ -222,7 +210,6 @@ export const deleteTask = (taskId: string) => {
   );
 };
 
-// Chat API
 export const sendChatMessage = (
   projectId: string,
   payload: SendMessageRequest

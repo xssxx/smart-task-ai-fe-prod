@@ -18,7 +18,6 @@ import { useParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -32,8 +31,6 @@ import {
 import {
   Plus,
   Calendar,
-  MessageSquare,
-  Paperclip,
   MoreHorizontal,
   Filter,
   Search,
@@ -60,11 +57,7 @@ interface BoardTask {
   title: string;
   description: string;
   priority: string;
-  assignees: string[];
   dueDate: string;
-  comments: number;
-  attachments: number;
-  tags: string[];
   status: string;
 }
 
@@ -81,16 +74,12 @@ function transformApiTask(apiTask: ApiTask): BoardTask {
     title: apiTask.name,
     description: apiTask.description || "",
     priority: apiTask.priority?.toLowerCase() || "medium",
-    assignees: [],
-    dueDate: apiTask.endDateTime
-      ? new Date(apiTask.endDateTime).toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-        })
+    dueDate: apiTask.end_datetime
+      ? new Date(apiTask.end_datetime).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      })
       : "",
-    comments: 0,
-    attachments: 0,
-    tags: [],
     status: mapApiStatus(apiTask.status),
   };
 }
@@ -146,19 +135,6 @@ function DraggableTaskCard({
               </p>
             )}
           </div>
-          {task.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              {task.tags.map((tag, idx) => (
-                <Badge
-                  key={idx}
-                  variant="secondary"
-                  className="text-xs px-2 py-0"
-                >
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-          )}
           <div className="flex items-center justify-between">
             <Badge
               variant="outline"
@@ -173,41 +149,6 @@ function DraggableTaskCard({
               </div>
             )}
           </div>
-          {(task.assignees.length > 0 ||
-            task.comments > 0 ||
-            task.attachments > 0) && (
-            <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-              <div className="flex -space-x-2">
-                {task.assignees.map((assignee, idx) => (
-                  <Avatar key={idx} className="w-6 h-6 border-2 border-white">
-                    <AvatarImage
-                      src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${assignee}`}
-                    />
-                    <AvatarFallback className="text-xs">
-                      {assignee
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")}
-                    </AvatarFallback>
-                  </Avatar>
-                ))}
-              </div>
-              <div className="flex items-center gap-3 text-gray-500">
-                {task.comments > 0 && (
-                  <div className="flex items-center gap-1">
-                    <MessageSquare className="w-3.5 h-3.5" />
-                    <span className="text-xs">{task.comments}</span>
-                  </div>
-                )}
-                {task.attachments > 0 && (
-                  <div className="flex items-center gap-1">
-                    <Paperclip className="w-3.5 h-3.5" />
-                    <span className="text-xs">{task.attachments}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
         </div>
       </CardContent>
     </Card>
@@ -227,9 +168,8 @@ function DroppableColumn({
   return (
     <Card
       ref={setNodeRef}
-      className={`h-full flex flex-col transition-all ${
-        isOver ? "ring-2 ring-gray-900 ring-offset-2" : ""
-      }`}
+      className={`h-full flex flex-col transition-all ${isOver ? "ring-2 ring-gray-900 ring-offset-2" : ""
+        }`}
     >
       <CardHeader className="pb-3 shrink-0">
         <div className="flex items-center justify-between">
@@ -397,8 +337,8 @@ export default function BoardPage() {
   const gapSize = 16;
   const totalGaps = Math.max(0, visibleColumns.length - 1) * gapSize;
   const safetyMargin = 8;
-  const columnWidthCalc = visibleColumns.length > 0 
-    ? `calc((100% - ${totalGaps + safetyMargin}px) / ${visibleColumns.length})` 
+  const columnWidthCalc = visibleColumns.length > 0
+    ? `calc((100% - ${totalGaps + safetyMargin}px) / ${visibleColumns.length})`
     : '100%';
 
   const scrollToColumn = useCallback(
@@ -417,7 +357,7 @@ export default function BoardPage() {
     const container = scrollContainerRef.current;
     if (!container) return;
     const isMobileOrTabletPortrait = () => window.innerWidth < 1024;
-    
+
     let scrollTimeout: NodeJS.Timeout;
     const handleScroll = () => {
       if (isDraggingTask || !isMobileOrTabletPortrait()) return;
@@ -438,17 +378,17 @@ export default function BoardPage() {
         });
       }, 150);
     };
-    
+
     const handleResize = () => {
       if (!isMobileOrTabletPortrait()) {
         container.scrollTo({ left: 0, behavior: "auto" });
         setCurrentColumnIndex(0);
       }
     };
-    
+
     container.addEventListener("scroll", handleScroll);
     window.addEventListener("resize", handleResize);
-    
+
     return () => {
       container.removeEventListener("scroll", handleScroll);
       window.removeEventListener("resize", handleResize);
@@ -504,9 +444,8 @@ export default function BoardPage() {
           status: mapColumnToApiStatus(targetColumnId),
         });
         toast.success("อัพเดท Status สำเร็จ", {
-          description: `ย้าย "${activeTask.title}" ไปยัง ${
-            targetColumn?.title || targetColumnId
-          }`,
+          description: `ย้าย "${activeTask.title}" ไปยัง ${targetColumn?.title || targetColumnId
+            }`,
           duration: TOAST_DURATION.SUCCESS,
         });
       } catch (err) {
@@ -598,18 +537,18 @@ export default function BoardPage() {
     <div className="h-full bg-gray-50 flex flex-col overflow-hidden">
       <main className="flex-1 flex flex-col p-4 lg:p-6 w-full overflow-hidden">
         <div className="mb-4 lg:mb-6 shrink-0">
-          {/* Header with Title and Action Buttons */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-            <div>
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-2">
-                บอร์ด
-              </h2>
-              <p className="text-base sm:text-lg text-gray-600">
-                จัดการงานของคุณด้วยบอร์ด Kanban
-              </p>
-            </div>
+          {/* Page Title */}
+          <h1 className="text-3xl font-semibold text-gray-900 mb-2 lg:hidden">
+            บอร์ด
+          </h1>
+          
+          {/* Page Subtitle and Action Buttons */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+            <p className="text-base sm:text-lg text-gray-600">
+              จัดการงานของคุณด้วยบอร์ด Kanban
+            </p>
 
-            {/* Action Buttons - Right aligned */}
+            {/* Action Buttons */}
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               <Button
                 variant="outline"
@@ -618,9 +557,8 @@ export default function BoardPage() {
                 disabled={isLoading}
               >
                 <RefreshCw
-                  className={`w-4 h-4 ${
-                    isLoading ? "animate-spin" : ""
-                  } sm:mr-2`}
+                  className={`w-4 h-4 ${isLoading ? "animate-spin" : ""
+                    } sm:mr-2`}
                 />
                 <span className="hidden sm:inline">รีเฟรช</span>
               </Button>
@@ -747,9 +685,8 @@ export default function BoardPage() {
               <button
                 key={col.id}
                 onClick={() => scrollToColumn(idx)}
-                className={`board-nav-dot ${
-                  idx === currentColumnIndex ? "active" : ""
-                }`}
+                className={`board-nav-dot ${idx === currentColumnIndex ? "active" : ""
+                  }`}
               />
             ))}
           </div>
@@ -777,44 +714,43 @@ export default function BoardPage() {
         >
           <div
             ref={scrollContainerRef}
-            className={`flex-1 flex gap-3 lg:gap-4 overflow-y-hidden pb-4 overflow-x-auto lg:overflow-x-hidden ${
-              isDraggingTask ? "" : "snap-x snap-mandatory scroll-smooth lg:snap-none"
-            }`}
-            style={{ 
-              scrollbarWidth: "none", 
+            className={`flex-1 flex gap-3 lg:gap-4 overflow-y-hidden pb-4 overflow-x-auto lg:overflow-x-hidden ${isDraggingTask ? "" : "snap-x snap-mandatory scroll-smooth lg:snap-none"
+              }`}
+            style={{
+              scrollbarWidth: "none",
               msOverflowStyle: "none",
               ['--column-width' as string]: columnWidthCalc,
             }}
           >
             {isLoading || isApplyingFilter
               ? [1, 2, 3, 4].slice(0, visibleStatuses.size).map((i) => (
-                  <div
-                    key={i}
-                    className={`board-column shrink-0 snap-center h-full ${visibleStatuses.size === 1 ? 'single' : ''}`}
-                  >
-                    <ColumnSkeleton />
-                  </div>
-                ))
+                <div
+                  key={i}
+                  className={`board-column shrink-0 snap-center h-full ${visibleStatuses.size === 1 ? 'single' : ''}`}
+                >
+                  <ColumnSkeleton />
+                </div>
+              ))
               : visibleColumns.map((column) => (
-                  <div
-                    key={column.id}
-                    className={`board-column shrink-0 snap-center h-full ${visibleColumns.length === 1 ? 'single' : ''}`}
+                <div
+                  key={column.id}
+                  className={`board-column shrink-0 snap-center h-full ${visibleColumns.length === 1 ? 'single' : ''}`}
+                >
+                  <DroppableColumn
+                    column={column}
+                    isOver={overColumnId === column.id}
                   >
-                    <DroppableColumn
-                      column={column}
-                      isOver={overColumnId === column.id}
-                    >
-                      {column.tasks.map((task) => (
-                        <DraggableTaskCard
-                          key={task.id}
-                          task={task}
-                          columnId={column.id}
-                          onTaskClick={handleTaskClick}
-                        />
-                      ))}
-                    </DroppableColumn>
-                  </div>
-                ))}
+                    {column.tasks.map((task) => (
+                      <DraggableTaskCard
+                        key={task.id}
+                        task={task}
+                        columnId={column.id}
+                        onTaskClick={handleTaskClick}
+                      />
+                    ))}
+                  </DroppableColumn>
+                </div>
+              ))}
           </div>
           <DragOverlay>
             {activeTask ? <TaskCardOverlay task={activeTask} /> : null}

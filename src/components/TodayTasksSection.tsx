@@ -18,8 +18,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { getPriorityColor, getStatusColor } from "@/constants";
-import { TaskWithProject } from "@/services/api/dashboard";
-import { updateTask } from "@/services/api";
+import { getStatusLabel } from "@/lib/task-utils";
+import { TaskWithProject, updateTask } from "@/services/api";
 import { toast } from "sonner";
 
 interface TodayTasksSectionProps {
@@ -88,16 +88,6 @@ export default function TodayTasksSection({
     }
   };
 
-  const getStatusLabel = (status: string) => {
-    const statusMap: Record<string, string> = {
-      todo: "รอดำเนินการ",
-      in_progress: "กำลังดำเนินการ",
-      in_review: "รอตรวจสอบ",
-      done: "เสร็จสิ้น",
-    };
-    return statusMap[status] || status;
-  };
-
   return (
     <>
       <Card>
@@ -124,7 +114,6 @@ export default function TodayTasksSection({
                   className="flex items-center justify-between gap-3 md:gap-6 p-4 md:p-6 border rounded-lg hover:bg-gray-50 transition-colors min-h-[140px] cursor-pointer"
                   onClick={() => handleCardClick(task.id)}
                 >
-                  {/* Left side */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-2 text-gray-600">
                       <Folder className="w-4 h-4 shrink-0" />
@@ -234,7 +223,6 @@ export default function TodayTasksSection({
         </CardContent>
       </Card>
 
-      {/* Delete Confirmation Dialog */}
       <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>

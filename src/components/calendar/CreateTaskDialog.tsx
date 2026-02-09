@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+
+import { useState, useEffect, memo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -23,27 +24,31 @@ import { toast } from "sonner";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { PRIORITY_OPTIONS, TOAST_DURATION } from "@/constants";
 
-interface CreateTaskModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSuccess: () => void;
-  projectId?: string;
-  projects?: Project[];
+interface CreateTaskDialogProps {
+  isOpen: boolean;
+  prefilledDate: Date | null;
+  prefilledStartDate?: Date | null;
+  projects: Project[];
+  onClose: () => void;
+  onCreate: () => void;
 }
 
-export default function CreateTaskModal({
-  open,
-  onOpenChange,
-  onSuccess,
-  projectId,
+function CreateTaskDialog({
+  isOpen,
+  prefilledDate,
+  prefilledStartDate,
   projects,
-}: CreateTaskModalProps) {
+  onClose,
+  onCreate,
+}: CreateTaskDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [startDateTime, setStartDateTime] = useState<{ date?: Date | null, hasTime: boolean }>({ hasTime: true });
-  const [endDateTime, setEndDateTime] = useState<{ date?: Date | null, hasTime: boolean }>({ hasTime: true });
+  const [startDateTime, setStartDateTime] = useState<{ date?: Date | null; hasTime: boolean }>({ hasTime: true });
+  const [endDateTime, setEndDateTime] = useState<{ date?: Date | null; hasTime: boolean }>({ hasTime: true });
   const [recurringDays, setRecurringDays] = useState<number | undefined>(undefined);
-  const [selectedProjectId, setSelectedProjectId] = useState<string>(projectId || "");
+  const [recurringUntil, setRecurringUntil] = useState<{ date?: Date | null; hasTime: boolean }>({ hasTime: false });
+  const [recurringEndType, setRecurringEndType] = useState<"never" | "on_date">("never");
+  const [selectedProjectId, setSelectedProjectId] = useState<string>("");
   const [formData, setFormData] = useState<CreateTaskRequest>({
     name: "",
     description: "",
@@ -51,10 +56,25 @@ export default function CreateTaskModal({
     location: "",
   });
 
-  const needsProjectSelection = !projectId;
+  // Pre-fill dates when dialog opens
+  useEffect(() => {
+    if (isOpen) {
+      // Pre-fill end_datetime from clicked slot
+      if (prefilledDate) {
+        setEndDateTime({ date: prefilledDate, hasTime: true });
+      }
+
+      // Pre-fill start_datetime if provided (for day/week view hour clicks)
+      if (prefilledStartDate) {
+        setStartDateTime({ date: prefilledStartDate, hasTime: true });
+      }
+    }
+  }, [isOpen, prefilledDate, prefilledStartDate]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    // Validate task name
     if (!formData.name.trim()) {
       setError("กรุณากรอกชื่อ Task");
       toast.error("ข้อมูลไม่ครบถ้วน", {
@@ -64,7 +84,8 @@ export default function CreateTaskModal({
       return;
     }
 
-    if (needsProjectSelection && !selectedProjectId) {
+    // Validate project selection
+    if (!selectedProjectId) {
       setError("กรุณาเลือก Project");
       toast.error("ข้อมูลไม่ครบถ้วน", {
         description: "กรุณาเลือก Project",
@@ -73,6 +94,7 @@ export default function CreateTaskModal({
       return;
     }
 
+    // Validate date range
     if (startDateTime.date && endDateTime.date) {
       if (endDateTime.date <= startDateTime.date) {
         setError("วันเวลาสิ้นสุดต้องมากกว่าวันเวลาเริ่มต้น");
@@ -82,12 +104,19 @@ export default function CreateTaskModal({
         });
         return;
       }
-    }
 
-    const targetProjectId = projectId || selectedProjectId;
-    if (!targetProjectId) {
-      setError("ไม่พบ Project ID");
-      return;
+      // Validate recurring for multi-day tasks
+      if (recurringDays && recurringDays > 0) {
+        const daysDiff = Math.ceil((endDateTime.date.getTime() - startDateTime.date.getTime()) / (1000 * 60 * 60 * 24));
+        if (recurringDays <= daysDiff) {
+          setError(`Task มีระยะเวลา ${daysDiff} วัน แต่ทำประจำทุก ${recurringDays} วัน จะทำให้เกิดการซ้ำซ้อน`);
+          toast.error("การตั้งค่าไม่เหมาะสม", {
+            description: `Task มีระยะเวลา ${daysDiff} วัน ควรตั้งทำประจำอย่างน้อย ${daysDiff + 1} วัน หรือลบการทำประจำออก`,
+            duration: TOAST_DURATION.ERROR,
+          });
+          return;
+        }
+      }
     }
 
     try {
@@ -103,10 +132,16 @@ export default function CreateTaskModal({
       if (startDateTime.date) payload.start_datetime = startDateTime.date.toISOString();
       if (endDateTime.date) payload.end_datetime = endDateTime.date.toISOString();
       if (formData.location?.trim()) payload.location = formData.location.trim();
-      if (recurringDays && recurringDays > 0) payload.recurring_days = recurringDays;
+      if (recurringDays && recurringDays > 0) {
+        payload.recurring_days = recurringDays;
+        if (recurringEndType === "on_date" && recurringUntil.date) {
+          payload.recurring_until = recurringUntil.date.toISOString();
+        }
+      }
 
-      await createTask(targetProjectId, payload);
+      await createTask(selectedProjectId, payload);
 
+      // Reset form
       setFormData({
         name: "",
         description: "",
@@ -116,16 +151,17 @@ export default function CreateTaskModal({
       setStartDateTime({ hasTime: true });
       setEndDateTime({ hasTime: true });
       setRecurringDays(undefined);
-      if (needsProjectSelection) {
-        setSelectedProjectId("");
-      }
+      setRecurringUntil({ hasTime: false });
+      setRecurringEndType("never");
+      setSelectedProjectId("");
 
       toast.success("สร้าง Task สำเร็จ", {
         description: `Task "${payload.name}" ถูกสร้างเรียบร้อยแล้ว`,
         duration: TOAST_DURATION.SUCCESS,
       });
-      handleClose(false);
-      onSuccess();
+
+      handleClose();
+      onCreate();
     } catch (err) {
       setError("ไม่สามารถสร้าง Task ได้ กรุณาลองใหม่");
       toast.error("สร้าง Task ไม่สำเร็จ", {
@@ -144,8 +180,9 @@ export default function CreateTaskModal({
 
   const isDateRangeInvalid = startDateTime.date && endDateTime.date && endDateTime.date <= startDateTime.date;
 
-  const handleClose = (open: boolean) => {
-    if (!open && !isLoading) {
+  const handleClose = () => {
+    if (!isLoading) {
+      // Reset form
       setFormData({
         name: "",
         description: "",
@@ -155,16 +192,16 @@ export default function CreateTaskModal({
       setStartDateTime({ hasTime: true });
       setEndDateTime({ hasTime: true });
       setRecurringDays(undefined);
-      if (needsProjectSelection) {
-        setSelectedProjectId("");
-      }
+      setRecurringUntil({ hasTime: false });
+      setRecurringEndType("never");
+      setSelectedProjectId("");
       setError(null);
+      onClose();
     }
-    onOpenChange(open);
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[500px] max-w-[95vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>สร้าง Task ใหม่</DialogTitle>
@@ -177,33 +214,31 @@ export default function CreateTaskModal({
             </div>
           )}
 
-          {needsProjectSelection && (
-            <div className="space-y-2">
-              <Label>Project <span className="text-rose-500">*</span></Label>
-              <Select
-                value={selectedProjectId}
-                onValueChange={setSelectedProjectId}
-                disabled={isLoading || !projects || projects.length === 0}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder={projects && projects.length > 0 ? "เลือก Project" : "ไม่มี Project"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {projects && projects.length > 0 ? (
-                    projects.map((project) => (
-                      <SelectItem key={project.id} value={project.id}>
-                        {project.name}
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <div className="px-2 py-1.5 text-sm text-gray-500">
-                      ไม่มี Project
-                    </div>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+          <div className="space-y-2">
+            <Label>Project <span className="text-rose-500">*</span></Label>
+            <Select
+              value={selectedProjectId}
+              onValueChange={setSelectedProjectId}
+              disabled={isLoading || !projects || projects.length === 0}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder={projects && projects.length > 0 ? "เลือก Project" : "ไม่มี Project"} />
+              </SelectTrigger>
+              <SelectContent>
+                {projects && projects.length > 0 ? (
+                  projects.map((project) => (
+                    <SelectItem key={project.id} value={project.id}>
+                      {project.name}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <div className="px-2 py-1.5 text-sm text-gray-500">
+                    ไม่มี Project
+                  </div>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
 
           <div className="space-y-2">
             <Label htmlFor="name">ชื่อ Task <span className="text-rose-500">*</span></Label>
@@ -317,23 +352,91 @@ export default function CreateTaskModal({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="recurringDays">ทำซ้ำทุกๆ (วัน)</Label>
-            <Input
-              id="recurringDays"
-              type="number"
-              min="0"
-              value={recurringDays ?? ""}
-              onChange={(e) => setRecurringDays(e.target.value ? parseInt(e.target.value) : undefined)}
-              placeholder="เช่น 7 สำหรับทำซ้ำทุกสัปดาห์"
+            <Label htmlFor="recurringDays">ทำประจำ</Label>
+            <Select
+              value={recurringDays ? recurringDays.toString() : "0"}
+              onValueChange={(value) => {
+                const numValue = parseInt(value);
+                setRecurringDays(numValue === 0 ? undefined : numValue);
+                if (numValue === 0) {
+                  setRecurringEndType("never");
+                  setRecurringUntil({ hasTime: false });
+                }
+              }}
               disabled={isLoading}
-            />
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="ไม่ทำประจำ" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="0">ไม่ทำประจำ</SelectItem>
+                <SelectItem value="1">ทุกวัน</SelectItem>
+                <SelectItem value="7">ทุกสัปดาห์</SelectItem>
+                <SelectItem value="14">ทุก 2 สัปดาห์</SelectItem>
+                <SelectItem value="30">ทุกเดือน</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
+
+          {recurringDays && recurringDays > 0 && (
+            <>
+              <div className="space-y-2">
+                <Label>สิ้นสุดการทำประจำ</Label>
+                <Select
+                  value={recurringEndType}
+                  onValueChange={(value: "never" | "on_date") => {
+                    setRecurringEndType(value);
+                    if (value === "never") {
+                      setRecurringUntil({ hasTime: false });
+                    }
+                  }}
+                  disabled={isLoading}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="never">ไม่เลย</SelectItem>
+                    <SelectItem value="on_date">ในวันที่</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {recurringEndType === "on_date" && (
+                <div className="space-y-2">
+                  <Label>วันที่สิ้นสุด</Label>
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <DateTimePicker
+                        value={recurringUntil}
+                        onChange={setRecurringUntil}
+                        isDisabled={isLoading}
+                        placeholder="เลือกวันที่สิ้นสุดการทำประจำ"
+                      />
+                    </div>
+                    {recurringUntil.date && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setRecurringUntil({ date: null, hasTime: false })}
+                        disabled={isLoading}
+                        className="shrink-0"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
 
           <div className="flex justify-end gap-3 pt-4 flex-col sm:flex-row">
             <Button
               type="button"
               variant="outline"
-              onClick={() => handleClose(false)}
+              onClick={handleClose}
               disabled={isLoading}
               className="w-full sm:w-auto order-2 sm:order-1"
             >
@@ -355,3 +458,5 @@ export default function CreateTaskModal({
     </Dialog>
   );
 }
+
+export default memo(CreateTaskDialog);

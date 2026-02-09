@@ -23,10 +23,9 @@ import {
 import { sendChatMessage, createTask, CreateTaskRequest } from "@/services/api";
 import { ChatMessage, Message, ProposedTask } from "@/types/chat";
 import { getActionBadgeColor, PRIORITY_OPTIONS } from "@/constants";
-import { format } from "date-fns";
-import { th } from "date-fns/locale";
 import { formatDateTime } from "@/lib/date-utils";
 import { getPriorityLabel } from "@/lib/task-utils";
+import { useProfile } from "@/hooks/useProfile";
 import {
   Dialog,
   DialogContent,
@@ -249,13 +248,12 @@ function TaskProposalCard({
 
   return (
     <Card
-      className={`border transition-all ${
-        task.userAction === "accepted"
-          ? "border-green-300 bg-green-50"
-          : task.userAction === "rejected"
+      className={`border transition-all ${task.userAction === "accepted"
+        ? "border-green-300 bg-green-50"
+        : task.userAction === "rejected"
           ? "border-rose-300 bg-rose-50 opacity-60"
           : "border-gray-200 hover:border-gray-300"
-      }`}
+        }`}
     >
       <CardContent className="p-3 sm:p-4">
         <div className="flex flex-col gap-3">
@@ -299,11 +297,10 @@ function TaskProposalCard({
             {isProcessed ? (
               <Badge
                 variant="outline"
-                className={`text-xs ${
-                  task.userAction === "accepted"
-                    ? "bg-green-100 text-green-700 border-green-300"
-                    : "bg-rose-100 text-rose-700 border-rose-300"
-                }`}
+                className={`text-xs ${task.userAction === "accepted"
+                  ? "bg-green-100 text-green-700 border-green-300"
+                  : "bg-rose-100 text-rose-700 border-rose-300"
+                  }`}
               >
                 {task.userAction === "accepted" ? (
                   <>
@@ -367,6 +364,9 @@ export default function AIChatPage() {
   const params = useParams();
   const projectId = params.projectId as string;
 
+  // Get user profile for avatar
+  const { profile } = useProfile();
+
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -389,12 +389,12 @@ export default function AIChatPage() {
       const desktop = window.innerWidth >= 1024; // lg breakpoint
       setIsDesktop(desktop);
     };
-    
+
     // Initial check
     checkScreenSize();
     // Set initial panel state based on screen size
     setIsRightPanelOpen(window.innerWidth >= 1024);
-    
+
     // Listen for resize
     window.addEventListener('resize', checkScreenSize);
     return () => window.removeEventListener('resize', checkScreenSize);
@@ -508,7 +508,7 @@ export default function AIChatPage() {
       });
 
       const responseData = response.data.data;
-      
+
       // Convert backend tasks to ProposedTask format
       const proposedTasks = responseData.tasks?.map((task, idx) => ({
         id: `proposed-${Date.now()}-${idx}`,
@@ -608,14 +608,14 @@ export default function AIChatPage() {
   // Handle save edited task - create task and mark as accepted
   const handleSaveEditedTask = async (editedTask: ProposedTask, location?: string, recurringDays?: number) => {
     if (!editingMessageId) return;
-    
+
     try {
       const payload = proposedTaskToRequest(editedTask, location, recurringDays);
       await createTask(projectId, payload);
-      
+
       // Mark as accepted
       updateTaskAction(editingMessageId, editedTask.id, "accepted");
-      
+
       // Close modal
       setIsEditModalOpen(false);
       setEditingTask(null);
@@ -633,20 +633,15 @@ export default function AIChatPage() {
         <main className={`flex-1 flex flex-col transition-all duration-300 ${isRightPanelOpen ? 'mr-0' : ''}`}>
           {/* Header */}
           <div className="p-6 bg-white border-b border-gray-200">
+            {/* Page Title */}
+            <h1 className="text-3xl font-semibold text-gray-900 mb-2 lg:hidden">
+              AI Task Assistant
+            </h1>
+            
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-black flex items-center justify-center">
-                  <Bot className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900">
-                    AI Task Assistant
-                  </h2>
-                  <p className="text-sm text-gray-600">
-                    สร้างและจัดการ tasks ด้วย AI
-                  </p>
-                </div>
-              </div>
+              <p className="text-base text-gray-600">
+                สร้างและจัดการ tasks ด้วย AI
+              </p>
               <Button
                 variant="outline"
                 size="icon"
@@ -677,9 +672,8 @@ export default function AIChatPage() {
             {messages.map((message) => (
               <div
                 key={message.id}
-                className={`flex gap-4 ${
-                  message.role === "user" ? "flex-row-reverse" : ""
-                }`}
+                className={`flex gap-4 ${message.role === "user" ? "flex-row-reverse" : ""
+                  }`}
               >
                 <div className="shrink-0">
                   {message.role === "assistant" ? (
@@ -688,39 +682,43 @@ export default function AIChatPage() {
                     </div>
                   ) : (
                     <Avatar className="w-8 h-8">
-                      <AvatarImage src="https://api.dicebear.com/7.x/avataaars/svg?seed=user" />
-                      <AvatarFallback>
-                        <User className="w-4 h-4" />
+                      {profile?.avatarPath ? (
+                        <AvatarImage src={profile.avatarPath} alt={profile.firstName} />
+                      ) : null}
+                      <AvatarFallback className="bg-gray-200">
+                        {profile?.firstName && profile?.lastName ? (
+                          <span className="text-xs font-medium text-gray-700">
+                            {profile.firstName[0]}{profile.lastName[0]}
+                          </span>
+                        ) : (
+                          <User className="w-4 h-4 text-gray-600" />
+                        )}
                       </AvatarFallback>
                     </Avatar>
                   )}
                 </div>
 
                 <div
-                  className={`flex-1 ${
-                    message.role === "user" ? "flex justify-end" : ""
-                  }`}
+                  className={`flex-1 ${message.role === "user" ? "flex justify-end" : ""
+                    }`}
                 >
                   <div
-                    className={`inline-block max-w-2xl ${
-                      message.role === "user"
-                        ? "bg-gray-900 text-white rounded-2xl rounded-tr-sm"
-                        : "bg-white border border-gray-200 rounded-2xl rounded-tl-sm"
-                    } p-4 shadow-sm`}
+                    className={`inline-block max-w-2xl ${message.role === "user"
+                      ? "bg-gray-900 text-white rounded-2xl rounded-tr-sm"
+                      : "bg-white border border-gray-200 rounded-2xl rounded-tl-sm"
+                      } p-4 shadow-sm`}
                   >
                     <p
-                      className={`text-sm whitespace-pre-wrap ${
-                        message.role === "user" ? "text-white" : "text-gray-900"
-                      }`}
+                      className={`text-sm whitespace-pre-wrap ${message.role === "user" ? "text-white" : "text-gray-900"
+                        }`}
                     >
                       {message.content}
                     </p>
                     <p
-                      className={`text-xs mt-2 ${
-                        message.role === "user"
-                          ? "text-gray-300"
-                          : "text-gray-500"
-                      }`}
+                      className={`text-xs mt-2 ${message.role === "user"
+                        ? "text-gray-300"
+                        : "text-gray-500"
+                        }`}
                     >
                       {message.timestamp?.toLocaleTimeString("th-TH", {
                         hour: "2-digit",
@@ -831,7 +829,7 @@ export default function AIChatPage() {
         </main>
 
         {/* Right Panel - Proposed Tasks */}
-        <aside 
+        <aside
           className={`
             ${isRightPanelOpen ? 'w-80 lg:w-96 opacity-100' : 'w-0 opacity-0'} 
             bg-white border-l border-gray-200 flex flex-col h-full
@@ -854,7 +852,7 @@ export default function AIChatPage() {
               <X className="w-4 h-4" />
             </Button>
           </div>
-          
+
           <div className="flex-1 overflow-y-auto p-4 space-y-3 min-w-[320px] lg:min-w-[384px]">
             {getAllProposedTasks().length === 0 ? (
               <div className="text-center py-8 text-gray-500">
@@ -878,7 +876,7 @@ export default function AIChatPage() {
 
         {/* Overlay for mobile when panel is open */}
         {isRightPanelOpen && !isDesktop && (
-          <div 
+          <div
             className="fixed inset-0 bg-black/30 z-30 lg:hidden transition-opacity duration-300"
             onClick={() => setIsRightPanelOpen(false)}
           />

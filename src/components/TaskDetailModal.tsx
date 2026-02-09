@@ -42,6 +42,7 @@ interface TaskData {
   end_datetime: string | null;
   location: string | null;
   recurring_days: number | null;
+  recurring_until: string | null;
 }
 
 export default function TaskDetailModal({
@@ -59,6 +60,8 @@ export default function TaskDetailModal({
   
   const [startDateTime, setStartDateTime] = useState<{ date?: Date | null, hasTime: boolean }>({ hasTime: true });
   const [endDateTime, setEndDateTime] = useState<{ date?: Date | null, hasTime: boolean }>({ hasTime: true });
+  const [recurringUntil, setRecurringUntil] = useState<{ date?: Date | null; hasTime: boolean }>({ hasTime: false });
+  const [recurringEndType, setRecurringEndType] = useState<"never" | "on_date">("never");
   
   const [formData, setFormData] = useState<TaskData>({
     id: "",
@@ -70,6 +73,7 @@ export default function TaskDetailModal({
     end_datetime: null,
     location: null,
     recurring_days: null,
+    recurring_until: null,
   });
 
   useEffect(() => {
@@ -104,6 +108,7 @@ export default function TaskDetailModal({
         const endDateTimeValue = (rawTask.end_datetime || rawTask.endDateTime) as string | null;
         const locationValue = (rawTask.location) as string | null;
         const recurringDaysValue = (rawTask.recurring_days || rawTask.recurringDays) as number | null;
+        const recurringUntilValue = (rawTask.recurring_until || rawTask.recurringUntil) as string | null;
         
         setFormData({
           id: task.id,
@@ -115,6 +120,7 @@ export default function TaskDetailModal({
           end_datetime: endDateTimeValue || null,
           location: locationValue || null,
           recurring_days: recurringDaysValue || null,
+          recurring_until: recurringUntilValue || null,
         });
         
         setStartDateTime({
@@ -125,6 +131,11 @@ export default function TaskDetailModal({
           date: endDateTimeValue ? new Date(endDateTimeValue) : null,
           hasTime: true,
         });
+        setRecurringUntil({
+          date: recurringUntilValue ? new Date(recurringUntilValue) : null,
+          hasTime: false,
+        });
+        setRecurringEndType(recurringUntilValue ? "on_date" : "never");
       }
     } catch (err) {
       setError("ไม่สามารถโหลดข้อมูล Task ได้");
@@ -151,6 +162,19 @@ export default function TaskDetailModal({
           duration: TOAST_DURATION.ERROR,
         });
         return;
+      }
+
+      // Validate recurring for multi-day tasks
+      if (formData.recurring_days && formData.recurring_days > 0) {
+        const daysDiff = Math.ceil((endDateTime.date.getTime() - startDateTime.date.getTime()) / (1000 * 60 * 60 * 24));
+        if (formData.recurring_days <= daysDiff) {
+          setError(`Task มีระยะเวลา ${daysDiff} วัน แต่ทำประจำทุก ${formData.recurring_days} วัน จะทำให้เกิดการซ้ำซ้อน`);
+          toast.error("การตั้งค่าไม่เหมาะสม", {
+            description: `Task มีระยะเวลา ${daysDiff} วัน ควรตั้งทำประจำอย่างน้อย ${daysDiff + 1} วัน หรือลบการทำประจำออก`,
+            duration: TOAST_DURATION.ERROR,
+          });
+          return;
+        }
       }
     }
 
@@ -179,6 +203,14 @@ export default function TaskDetailModal({
       }
       if (formData.recurring_days && formData.recurring_days > 0) {
         payload.recurring_days = formData.recurring_days;
+        if (recurringEndType === "on_date" && recurringUntil.date) {
+          payload.recurring_until = recurringUntil.date.toISOString();
+        } else {
+          payload.recurring_until = undefined;
+        }
+      } else {
+        payload.recurring_days = undefined;
+        payload.recurring_until = undefined;
       }
 
       await updateTask(formData.id, payload);
@@ -380,11 +412,11 @@ export default function TaskDetailModal({
                   <DateTimePicker
                     value={endDateTime}
                     onChange={setEndDateTime}
-                    isDisabled={!isEditing || isSaving}
+                    isDisabled={!isEditing || isSaving || formData.status !== 'todo'}
                     placeholder="เลือกวันเวลาสิ้นสุด"
                   />
                 </div>
-                {isEditing && endDateTime.date && (
+                {isEditing && endDateTime.date && formData.status === 'todo' && (
                   <Button
                     type="button"
                     variant="outline"
@@ -402,6 +434,11 @@ export default function TaskDetailModal({
                   วันเวลาสิ้นสุดต้องมากกว่าวันเวลาเริ่มต้น
                 </p>
               )}
+              {formData.status !== 'todo' && (
+                <p className="text-xs text-muted-foreground">
+                  ไม่สามารถแก้ไขวันเวลาสิ้นสุดได้เมื่อ status ไม่ใช่ Todo
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -417,21 +454,88 @@ export default function TaskDetailModal({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="recurringDays">ทำซ้ำทุกๆ (วัน)</Label>
-              <Input
-                id="recurringDays"
-                type="number"
-                min="0"
-                value={formData.recurring_days ?? ""}
-                onChange={(e) => setFormData((prev) => ({ 
-                  ...prev, 
-                  recurring_days: e.target.value ? parseInt(e.target.value) : null 
-                }))}
-                placeholder="เช่น 7 สำหรับทำซ้ำทุกสัปดาห์"
+              <Label htmlFor="recurringDays">ทำประจำ</Label>
+              <Select
+                value={formData.recurring_days ? formData.recurring_days.toString() : "0"}
+                onValueChange={(value) => {
+                  const numValue = parseInt(value);
+                  setFormData((prev) => ({
+                    ...prev,
+                    recurring_days: numValue === 0 ? null : numValue
+                  }));
+                  if (numValue === 0) {
+                    setRecurringEndType("never");
+                    setRecurringUntil({ hasTime: false });
+                  }
+                }}
                 disabled={!isEditing || isSaving}
-                className={!isEditing ? "bg-gray-50" : ""}
-              />
+              >
+                <SelectTrigger className={cn("w-full", !isEditing && "bg-gray-50")}>
+                  <SelectValue placeholder="ไม่ทำประจำ" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">ไม่ทำประจำ</SelectItem>
+                  <SelectItem value="1">ทุกวัน</SelectItem>
+                  <SelectItem value="7">ทุกสัปดาห์</SelectItem>
+                  <SelectItem value="14">ทุก 2 สัปดาห์</SelectItem>
+                  <SelectItem value="30">ทุกเดือน</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
+
+            {formData.recurring_days && formData.recurring_days > 0 && (
+              <>
+                <div className="space-y-2">
+                  <Label>สิ้นสุดการทำประจำ</Label>
+                  <Select
+                    value={recurringEndType}
+                    onValueChange={(value: "never" | "on_date") => {
+                      setRecurringEndType(value);
+                      if (value === "never") {
+                        setRecurringUntil({ hasTime: false });
+                      }
+                    }}
+                    disabled={!isEditing || isSaving}
+                  >
+                    <SelectTrigger className={cn("w-full", !isEditing && "bg-gray-50")}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="never">ไม่เลย</SelectItem>
+                      <SelectItem value="on_date">ในวันที่</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {recurringEndType === "on_date" && (
+                  <div className="space-y-2">
+                    <Label>วันที่สิ้นสุด</Label>
+                    <div className="flex gap-2">
+                      <div className="flex-1">
+                        <DateTimePicker
+                          value={recurringUntil}
+                          onChange={setRecurringUntil}
+                          isDisabled={!isEditing || isSaving}
+                          placeholder="เลือกวันที่สิ้นสุดการทำประจำ"
+                        />
+                      </div>
+                      {isEditing && recurringUntil.date && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={() => setRecurringUntil({ date: null, hasTime: false })}
+                          disabled={isSaving}
+                          className="shrink-0"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
 
             {isEditing && (
               <div className="flex justify-end gap-3 pt-4 flex-col sm:flex-row">
@@ -467,7 +571,6 @@ export default function TaskDetailModal({
         )}
       </DialogContent>
 
-      {/* Delete Confirmation Modal */}
       <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>

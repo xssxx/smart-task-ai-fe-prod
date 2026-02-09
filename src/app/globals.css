@@ -119,11 +119,12 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-kanit), sans-serif;
   }
-  
+
   /* Set Kanit as default font for all elements */
   html {
     font-family: var(--font-kanit), sans-serif;
@@ -136,6 +137,7 @@
     opacity: 0;
     transform: scale(0.95);
   }
+
   100% {
     opacity: 1;
     transform: scale(1);
@@ -147,6 +149,7 @@
     opacity: 1;
     transform: scale(1);
   }
+
   100% {
     opacity: 0;
     transform: scale(0.95);
@@ -167,6 +170,7 @@
     height: 0;
     opacity: 0;
   }
+
   to {
     height: var(--radix-collapsible-content-height);
     opacity: 1;
@@ -178,6 +182,7 @@
     height: var(--radix-collapsible-content-height);
     opacity: 1;
   }
+
   to {
     height: 0;
     opacity: 0;
@@ -191,6 +196,7 @@
 .animate-collapsible-up {
   animation: collapsible-up 0.2s ease-out;
 }
+
 /* Custom Sonner Toast Styles */
 [data-sonner-toaster] {
   --normal-bg: oklch(1 0 0) !important;
@@ -254,13 +260,17 @@
 .board-nav-dot.active {
   @apply bg-gray-600;
 }
+
 /* Global font override to ensure Kanit is used everywhere */
 * {
   font-family: var(--font-kanit), sans-serif !important;
 }
 
 /* Specific overrides for common elements */
-input, textarea, select, button {
+input,
+textarea,
+select,
+button {
   font-family: var(--font-kanit), sans-serif !important;
 }
 
@@ -283,7 +293,7 @@ input, textarea, select, button {
     min-width: 0;
     max-width: 100%;
   }
-  
+
   .board-column.single {
     width: 100%;
     flex: 1 1 100%;

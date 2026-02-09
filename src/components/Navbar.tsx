@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -23,8 +23,18 @@ import { logout, getProfile } from "@/services/api";
 import { ROUTES } from "@/constants";
 import { useLoading } from "@/components/LoadingProvider";
 
+// Page titles mapping
+const PAGE_TITLES: Record<string, string> = {
+  "/app/home": "แดชบอร์ด",
+  "/app/calendar": "ปฏิทิน",
+  "/app/profile": "โปรไฟล์ของฉัน",
+  "board": "บอร์ด",
+  "chat": "AI Task Assistant",
+};
+
 const Navbar = () => {
   const router = useRouter();
+  const pathname = usePathname();
   const { startLoading } = useLoading();
   const [profile, setProfile] = useState<{
     firstName: string;
@@ -73,10 +83,32 @@ const Navbar = () => {
     return profile.nickname || profile.firstName || "User";
   };
 
+  // Get current page title
+  const getCurrentPageTitle = () => {
+    // Check for exact match first
+    if (PAGE_TITLES[pathname]) {
+      return PAGE_TITLES[pathname];
+    }
+
+    if (pathname.includes("/board")) {
+      return PAGE_TITLES["board"];
+    }
+    if (pathname.includes("/chat")) {
+      return PAGE_TITLES["chat"];
+    }
+
+    if (pathname.startsWith("/app/") && pathname !== "/app/home" && pathname !== "/app/calendar" && pathname !== "/app/profile") {
+      return "โปรเจกต์";
+    }
+
+    return null;
+  };
+
+  const pageTitle = getCurrentPageTitle();
+
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
       <div className="flex items-center justify-between px-6 py-5 lg:px-8 pl-16 lg:pl-8">
-        {/* Logo - Show when sidebar is hidden (< 1024px) */}
         <div className="flex items-center gap-4 lg:hidden">
           <div className="flex items-center gap-2">
             <Image src="/logo.svg" alt="Smart Task AI" width={40} height={40} className="object-contain" />
@@ -85,10 +117,17 @@ const Navbar = () => {
             </h1>
           </div>
         </div>
-        
-        {/* Empty div for desktop to maintain layout */}
-        <div className="hidden lg:block"></div>
-        
+
+        {pageTitle && (
+          <div className="hidden lg:block">
+            <h1 className="text-4xl font-semibold text-gray-900">
+              {pageTitle}
+            </h1>
+          </div>
+        )}
+
+        {!pageTitle && <div className="hidden lg:block"></div>}
+
         <div className="flex items-center">
           <Button variant="ghost" size="icon" className="h-12 w-12 sm:h-13 sm:w-13 hover:bg-transparent">
             <Bell className="w-5.5! h-5.5! text-gray-600 hover:text-gray-900 transition-colors" />
@@ -97,7 +136,6 @@ const Navbar = () => {
             <Settings className="w-5.5! h-5.5! text-gray-600 hover:text-gray-900 transition-colors" />
           </Button>
 
-          {/* User Profile Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-2 sm:gap-3 ml-1 sm:ml-2 p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 transition-colors focus:outline-none">
