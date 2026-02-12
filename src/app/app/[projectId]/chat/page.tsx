@@ -51,13 +51,15 @@ interface EditProposedTaskModalProps {
   task: ProposedTask | null;
   isOpen: boolean;
   onClose: () => void;
-  onSave: (task: ProposedTask, location?: string, recurringDays?: number) => void;
+  onSave: (task: ProposedTask, location?: string, recurringDays?: number, recurringUntil?: string) => void;
 }
 
 function EditProposedTaskModal({ task, isOpen, onClose, onSave }: EditProposedTaskModalProps) {
   const [editedTask, setEditedTask] = useState<ProposedTask | null>(null);
   const [startDateTime, setStartDateTime] = useState<{ date?: Date | null, hasTime: boolean }>({ hasTime: true });
   const [endDateTime, setEndDateTime] = useState<{ date?: Date | null, hasTime: boolean }>({ hasTime: true });
+  const [recurringUntil, setRecurringUntil] = useState<{ date?: Date | null; hasTime: boolean }>({ hasTime: false });
+  const [recurringEndType, setRecurringEndType] = useState<"never" | "on_date">("never");
   const [location, setLocation] = useState("");
   const [recurringDays, setRecurringDays] = useState<number | null>(null);
 
@@ -74,6 +76,8 @@ function EditProposedTaskModal({ task, isOpen, onClose, onSave }: EditProposedTa
       });
       setLocation("");
       setRecurringDays(null);
+      setRecurringUntil({ date: null, hasTime: false });
+      setRecurringEndType("never");
     }
   }, [task]);
 
@@ -85,8 +89,13 @@ function EditProposedTaskModal({ task, isOpen, onClose, onSave }: EditProposedTa
       start_datetime: startDateTime.date?.toISOString() || editedTask.start_datetime,
       end_datetime: endDateTime.date?.toISOString() || editedTask.end_datetime,
     };
-    onSave(updatedTask, location || undefined, recurringDays || undefined);
+    const recurringUntilValue = recurringEndType === "on_date" && recurringUntil.date
+      ? recurringUntil.date.toISOString()
+      : undefined;
+    onSave(updatedTask, location || undefined, recurringDays || undefined, recurringUntilValue);
   };
+
+  const isDateRangeInvalid = startDateTime.date && endDateTime.date && endDateTime.date <= startDateTime.date;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -188,6 +197,11 @@ function EditProposedTaskModal({ task, isOpen, onClose, onSave }: EditProposedTa
                 </Button>
               )}
             </div>
+            {isDateRangeInvalid && (
+              <p className="text-xs text-rose-600">
+                วันเวลาสิ้นสุดต้องมากกว่าวันเวลาเริ่มต้น
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -201,16 +215,81 @@ function EditProposedTaskModal({ task, isOpen, onClose, onSave }: EditProposedTa
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="recurringDays">ทำซ้ำทุกๆ (วัน)</Label>
-            <Input
-              id="recurringDays"
-              type="number"
-              min="0"
-              value={recurringDays ?? ""}
-              onChange={(e) => setRecurringDays(e.target.value ? parseInt(e.target.value) : null)}
-              placeholder="เช่น 7 สำหรับทำซ้ำทุกสัปดาห์"
-            />
+            <Label htmlFor="recurringDays">ทำประจำ</Label>
+            <Select
+              value={recurringDays ? recurringDays.toString() : "0"}
+              onValueChange={(value) => {
+                const numValue = parseInt(value);
+                setRecurringDays(numValue === 0 ? null : numValue);
+                if (numValue === 0) {
+                  setRecurringEndType("never");
+                  setRecurringUntil({ date: null, hasTime: false });
+                }
+              }}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="ไม่ทำประจำ" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="0">ไม่ทำประจำ</SelectItem>
+                <SelectItem value="1">ทุกวัน</SelectItem>
+                <SelectItem value="7">ทุกสัปดาห์</SelectItem>
+                <SelectItem value="14">ทุก 2 สัปดาห์</SelectItem>
+                <SelectItem value="30">ทุกเดือน</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
+
+          {recurringDays && recurringDays > 0 && (
+            <>
+              <div className="space-y-2">
+                <Label>สิ้นสุดการทำประจำ</Label>
+                <Select
+                  value={recurringEndType}
+                  onValueChange={(value: "never" | "on_date") => {
+                    setRecurringEndType(value);
+                    if (value === "never") {
+                      setRecurringUntil({ date: null, hasTime: false });
+                    }
+                  }}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="never">ไม่เลย</SelectItem>
+                    <SelectItem value="on_date">ในวันที่</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {recurringEndType === "on_date" && (
+                <div className="space-y-2">
+                  <Label>วันที่สิ้นสุด</Label>
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <DateTimePicker
+                        value={recurringUntil}
+                        onChange={setRecurringUntil}
+                        placeholder="เลือกวันที่สิ้นสุดการทำประจำ"
+                      />
+                    </div>
+                    {recurringUntil.date && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setRecurringUntil({ date: null, hasTime: false })}
+                        className="shrink-0"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </div>
 
         <DialogFooter className="flex-col sm:flex-row gap-2">
@@ -323,7 +402,7 @@ function TaskProposalCard({
                   onClick={() => onAccept(task)}
                 >
                   <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1" />
-                  <span className="hidden sm:inline">ยอมรับ</span>
+                  <span className="hidden lg:inline">ยอมรับ</span>
                 </Button>
                 <Button
                   size="sm"
@@ -332,7 +411,7 @@ function TaskProposalCard({
                   onClick={() => onEdit(task)}
                 >
                   <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1" />
-                  <span className="hidden sm:inline">แก้ไข</span>
+                  <span className="hidden lg:inline">แก้ไข</span>
                 </Button>
                 <Button
                   size="sm"
@@ -341,7 +420,7 @@ function TaskProposalCard({
                   onClick={() => onReject(task)}
                 >
                   <X className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1" />
-                  <span className="hidden sm:inline">ปฏิเสธ</span>
+                  <span className="hidden lg:inline">ปฏิเสธ</span>
                 </Button>
               </div>
             )}
@@ -571,7 +650,12 @@ export default function AIChatPage() {
   };
 
   // Convert ProposedTask to CreateTaskRequest
-  const proposedTaskToRequest = (task: ProposedTask, location?: string, recurringDays?: number): CreateTaskRequest => ({
+  const proposedTaskToRequest = (
+    task: ProposedTask,
+    location?: string,
+    recurringDays?: number,
+    recurringUntil?: string
+  ): CreateTaskRequest => ({
     name: task.name,
     description: task.description,
     priority: task.priority,
@@ -579,6 +663,7 @@ export default function AIChatPage() {
     end_datetime: task.end_datetime,
     ...(location && { location }),
     ...(recurringDays && recurringDays > 0 && { recurring_days: recurringDays }),
+    ...(recurringUntil && { recurring_until: recurringUntil }),
   });
 
   // Handle accept task
@@ -606,11 +691,16 @@ export default function AIChatPage() {
   };
 
   // Handle save edited task - create task and mark as accepted
-  const handleSaveEditedTask = async (editedTask: ProposedTask, location?: string, recurringDays?: number) => {
+  const handleSaveEditedTask = async (
+    editedTask: ProposedTask,
+    location?: string,
+    recurringDays?: number,
+    recurringUntil?: string
+  ) => {
     if (!editingMessageId) return;
 
     try {
-      const payload = proposedTaskToRequest(editedTask, location, recurringDays);
+      const payload = proposedTaskToRequest(editedTask, location, recurringDays, recurringUntil);
       await createTask(projectId, payload);
 
       // Mark as accepted
@@ -637,7 +727,7 @@ export default function AIChatPage() {
             <h1 className="text-3xl font-semibold text-gray-900 mb-2 lg:hidden">
               AI Task Assistant
             </h1>
-            
+
             <div className="flex items-center justify-between">
               <p className="text-base text-gray-600">
                 สร้างและจัดการ tasks ด้วย AI

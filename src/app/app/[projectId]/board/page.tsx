@@ -48,7 +48,7 @@ import {
 } from "@/services/api";
 import CreateTaskModal from "@/components/CreateTaskModal";
 import TaskDetailModal from "@/components/TaskDetailModal";
-import { toast } from "sonner";
+import { toast } from "@/lib/enhanced-toast";
 import { getPriorityColor, TOAST_DURATION } from "@/constants";
 import { mapApiStatus, mapColumnToApiStatus } from "@/lib/task-utils";
 
@@ -444,8 +444,11 @@ export default function BoardPage() {
           status: mapColumnToApiStatus(targetColumnId),
         });
         toast.success("อัพเดท Status สำเร็จ", {
-          description: `ย้าย "${activeTask.title}" ไปยัง ${targetColumn?.title || targetColumnId
-            }`,
+          description: (
+            <>
+              ย้าย <strong>{activeTask.title}</strong> ไปยัง <strong>{targetColumn?.title || targetColumnId}</strong>
+            </>
+          ),
           duration: TOAST_DURATION.SUCCESS,
         });
       } catch (err) {

@@ -23,7 +23,7 @@ import {
 import { cn } from "@/lib/utils";
 import { getTaskById, updateTask, deleteTask, UpdateTaskRequest } from "@/services/api";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
-import { toast } from "sonner";
+import { toast } from "@/lib/enhanced-toast";
 import { PRIORITY_OPTIONS, STATUS_OPTIONS, TOAST_DURATION, getPriorityColor } from "@/constants";
 
 interface TaskDetailDialogTask {
@@ -215,36 +215,31 @@ function TaskDetailDialog({
         status: formData.status,
       };
 
-      if (formData.description?.trim()) {
-        payload.description = formData.description.trim();
-      }
-
-      if (startDateTime.date) {
-        payload.start_datetime = startDateTime.date.toISOString();
-      }
-      if (endDateTime.date) {
-        payload.end_datetime = endDateTime.date.toISOString();
-      }
-      if (formData.location?.trim()) {
-        payload.location = formData.location.trim();
-      }
+      payload.description = formData.description?.trim() || null;
+      payload.location = formData.location?.trim() || null;
+      payload.start_datetime = startDateTime.date ? startDateTime.date.toISOString() : null;
+      payload.end_datetime = endDateTime.date ? endDateTime.date.toISOString() : null;
       if (formData.recurring_days && formData.recurring_days > 0) {
         payload.recurring_days = formData.recurring_days;
         if (recurringEndType === "on_date" && recurringUntil.date) {
           payload.recurring_until = recurringUntil.date.toISOString();
         } else {
-          payload.recurring_until = undefined;
+          payload.recurring_until = null;
         }
       } else {
-        payload.recurring_days = undefined;
-        payload.recurring_until = undefined;
+        payload.recurring_days = null;
+        payload.recurring_until = null;
       }
 
       await updateTask(formData.id, payload);
 
       setIsEditing(false);
       toast.success("บันทึก Task สำเร็จ", {
-        description: `Task "${formData.name}" ถูกอัพเดทเรียบร้อยแล้ว`,
+        description: (
+          <>
+            Task <strong>{formData.name}</strong> ถูกอัพเดทเรียบร้อยแล้ว
+          </>
+        ),
         duration: TOAST_DURATION.SUCCESS,
       });
       onClose();
@@ -282,7 +277,11 @@ function TaskDetailDialog({
       await deleteTask(formData.id);
       setShowDeleteConfirm(false);
       toast.success("ลบ Task สำเร็จ", {
-        description: `Task "${formData.name}" ถูกลบเรียบร้อยแล้ว`,
+        description: (
+          <>
+            Task <strong>{formData.name}</strong> ถูกลบเรียบร้อยแล้ว
+          </>
+        ),
         duration: TOAST_DURATION.SUCCESS,
       });
       onClose();

@@ -13,7 +13,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Bell,
   Settings,
   ChevronDown,
   LogOut,
@@ -22,6 +21,7 @@ import {
 import { logout, getProfile } from "@/services/api";
 import { ROUTES } from "@/constants";
 import { useLoading } from "@/components/LoadingProvider";
+import { NotificationDropdown } from "@/components/NotificationDropdown";
 
 // Page titles mapping
 const PAGE_TITLES: Record<string, string> = {
@@ -129,9 +129,7 @@ const Navbar = () => {
         {!pageTitle && <div className="hidden lg:block"></div>}
 
         <div className="flex items-center">
-          <Button variant="ghost" size="icon" className="h-12 w-12 sm:h-13 sm:w-13 hover:bg-transparent">
-            <Bell className="w-5.5! h-5.5! text-gray-600 hover:text-gray-900 transition-colors" />
-          </Button>
+          <NotificationDropdown />
           <Button variant="ghost" size="icon" className="h-12 w-12 sm:h-13 sm:w-13 hover:bg-transparent">
             <Settings className="w-5.5! h-5.5! text-gray-600 hover:text-gray-900 transition-colors" />
           </Button>

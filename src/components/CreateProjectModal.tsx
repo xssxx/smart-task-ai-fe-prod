@@ -21,6 +21,7 @@ import {
 import { Loader2, ChevronDown } from "lucide-react";
 import { createProject, CreateProjectRequest } from "@/services/api";
 import { cn } from "@/lib/utils";
+import { toast } from "@/lib/enhanced-toast";
 
 interface CreateProjectModalProps {
   open: boolean;
@@ -84,10 +85,21 @@ export default function CreateProjectModal({
       });
       setShowAdvanced(false);
 
+      toast.success("สร้าง Workspace สำเร็จ", {
+        description: (
+          <>
+            Workspace <strong>{formData.name.trim()}</strong> ถูกสร้างเรียบร้อยแล้ว
+          </>
+        ),
+      });
+
       onOpenChange(false);
       onSuccess?.();
     } catch (err) {
       setError("ไม่สามารถสร้าง Workspace ได้ กรุณาลองใหม่อีกครั้ง");
+      toast.error("เกิดข้อผิดพลาด", {
+        description: "ไม่สามารถสร้าง Workspace ได้ กรุณาลองใหม่อีกครั้ง",
+      });
     } finally {
       setIsLoading(false);
     }

@@ -74,7 +74,7 @@ export function CalendarTaskProvider({ children }: { children: React.ReactNode }
             if (tasksResponse.data.success && tasksResponse.data.data) {
               const projectTasks = tasksResponse.data.data.items || [];
               const scheduledTasks = projectTasks
-                .filter((task: ApiTask) => task.end_datetime)
+                .filter((task: ApiTask) => task.start_datetime && task.end_datetime)
                 .map((task: ApiTask): Task => ({
                   ...task,
                   project_id: project.id,

@@ -22,7 +22,7 @@ import {
 import { cn } from "@/lib/utils";
 import { getTaskById, updateTask, deleteTask, UpdateTaskRequest } from "@/services/api";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
-import { toast } from "sonner";
+import { toast } from "@/lib/enhanced-toast";
 import { PRIORITY_OPTIONS, STATUS_OPTIONS, TOAST_DURATION } from "@/constants";
 
 interface TaskDetailModalProps {
@@ -57,12 +57,12 @@ export default function TaskDetailModal({
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const [startDateTime, setStartDateTime] = useState<{ date?: Date | null, hasTime: boolean }>({ hasTime: true });
   const [endDateTime, setEndDateTime] = useState<{ date?: Date | null, hasTime: boolean }>({ hasTime: true });
   const [recurringUntil, setRecurringUntil] = useState<{ date?: Date | null; hasTime: boolean }>({ hasTime: false });
   const [recurringEndType, setRecurringEndType] = useState<"never" | "on_date">("never");
-  
+
   const [formData, setFormData] = useState<TaskData>({
     id: "",
     name: "",
@@ -90,26 +90,26 @@ export default function TaskDetailModal({
 
   const fetchTaskData = async () => {
     if (!taskId) return;
-    
+
     try {
       setIsLoading(true);
       setError(null);
-      
+
       const response = await getTaskById(taskId);
       const task = response.data?.data;
-      
+
       if (task) {
         const rawTask = task as unknown as Record<string, unknown>;
-        const statusValue = typeof rawTask.status === 'string' 
-          ? rawTask.status.toLowerCase() 
+        const statusValue = typeof rawTask.status === 'string'
+          ? rawTask.status.toLowerCase()
           : 'todo';
-        
+
         const startDateTimeValue = (rawTask.start_datetime || rawTask.startDateTime) as string | null;
         const endDateTimeValue = (rawTask.end_datetime || rawTask.endDateTime) as string | null;
         const locationValue = (rawTask.location) as string | null;
         const recurringDaysValue = (rawTask.recurring_days || rawTask.recurringDays) as number | null;
         const recurringUntilValue = (rawTask.recurring_until || rawTask.recurringUntil) as string | null;
-        
+
         setFormData({
           id: task.id,
           name: task.name || "",
@@ -122,7 +122,7 @@ export default function TaskDetailModal({
           recurring_days: recurringDaysValue || null,
           recurring_until: recurringUntilValue || null,
         });
-        
+
         setStartDateTime({
           date: startDateTimeValue ? new Date(startDateTimeValue) : null,
           hasTime: true,
@@ -181,44 +181,43 @@ export default function TaskDetailModal({
     try {
       setIsSaving(true);
       setError(null);
-      
+
       const payload: UpdateTaskRequest = {
         name: formData.name.trim(),
         priority: formData.priority,
         status: formData.status,
       };
-      
-      if (formData.description?.trim()) {
-        payload.description = formData.description.trim();
-      }
-      
-      if (startDateTime.date) {
-        payload.start_datetime = startDateTime.date.toISOString();
-      }
-      if (endDateTime.date) {
-        payload.end_datetime = endDateTime.date.toISOString();
-      }
-      if (formData.location?.trim()) {
-        payload.location = formData.location.trim();
-      }
+
+      payload.description = formData.description?.trim() || null;
+      payload.location = formData.location?.trim() || null;
+      payload.start_datetime = startDateTime.date ? startDateTime.date.toISOString() : null;
+      payload.end_datetime = endDateTime.date ? endDateTime.date.toISOString() : null;
       if (formData.recurring_days && formData.recurring_days > 0) {
         payload.recurring_days = formData.recurring_days;
         if (recurringEndType === "on_date" && recurringUntil.date) {
           payload.recurring_until = recurringUntil.date.toISOString();
         } else {
-          payload.recurring_until = undefined;
+          payload.recurring_until = null;
         }
       } else {
-        payload.recurring_days = undefined;
-        payload.recurring_until = undefined;
+        payload.recurring_days = null;
+        payload.recurring_until = null;
       }
 
       await updateTask(formData.id, payload);
-      
+
       setIsEditing(false);
       toast.success("บันทึก Task สำเร็จ", {
-        description: `Task "${formData.name}" ถูกอัพเดทเรียบร้อยแล้ว`,
+        description: (
+          <>
+            Task <strong>{formData.name}</strong> ถูกอัพเดทเรียบร้อยแล้ว
+          </>
+        ),
         duration: TOAST_DURATION.SUCCESS,
+        metadata: {
+          taskName: formData.name,
+          taskId: formData.id,
+        },
       });
       onOpenChange(false);
       onSuccess();
@@ -248,15 +247,23 @@ export default function TaskDetailModal({
 
   const handleDelete = async () => {
     if (!formData.id) return;
-    
+
     try {
       setIsDeleting(true);
       setError(null);
       await deleteTask(formData.id);
       setShowDeleteConfirm(false);
       toast.success("ลบ Task สำเร็จ", {
-        description: `Task "${formData.name}" ถูกลบเรียบร้อยแล้ว`,
+        description: (
+          <>
+            Task <strong>{formData.name}</strong> ถูกลบเรียบร้อยแล้ว
+          </>
+        ),
         duration: TOAST_DURATION.SUCCESS,
+        metadata: {
+          taskName: formData.name,
+          taskId: formData.id,
+        },
       });
       onOpenChange(false);
       onSuccess();

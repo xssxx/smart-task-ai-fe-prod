@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Loader2, Trash2 } from "lucide-react";
 import { deleteProject, Project } from "@/services/api";
+import { toast } from "@/lib/enhanced-toast";
 
 interface DeleteWorkspaceModalProps {
   open: boolean;
@@ -36,11 +37,24 @@ export default function DeleteWorkspaceModal({
     setError(null);
 
     try {
+      const projectName = project.name;
       await deleteProject(project.id);
+      
+      toast.success("ลบ Workspace สำเร็จ", {
+        description: (
+          <>
+            Workspace <strong>{projectName}</strong> ถูกลบเรียบร้อยแล้ว
+          </>
+        ),
+      });
+
       onOpenChange(false);
       onSuccess?.();
     } catch (err) {
       setError("ไม่สามารถลบ Workspace ได้ กรุณาลองใหม่อีกครั้ง");
+      toast.error("เกิดข้อผิดพลาด", {
+        description: "ไม่สามารถลบ Workspace ได้ กรุณาลองใหม่อีกครั้ง",
+      });
     } finally {
       setIsDeleting(false);
     }

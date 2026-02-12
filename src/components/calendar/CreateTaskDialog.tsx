@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select";
 import { Loader2, X } from "lucide-react";
 import { createTask, CreateTaskRequest, Project } from "@/services/api";
-import { toast } from "sonner";
+import { toast } from "@/lib/enhanced-toast";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { PRIORITY_OPTIONS, TOAST_DURATION } from "@/constants";
 
@@ -156,7 +156,11 @@ function CreateTaskDialog({
       setSelectedProjectId("");
 
       toast.success("สร้าง Task สำเร็จ", {
-        description: `Task "${payload.name}" ถูกสร้างเรียบร้อยแล้ว`,
+        description: (
+          <>
+            Task <strong>{payload.name}</strong> ถูกสร้างเรียบร้อยแล้ว
+          </>
+        ),
         duration: TOAST_DURATION.SUCCESS,
       });
 
