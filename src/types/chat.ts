@@ -6,6 +6,7 @@ export interface Message {
 export interface SendMessageRequest {
   content: string;
   session_history?: Message[];
+  locale?: string;
 }
 
 export interface TaskAction {

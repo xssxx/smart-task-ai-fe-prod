@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import {
   DndContext,
   DragOverlay,
@@ -254,19 +255,20 @@ function ColumnSkeleton() {
 }
 
 export default function BoardPage() {
+  const t = useTranslations();
   const params = useParams();
   const projectId = params.projectId as string;
 
   const [columns, setColumns] = useState<Column[]>([
-    { id: "todo", title: "รอดำเนินการ", color: "bg-zinc-500", tasks: [] },
+    { id: "todo", title: t('status.todo'), color: "bg-zinc-500", tasks: [] },
     {
       id: "in_progress",
-      title: "กำลังดำเนินการ",
+      title: t('status.inProgress'),
       color: "bg-sky-500",
       tasks: [],
     },
-    { id: "in_review", title: "รอตรวจสอบ", color: "bg-yellow-500", tasks: [] },
-    { id: "done", title: "เสร็จสิ้น", color: "bg-lime-500", tasks: [] },
+    { id: "in_review", title: t('status.inReview'), color: "bg-yellow-500", tasks: [] },
+    { id: "done", title: t('status.done'), color: "bg-lime-500", tasks: [] },
   ]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -323,7 +325,7 @@ export default function BoardPage() {
         prev.map((col) => ({ ...col, tasks: tasksByStatus[col.id] || [] }))
       );
     } catch (err) {
-      setError("ไม่สามารถโหลด tasks ได้");
+      setError(t('board.cannotLoadTasks'));
     } finally {
       setIsLoading(false);
     }
@@ -443,17 +445,16 @@ export default function BoardPage() {
         await updateTask(activeTask.id, {
           status: mapColumnToApiStatus(targetColumnId),
         });
-        toast.success("อัพเดท Status สำเร็จ", {
-          description: (
-            <>
-              ย้าย <strong>{activeTask.title}</strong> ไปยัง <strong>{targetColumn?.title || targetColumnId}</strong>
-            </>
-          ),
+        toast.success(t('board.statusUpdateSuccess'), {
+          description: t('board.movedTo', {
+            task: activeTask.title,
+            column: targetColumn?.title || targetColumnId
+          }),
           duration: TOAST_DURATION.SUCCESS,
         });
       } catch (err) {
-        toast.error("อัพเดท Status ไม่สำเร็จ", {
-          description: "เกิดข้อผิดพลาด กำลังโหลดข้อมูลใหม่...",
+        toast.error(t('board.statusUpdateFailed'), {
+          description: t('board.statusUpdateError'),
           duration: TOAST_DURATION.ERROR,
         });
         fetchTasks();
@@ -482,7 +483,6 @@ export default function BoardPage() {
     setSortOrder(order);
     setIsApplyingFilter(true);
 
-    // Simulate loading delay for better UX
     await new Promise((resolve) => setTimeout(resolve, 500));
 
     setColumns((prev) => {
@@ -491,15 +491,15 @@ export default function BoardPage() {
         return newColumns.reverse();
       }
       return [
-        { id: "todo", title: "รอดำเนินการ", color: "bg-zinc-500", tasks: [] },
+        { id: "todo", title: t('status.todo'), color: "bg-zinc-500", tasks: [] },
         {
           id: "in_progress",
-          title: "กำลังดำเนินการ",
+          title: t('status.inProgress'),
           color: "bg-sky-500",
           tasks: [],
         },
-        { id: "in_review", title: "รอตรวจสอบ", color: "bg-yellow-500", tasks: [] },
-        { id: "done", title: "เสร็จสิ้น", color: "bg-lime-500", tasks: [] },
+        { id: "in_review", title: t('status.inReview'), color: "bg-yellow-500", tasks: [] },
+        { id: "done", title: t('status.done'), color: "bg-lime-500", tasks: [] },
       ].map((col) => {
         const existingCol = prev.find((c) => c.id === col.id);
         return existingCol ? { ...col, tasks: existingCol.tasks } : col;
@@ -529,7 +529,7 @@ export default function BoardPage() {
         <div className="text-center">
           <AlertCircle className="w-12 h-12 text-rose-500 mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-gray-900">
-            ไม่พบโปรเจกต์
+            {t('board.projectNotFound')}
           </h2>
         </div>
       </div>
@@ -542,13 +542,13 @@ export default function BoardPage() {
         <div className="mb-4 lg:mb-6 shrink-0">
           {/* Page Title */}
           <h1 className="text-3xl font-semibold text-gray-900 mb-2 lg:hidden">
-            บอร์ด
+            {t('board.pageTitle')}
           </h1>
           
           {/* Page Subtitle and Action Buttons */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
             <p className="text-base sm:text-lg text-gray-600">
-              จัดการงานของคุณด้วยบอร์ด Kanban
+              {t('board.pageSubtitle')}
             </p>
 
             {/* Action Buttons */}
@@ -563,7 +563,7 @@ export default function BoardPage() {
                   className={`w-4 h-4 ${isLoading ? "animate-spin" : ""
                     } sm:mr-2`}
                 />
-                <span className="hidden sm:inline">รีเฟรช</span>
+                <span className="hidden sm:inline">{t('board.refresh')}</span>
               </Button>
 
               {/* Filter Dropdown */}
@@ -571,7 +571,7 @@ export default function BoardPage() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="default">
                     <Filter className="w-4 h-4 sm:mr-2" />
-                    <span className="hidden sm:inline">ตัวกรอง</span>
+                    <span className="hidden sm:inline">{t('board.filter')}</span>
                     {visibleStatuses.size < 4 && (
                       <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-xs">
                         {visibleStatuses.size}
@@ -583,14 +583,14 @@ export default function BoardPage() {
                   {/* Sort Section */}
                   <DropdownMenuLabel className="flex items-center gap-2">
                     <ArrowUpDown className="w-4 h-4" />
-                    เรียงลำดับคอลัมน์
+                    {t('board.sortColumns')}
                   </DropdownMenuLabel>
                   <DropdownMenuItem
                     onClick={() => handleSortChange("todo-to-done")}
                     className="cursor-pointer"
                   >
                     <div className="flex items-center justify-between w-full">
-                      <span>รอดำเนินการ → เสร็จสิ้น</span>
+                      <span>{t('board.sortTodoToDone')}</span>
                       {sortOrder === "todo-to-done" && (
                         <Check className="w-4 h-4 text-green-600" />
                       )}
@@ -601,7 +601,7 @@ export default function BoardPage() {
                     className="cursor-pointer"
                   >
                     <div className="flex items-center justify-between w-full">
-                      <span>เสร็จสิ้น → รอดำเนินการ</span>
+                      <span>{t('board.sortDoneToTodo')}</span>
                       {sortOrder === "done-to-todo" && (
                         <Check className="w-4 h-4 text-green-600" />
                       )}
@@ -613,7 +613,7 @@ export default function BoardPage() {
                   {/* Status Filter Section */}
                   <DropdownMenuLabel className="flex items-center gap-2">
                     <Filter className="w-4 h-4" />
-                    แสดง Status
+                    {t('board.showStatus')}
                   </DropdownMenuLabel>
                   {columns.map((column) => (
                     <DropdownMenuItem
@@ -643,7 +643,7 @@ export default function BoardPage() {
 
               <Button variant="outline" size="sm">
                 <Search className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">ค้นหา</span>
+                <span className="hidden sm:inline">{t('board.search')}</span>
               </Button>
               <Button
                 size="sm"
@@ -653,7 +653,7 @@ export default function BoardPage() {
                 }}
               >
                 <Plus className="w-4 h-4 mr-2" />
-                สร้างงานใหม่
+                {t('board.createNewTask')}
               </Button>
             </div>
           </div>
@@ -669,7 +669,7 @@ export default function BoardPage() {
               onClick={fetchTasks}
               className="ml-auto"
             >
-              ลองใหม่
+              {t('board.retry')}
             </Button>
           </div>
         )}

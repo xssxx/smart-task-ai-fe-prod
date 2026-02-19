@@ -1,11 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Home, ArrowLeft, Search, FileQuestion } from "lucide-react";
 
 export default function NotFoundPage() {
   const router = useRouter();
+  const t = useTranslations();
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-80px)] px-4 py-8 bg-gray-50">
@@ -29,14 +31,12 @@ export default function NotFoundPage() {
 
         {/* Title */}
         <h2 className="text-xl md:text-2xl font-semibold text-gray-800 mb-3">
-          ไม่พบหน้าที่คุณต้องการ
+          {t('notFound.title')}
         </h2>
 
         {/* Description */}
         <p className="text-gray-500 mb-8 text-sm md:text-base leading-relaxed">
-          หน้าที่คุณกำลังค้นหาอาจถูกย้าย ลบ หรือไม่เคยมีอยู่
-          <br className="hidden md:block" />
-          กรุณาตรวจสอบ URL อีกครั้ง หรือกลับไปหน้าหลัก
+          {t('notFound.description')}
         </p>
 
         {/* Action Buttons */}
@@ -47,14 +47,14 @@ export default function NotFoundPage() {
             className="flex items-center gap-2 px-6"
           >
             <ArrowLeft className="w-4 h-4" />
-            ย้อนกลับ
+            {t('notFound.goBack')}
           </Button>
           <Button
             onClick={() => router.push("/app/home")}
             className="flex items-center gap-2 px-6 bg-gray-900 hover:bg-gray-800"
           >
             <Home className="w-4 h-4" />
-            กลับหน้าหลัก
+            {t('notFound.goHome')}
           </Button>
         </div>
       </div>

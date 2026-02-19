@@ -1,6 +1,7 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import { useParams } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -28,8 +29,8 @@ import { sendChatMessage, createTask, CreateTaskRequest } from "@/services/api";
 import { ChatMessage, Message, ProposedTask } from "@/types/chat";
 import { getActionBadgeColor, PRIORITY_OPTIONS } from "@/constants";
 import { formatDateTime } from "@/lib/date-utils";
-import { getPriorityLabel } from "@/lib/task-utils";
-import { useProfile } from "@/hooks/useProfile";
+import { getPriorityKey } from "@/lib/task-utils";
+import { useProfile } from "@/contexts/ProfileContext";
 import {
   Dialog,
   DialogContent,
@@ -63,12 +64,8 @@ interface EditProposedTaskModalProps {
   ) => void;
 }
 
-function EditProposedTaskModal({
-  task,
-  isOpen,
-  onClose,
-  onSave,
-}: EditProposedTaskModalProps) {
+function EditProposedTaskModal({ task, isOpen, onClose, onSave }: EditProposedTaskModalProps) {
+  const t = useTranslations();
   const [editedTask, setEditedTask] = useState<ProposedTask | null>(null);
   const [startDateTime, setStartDateTime] = useState<{
     date?: Date | null;
@@ -136,14 +133,12 @@ function EditProposedTaskModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-125 max-w-[95vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>แก้ไข Task</DialogTitle>
+          <DialogTitle>{t('chat.editTask')}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="name">
-              ชื่อ Task <span className="text-rose-500">*</span>
-            </Label>
+            <Label htmlFor="name">{t('chat.taskName')} <span className="text-rose-500">*</span></Label>
             <Input
               id="name"
               value={editedTask.name}
@@ -154,7 +149,7 @@ function EditProposedTaskModal({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">รายละเอียด</Label>
+            <Label htmlFor="description">{t('chat.description')}</Label>
             <Textarea
               id="description"
               value={editedTask.description}
@@ -166,9 +161,7 @@ function EditProposedTaskModal({
           </div>
 
           <div className="space-y-2">
-            <Label>
-              Priority <span className="text-rose-500">*</span>
-            </Label>
+            <Label>{t('chat.priority')} <span className="text-rose-500">*</span></Label>
             <Select
               value={editedTask.priority}
               onValueChange={(value: "high" | "medium" | "low") =>
@@ -181,7 +174,7 @@ function EditProposedTaskModal({
               <SelectContent>
                 {PRIORITY_OPTIONS.map((opt) => (
                   <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
+                    {t(getPriorityKey(opt.value))}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -190,13 +183,13 @@ function EditProposedTaskModal({
 
           {/* Start DateTime */}
           <div className="space-y-2">
-            <Label>วันเวลาเริ่มต้น</Label>
+            <Label>{t('chat.startDateTime')}</Label>
             <div className="flex gap-2">
               <div className="flex-1">
                 <DateTimePicker
                   value={startDateTime}
                   onChange={setStartDateTime}
-                  placeholder="เลือกวันเวลาเริ่มต้น"
+                  placeholder={t('chat.selectStartDateTime')}
                 />
               </div>
               {startDateTime.date && (
@@ -217,13 +210,13 @@ function EditProposedTaskModal({
 
           {/* End DateTime */}
           <div className="space-y-2">
-            <Label>วันเวลาสิ้นสุด</Label>
+            <Label>{t('chat.endDateTime')}</Label>
             <div className="flex gap-2">
               <div className="flex-1">
                 <DateTimePicker
                   value={endDateTime}
                   onChange={setEndDateTime}
-                  placeholder="เลือกวันเวลาสิ้นสุด"
+                  placeholder={t('chat.selectEndDateTime')}
                 />
               </div>
               {endDateTime.date && (
@@ -240,23 +233,23 @@ function EditProposedTaskModal({
             </div>
             {isDateRangeInvalid && (
               <p className="text-xs text-rose-600">
-                วันเวลาสิ้นสุดต้องมากกว่าวันเวลาเริ่มต้น
+                {t('chat.endDateMustBeAfterStart')}
               </p>
             )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="location">สถานที่</Label>
+            <Label htmlFor="location">{t('chat.location')}</Label>
             <Input
               id="location"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              placeholder="เช่น ห้องประชุม A, Online"
+              placeholder={t('chat.locationPlaceholder')}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="recurringDays">ทำประจำ</Label>
+            <Label htmlFor="recurringDays">{t('chat.recurring')}</Label>
             <Select
               value={recurringDays ? recurringDays.toString() : "0"}
               onValueChange={(value) => {
@@ -269,14 +262,14 @@ function EditProposedTaskModal({
               }}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="ไม่ทำประจำ" />
+                <SelectValue placeholder={t('chat.noRecurring')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="0">ไม่ทำประจำ</SelectItem>
-                <SelectItem value="1">ทุกวัน</SelectItem>
-                <SelectItem value="7">ทุกสัปดาห์</SelectItem>
-                <SelectItem value="14">ทุก 2 สัปดาห์</SelectItem>
-                <SelectItem value="30">ทุกเดือน</SelectItem>
+                <SelectItem value="0">{t('chat.noRecurring')}</SelectItem>
+                <SelectItem value="1">{t('chat.daily')}</SelectItem>
+                <SelectItem value="7">{t('chat.weekly')}</SelectItem>
+                <SelectItem value="14">{t('chat.biweekly')}</SelectItem>
+                <SelectItem value="30">{t('chat.monthly')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -284,7 +277,7 @@ function EditProposedTaskModal({
           {recurringDays && recurringDays > 0 && (
             <>
               <div className="space-y-2">
-                <Label>สิ้นสุดการทำประจำ</Label>
+                <Label>{t('chat.recurringEnd')}</Label>
                 <Select
                   value={recurringEndType}
                   onValueChange={(value: "never" | "on_date") => {
@@ -298,21 +291,21 @@ function EditProposedTaskModal({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="never">ไม่เลย</SelectItem>
-                    <SelectItem value="on_date">ในวันที่</SelectItem>
+                    <SelectItem value="never">{t('chat.never')}</SelectItem>
+                    <SelectItem value="on_date">{t('chat.onDate')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               {recurringEndType === "on_date" && (
                 <div className="space-y-2">
-                  <Label>วันที่สิ้นสุด</Label>
+                  <Label>{t('chat.recurringEndDate')}</Label>
                   <div className="flex gap-2">
                     <div className="flex-1">
                       <DateTimePicker
                         value={recurringUntil}
                         onChange={setRecurringUntil}
-                        placeholder="เลือกวันที่สิ้นสุดการทำประจำ"
+                        placeholder={t('chat.selectRecurringEndDate')}
                       />
                     </div>
                     {recurringUntil.date && (
@@ -336,19 +329,15 @@ function EditProposedTaskModal({
         </div>
 
         <DialogFooter className="flex-col sm:flex-row gap-2">
-          <Button
-            variant="outline"
-            onClick={onClose}
-            className="w-full sm:w-auto"
-          >
-            ยกเลิก
+          <Button variant="outline" onClick={onClose} className="w-full sm:w-auto">
+            {t('chat.cancel')}
           </Button>
           <Button
             onClick={handleSave}
             className="bg-gray-900 hover:bg-gray-800 w-full sm:w-auto"
           >
             <Check className="w-4 h-4 mr-1" />
-            บันทึกและยอมรับ
+            {t('chat.saveAndAccept')}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -370,6 +359,8 @@ function TaskProposalCard({
   onEdit,
   onReject,
 }: TaskProposalCardProps) {
+  const t = useTranslations();
+  const locale = useLocale();
   const isProcessed = task.userAction !== "pending";
 
   return (
@@ -395,7 +386,7 @@ function TaskProposalCard({
                 className={`text-xs ${getPriorityColor(task.priority)}`}
               >
                 <Flag className="w-3 h-3 mr-1" />
-                {getPriorityLabel(task.priority)}
+                {t(getPriorityKey(task.priority))}
               </Badge>
             </div>
 
@@ -407,13 +398,13 @@ function TaskProposalCard({
               <div className="flex items-center gap-1">
                 <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 <span className="text-[11px] sm:text-xs">
-                  {formatDateTime(task.start_datetime)}
+                  {formatDateTime(task.start_datetime, locale)}
                 </span>
               </div>
               <div className="flex items-center gap-1">
                 <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 <span className="text-[11px] sm:text-xs">
-                  ถึง {formatDateTime(task.end_datetime)}
+                  {t('chat.until')} {formatDateTime(task.end_datetime, locale)}
                 </span>
               </div>
             </div>
@@ -433,12 +424,12 @@ function TaskProposalCard({
                 {task.userAction === "accepted" ? (
                   <>
                     <Check className="w-3 h-3 mr-1" />
-                    ยอมรับแล้ว
+                    {t('chat.accepted')}
                   </>
                 ) : (
                   <>
                     <X className="w-3 h-3 mr-1" />
-                    ปฏิเสธแล้ว
+                    {t('chat.rejected')}
                   </>
                 )}
               </Badge>
@@ -451,7 +442,7 @@ function TaskProposalCard({
                   onClick={() => onAccept(task)}
                 >
                   <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1" />
-                  <span className="hidden lg:inline">ยอมรับ</span>
+                  <span className="hidden lg:inline">{t('chat.accept')}</span>
                 </Button>
                 <Button
                   size="sm"
@@ -460,7 +451,7 @@ function TaskProposalCard({
                   onClick={() => onEdit(task)}
                 >
                   <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1" />
-                  <span className="hidden lg:inline">แก้ไข</span>
+                  <span className="hidden lg:inline">{t('chat.edit')}</span>
                 </Button>
                 <Button
                   size="sm"
@@ -469,7 +460,7 @@ function TaskProposalCard({
                   onClick={() => onReject(task)}
                 >
                   <X className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1" />
-                  <span className="hidden lg:inline">ปฏิเสธ</span>
+                  <span className="hidden lg:inline">{t('chat.reject')}</span>
                 </Button>
               </div>
             )}
@@ -489,8 +480,10 @@ interface StoredChatMessage extends Omit<ChatMessage, "timestamp"> {
 }
 
 export default function AIChatPage() {
+  const t = useTranslations();
   const params = useParams();
   const projectId = params.projectId as string;
+  const locale = useLocale();
 
   // Get user profile for avatar
   const { profile } = useProfile();
@@ -641,6 +634,7 @@ export default function AIChatPage() {
       const response = await sendChatMessage(projectId, {
         content,
         session_history: sessionHistory,
+        locale,
       });
 
       const responseData = response.data.data;
@@ -672,7 +666,7 @@ export default function AIChatPage() {
       const errorMessage =
         err instanceof Error
           ? err.message
-          : "ไม่สามารถเชื่อมต่อกับ AI ได้ กรุณาลองใหม่อีกครั้ง";
+          : t('chat.cannotConnectToAI');
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -916,7 +910,7 @@ export default function AIChatPage() {
       updateTaskAction(messageId, task.id, "accepted");
     } catch (err) {
       console.error("Failed to create task:", err);
-      setError("ไม่สามารถสร้าง task ได้ กรุณาลองใหม่อีกครั้ง");
+      setError(t('chat.cannotCreateTask'));
     }
   };
 
@@ -959,7 +953,7 @@ export default function AIChatPage() {
       setEditingMessageId(null);
     } catch (err) {
       console.error("Failed to create task:", err);
-      setError("ไม่สามารถสร้าง task ได้ กรุณาลองใหม่อีกครั้ง");
+      setError(t('chat.cannotCreateTask'));
     }
   };
 
@@ -974,12 +968,12 @@ export default function AIChatPage() {
           <div className="p-6 bg-white border-b border-gray-200">
             {/* Page Title */}
             <h1 className="text-3xl font-semibold text-gray-900 mb-2 lg:hidden">
-              AI Task Assistant
+              {t('chat.pageTitle')}
             </h1>
 
             <div className="flex items-center justify-between">
               <p className="text-base text-gray-600">
-                สร้างและจัดการ tasks ด้วย AI
+                {t('chat.pageSubtitle')}
               </p>
               <Button
                 variant="outline"
@@ -1123,21 +1117,19 @@ export default function AIChatPage() {
                   )}
 
                   {/* Proposed Tasks notification - show only when panel is closed */}
-                  {!isRightPanelOpen &&
-                    message.proposedTasks &&
-                    message.proposedTasks.length > 0 && (
-                      <div className="mt-4">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setIsRightPanelOpen(true)}
-                          className="text-blue-600 border-blue-300 hover:bg-blue-50"
-                        >
-                          <Flag className="w-4 h-4 mr-2" />
-                          ดู {message.proposedTasks.length} Tasks ที่แนะนำ
-                        </Button>
-                      </div>
-                    )}
+                  {!isRightPanelOpen && message.proposedTasks && message.proposedTasks.length > 0 && (
+                    <div className="mt-4">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsRightPanelOpen(true)}
+                        className="text-blue-600 border-blue-300 hover:bg-blue-50"
+                      >
+                        <Flag className="w-4 h-4 mr-2" />
+                        {t('chat.viewProposedTasks')}
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -1150,7 +1142,7 @@ export default function AIChatPage() {
                 <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-sm p-4 shadow-sm">
                   <div className="flex items-center gap-2 text-gray-600">
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span className="text-sm">กำลังคิด...</span>
+                    <span className="text-sm">{t('common.loading')}</span>
                   </div>
                 </div>
               </div>
@@ -1188,7 +1180,7 @@ export default function AIChatPage() {
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder="พิมพ์ข้อความ หรือลากไฟล์เสียงมาวางที่นี่"
+                    placeholder={t('chat.inputPlaceholder')}
                     disabled={isRecording || isTranscribing}
                     className="w-full resize-none rounded-xl border border-gray-300 px-4 py-3 pr-12 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent min-h-[52px] max-h-32 disabled:opacity-50"
                     rows={1}
@@ -1236,7 +1228,7 @@ export default function AIChatPage() {
                 </Button>
               </div>
               <p className="text-xs text-gray-500 mt-2 text-center">
-                กด Enter เพื่อส่งข้อความ, Shift + Enter เพื่อขึ้นบรรทัดใหม่
+                {t('chat.inputHint')}
                 {isRecording && (
                   <span className="text-red-600 font-medium ml-2">
                     • กำลังบันทึกเสียง...
@@ -1263,9 +1255,9 @@ export default function AIChatPage() {
         >
           <div className="p-4 border-b border-gray-200 flex items-center justify-between min-w-[320px] lg:min-w-[384px]">
             <div>
-              <h3 className="font-semibold text-gray-900">Tasks ที่แนะนำ</h3>
+              <h3 className="font-semibold text-gray-900">{t('chat.proposedTasks')}</h3>
               <p className="text-xs text-gray-500">
-                {getAllProposedTasks().length} tasks จาก AI
+                {getAllProposedTasks().length} {t('chat.aiCreatedTasks')}
               </p>
             </div>
             <Button
@@ -1281,8 +1273,8 @@ export default function AIChatPage() {
             {getAllProposedTasks().length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 <Flag className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                <p className="text-sm">ยังไม่มี tasks ที่แนะนำ</p>
-                <p className="text-xs mt-1">ลองถาม AI เพื่อสร้าง tasks ใหม่</p>
+                <p className="text-sm">{t('chat.noProposedTasks')}</p>
+                <p className="text-xs mt-1">{t('chat.askAIToCreateTasks')}</p>
               </div>
             ) : (
               getAllProposedTasks().map(({ messageId, task }) => (

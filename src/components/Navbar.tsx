@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -17,50 +18,22 @@ import {
   ChevronDown,
   LogOut,
   User,
+  Languages,
 } from "lucide-react";
-import { logout, getProfile } from "@/services/api";
+import { logout } from "@/services/api";
 import { ROUTES } from "@/constants";
 import { useLoading } from "@/components/LoadingProvider";
 import { NotificationDropdown } from "@/components/NotificationDropdown";
-
-// Page titles mapping
-const PAGE_TITLES: Record<string, string> = {
-  "/app/home": "แดชบอร์ด",
-  "/app/calendar": "ปฏิทิน",
-  "/app/profile": "โปรไฟล์ของฉัน",
-  "board": "บอร์ด",
-  "chat": "AI Task Assistant",
-};
+import { LanguageModal } from "@/components/LanguageModal";
+import { useProfile } from "@/contexts/ProfileContext";
 
 const Navbar = () => {
   const router = useRouter();
   const pathname = usePathname();
   const { startLoading } = useLoading();
-  const [profile, setProfile] = useState<{
-    firstName: string;
-    lastName: string;
-    nickname?: string;
-    avatarPath?: string;
-  } | null>(null);
-
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const response = await getProfile();
-        const data = response.data.data;
-        setProfile({
-          firstName: data.first_name,
-          lastName: data.last_name,
-          nickname: data.nickname,
-          avatarPath: data.avatar_path,
-        });
-      } catch (err) {
-        console.error("Failed to fetch profile:", err);
-      }
-    };
-
-    fetchProfile();
-  }, []);
+  const t = useTranslations("navbar");
+  const [languageModalOpen, setLanguageModalOpen] = useState(false);
+  const { profile, getInitials, getDisplayName } = useProfile();
 
   const handleLogout = () => {
     logout();
@@ -71,34 +44,27 @@ const Navbar = () => {
     router.push(ROUTES.PROFILE);
   };
 
-  const getInitials = () => {
-    if (!profile) return "U";
-    const firstInitial = profile.firstName?.charAt(0) || "";
-    const lastInitial = profile.lastName?.charAt(0) || "";
-    return (firstInitial + lastInitial).toUpperCase();
-  };
-
-  const getDisplayName = () => {
-    if (!profile) return "User";
-    return profile.nickname || profile.firstName || "User";
-  };
-
   // Get current page title
   const getCurrentPageTitle = () => {
-    // Check for exact match first
-    if (PAGE_TITLES[pathname]) {
-      return PAGE_TITLES[pathname];
+    if (pathname === "/app/home") {
+      return t("dashboard");
+    }
+    if (pathname === "/app/calendar") {
+      return t("calendar");
+    }
+    if (pathname === "/app/profile") {
+      return t("myProfile");
     }
 
     if (pathname.includes("/board")) {
-      return PAGE_TITLES["board"];
+      return t("board");
     }
     if (pathname.includes("/chat")) {
-      return PAGE_TITLES["chat"];
+      return t("aiAssistant");
     }
 
     if (pathname.startsWith("/app/") && pathname !== "/app/home" && pathname !== "/app/calendar" && pathname !== "/app/profile") {
-      return "โปรเจกต์";
+      return t("project");
     }
 
     return null;
@@ -111,9 +77,9 @@ const Navbar = () => {
       <div className="flex items-center justify-between px-6 py-5 lg:px-8 pl-16 lg:pl-8">
         <div className="flex items-center gap-4 lg:hidden">
           <div className="flex items-center gap-2">
-            <Image src="/logo.svg" alt="Smart Task AI" width={40} height={40} className="object-contain" />
+            <Image src="/logo.svg" alt={t("smartTask")} width={40} height={40} className="object-contain" />
             <h1 className="text-2xl font-momo text-gray-900">
-              Smart Task
+              {t("smartTask")}
             </h1>
           </div>
         </div>
@@ -130,9 +96,25 @@ const Navbar = () => {
 
         <div className="flex items-center">
           <NotificationDropdown />
-          <Button variant="ghost" size="icon" className="h-12 w-12 sm:h-13 sm:w-13 hover:bg-transparent">
-            <Settings className="w-5.5! h-5.5! text-gray-600 hover:text-gray-900 transition-colors" />
-          </Button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-12 w-12 sm:h-13 sm:w-13 hover:bg-transparent"
+                aria-label={t("settings")}
+              >
+                <Settings className="w-5.5! h-5.5! text-gray-600 hover:text-gray-900 transition-colors" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={() => setLanguageModalOpen(true)} className="cursor-pointer">
+                <Languages className="w-4 h-4 mr-2" />
+                {t("changeLanguage")}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -154,17 +136,22 @@ const Navbar = () => {
             <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuItem onClick={handleNavigateToProfile} className="cursor-pointer">
                 <User className="w-4 h-4 mr-2" />
-                โปรไฟล์
+                {t("profile")}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-rose-600 focus:text-rose-600 focus:bg-rose-50">
                 <LogOut className="w-4 h-4 mr-2" />
-                ลงชื่อออก
+                {t("logout")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
+
+      <LanguageModal
+        open={languageModalOpen}
+        onOpenChange={setLanguageModalOpen}
+      />
     </header>
   );
 };

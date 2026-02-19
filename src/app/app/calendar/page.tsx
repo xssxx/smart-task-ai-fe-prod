@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useMemo } from "react";
 import { addHours, format } from "date-fns";
+import { useTranslations } from "next-intl";
 import CalendarHeader from "@/components/calendar/CalendarHeader";
 import MonthView from "@/components/calendar/MonthView";
 import WeekView from "@/components/calendar/WeekView";
@@ -17,6 +18,7 @@ import { CalendarTaskProvider } from "@/contexts";
 import type { Project } from "@/services/api";
 
 function CalendarPageContent() {
+  const t = useTranslations();
   const {
     currentDate,
     viewMode,
@@ -185,12 +187,12 @@ function CalendarPageContent() {
       <div className="h-screen flex flex-col bg-gray-50 text-base">
         <main className="flex-1 flex flex-col p-3 sm:p-4 md:p-6 max-w-[1600px] mx-auto w-full">
           <h1 className="text-3xl font-semibold text-gray-900 mb-2 lg:hidden">
-            ปฏิทิน
+            {t('calendar.pageTitle')}
           </h1>
 
           <div className="mb-4">
             <p className="text-base sm:text-lg text-gray-600">
-              ดูและจัดการงานของคุณในมุมมองปฏิทิน
+              {t('calendar.pageSubtitle')}
             </p>
           </div>
 

@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { useProjects } from "@/hooks/useProjects";
 import type { Project } from "@/services/api";
 
@@ -55,6 +56,7 @@ interface SidebarProps {
 
 const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
   const pathname = usePathname();
+  const t = useTranslations();
   const [activeItem, setActiveItem] = useState("");
   const [expandedWorkspaces, setExpandedWorkspaces] = useState<Set<string>>(
     new Set(),
@@ -110,13 +112,13 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
         {
           id: `board-${project.id}`,
           icon: FolderKanban,
-          label: "บอร์ด",
+          label: t('sidebar.board'),
           to: `/app/${project.id}/board`,
         },
         {
           id: `chat-${project.id}`,
           icon: MessageCircle,
-          label: "แชท AI",
+          label: t('sidebar.aiChat'),
           to: `/app/${project.id}/chat`,
         },
       ],
@@ -124,7 +126,7 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
 
     updateActiveStateFromPath(pathname, mappedWorkspaces);
     setWorkspaces(mappedWorkspaces);
-  }, [projects, pathname]);
+  }, [projects, pathname, t]);
 
   const handleProjectCreated = () => {
     refetch();
@@ -162,13 +164,8 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
   };
 
   const menuItems = [
-    { id: "home", icon: Home, label: "หน้าแรก", href: "/app/home" },
-    {
-      id: "my-calendar",
-      icon: Calendar,
-      label: "ปฏิทินของฉัน",
-      href: "/app/calendar",
-    },
+    { id: "home", icon: Home, label: t('sidebar.home'), href: "/app/home" },
+    { id: "my-calendar", icon: Calendar, label: t('sidebar.myCalendar'), href: "/app/calendar" },
   ];
 
   return (
@@ -239,7 +236,7 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
           <div>
             <div className="flex items-center justify-between mb-3 px-4">
               <span className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
-                Workspaces
+                {t('sidebar.workspaces')}
               </span>
               <Button
                 variant="ghost"
@@ -263,9 +260,7 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
                   ))}
                 </div>
               ) : workspaces.length === 0 ? (
-                <p className="text-base text-gray-500 px-4 py-2">
-                  No projects yet
-                </p>
+                <p className="text-base text-gray-500 px-4 py-2">{t('sidebar.noProjects')}</p>
               ) : (
                 workspaces.map((workspace) => (
                   <div key={workspace.id} className="group">
@@ -329,7 +324,7 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
                             className="cursor-pointer"
                           >
                             <Edit3 className="w-4 h-4 mr-2" />
-                            แก้ไข
+                            {t('sidebar.edit')}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={(e) => {
@@ -344,7 +339,7 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
                             className="cursor-pointer text-rose-600 focus:text-rose-600 focus:bg-rose-50"
                           >
                             <Trash2 className="w-4 h-4 mr-2" />
-                            ลบ
+                            {t('sidebar.delete')}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>

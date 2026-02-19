@@ -1,31 +1,41 @@
-export function getRelativeTimeText(date: Date): string {
-  const now = new Date();
-  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+const TIME_UNITS = {
+  SECOND: 1,
+  MINUTE: 60,
+  HOUR: 60 * 60,
+  DAY: 60 * 60 * 24,
+  MONTH: 60 * 60 * 24 * 30,
+  YEAR: 60 * 60 * 24 * 365,
+} as const;
 
-  if (diffInSeconds < 60) {
-    return `${diffInSeconds} วิ.`;
+type TimeSuffixes = {
+  second: string;
+  minute: string;
+  hour: string;
+  day: string;
+  month: string;
+  year: string;
+};
+
+export function getRelativeTimeText(
+  date: Date,
+  suffixes: TimeSuffixes
+): string {
+  const diffInSeconds = Math.floor((Date.now() - date.getTime()) / 1000);
+
+  if (diffInSeconds < TIME_UNITS.MINUTE) {
+    return `${diffInSeconds}${suffixes.second}`;
   }
-
-  const diffInMinutes = Math.floor(diffInSeconds / 60);
-  if (diffInMinutes < 60) {
-    return `${diffInMinutes} น.`;
+  if (diffInSeconds < TIME_UNITS.HOUR) {
+    return `${Math.floor(diffInSeconds / TIME_UNITS.MINUTE)}${suffixes.minute}`;
   }
-
-  const diffInHours = Math.floor(diffInMinutes / 60);
-  if (diffInHours < 24) {
-    return `${diffInHours} ชม.`;
+  if (diffInSeconds < TIME_UNITS.DAY) {
+    return `${Math.floor(diffInSeconds / TIME_UNITS.HOUR)}${suffixes.hour}`;
   }
-
-  const diffInDays = Math.floor(diffInHours / 24);
-  if (diffInDays < 30) {
-    return `${diffInDays} ว.`;
+  if (diffInSeconds < TIME_UNITS.MONTH) {
+    return `${Math.floor(diffInSeconds / TIME_UNITS.DAY)}${suffixes.day}`;
   }
-
-  const diffInMonths = Math.floor(diffInDays / 30);
-  if (diffInMonths < 12) {
-    return `${diffInMonths} ด.`;
+  if (diffInSeconds < TIME_UNITS.YEAR) {
+    return `${Math.floor(diffInSeconds / TIME_UNITS.MONTH)}${suffixes.month}`;
   }
-
-  const diffInYears = Math.floor(diffInMonths / 12);
-  return `${diffInYears} ป`;
+  return `${Math.floor(diffInSeconds / TIME_UNITS.YEAR)}${suffixes.year}`;
 }
