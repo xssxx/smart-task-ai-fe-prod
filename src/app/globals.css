@@ -117,11 +117,13 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    border-color: var(--color-border);
+    outline-color: color-mix(in oklch, var(--color-ring) 50%, transparent);
   }
 
   body {
-    @apply bg-background text-foreground;
+    background-color: var(--color-background);
+    color: var(--color-foreground);
     font-family: var(--font-kanit), sans-serif;
   }
 
@@ -254,11 +256,22 @@
 
 /* Board Navigation Dots */
 .board-nav-dot {
-  @apply w-2 h-2 rounded-full transition-all cursor-pointer bg-gray-400 hover:bg-gray-500;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+  cursor: pointer;
+  background-color: rgb(156 163 175);
+}
+
+.board-nav-dot:hover {
+  background-color: rgb(107 114 128);
 }
 
 .board-nav-dot.active {
-  @apply bg-gray-600;
+  background-color: rgb(75 85 99);
 }
 
 /* Global font override to ensure Kanit is used everywhere */
@@ -272,6 +285,16 @@ textarea,
 select,
 button {
   font-family: var(--font-kanit), sans-serif !important;
+}
+
+/* Emoji font support - allow system emoji fonts to render */
+.font-emoji {
+  font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Segoe UI Symbol", "Twemoji Mozilla", sans-serif !important;
+  font-style: normal !important;
+  font-weight: normal !important;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Momo Signature font for logo */

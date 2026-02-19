@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   Dialog,
   DialogContent,
@@ -22,6 +23,7 @@ import { createTask, CreateTaskRequest, Project } from "@/services/api";
 import { toast } from "@/lib/enhanced-toast";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { PRIORITY_OPTIONS, TOAST_DURATION } from "@/constants";
+import { getPriorityKey } from "@/lib/task-utils";
 
 interface CreateTaskModalProps {
   open: boolean;
@@ -38,6 +40,7 @@ export default function CreateTaskModal({
   projectId,
   projects,
 }: CreateTaskModalProps) {
+  const t = useTranslations();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [startDateTime, setStartDateTime] = useState<{ date?: Date | null, hasTime: boolean }>({ hasTime: true });
@@ -56,18 +59,18 @@ export default function CreateTaskModal({
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!formData.name.trim()) {
-      setError("กรุณากรอกชื่อ Task");
-      toast.error("ข้อมูลไม่ครบถ้วน", {
-        description: "กรุณากรอกชื่อ Task",
+      setError(t('task.pleaseEnterTaskName'));
+      toast.error(t('task.incompleteData'), {
+        description: t('task.pleaseEnterTaskName'),
         duration: TOAST_DURATION.ERROR,
       });
       return;
     }
 
     if (needsProjectSelection && !selectedProjectId) {
-      setError("กรุณาเลือก Project");
-      toast.error("ข้อมูลไม่ครบถ้วน", {
-        description: "กรุณาเลือก Project",
+      setError(t('task.pleaseSelectProject'));
+      toast.error(t('task.incompleteData'), {
+        description: t('task.pleaseSelectProject'),
         duration: TOAST_DURATION.ERROR,
       });
       return;
@@ -75,9 +78,9 @@ export default function CreateTaskModal({
 
     if (startDateTime.date && endDateTime.date) {
       if (endDateTime.date <= startDateTime.date) {
-        setError("วันเวลาสิ้นสุดต้องมากกว่าวันเวลาเริ่มต้น");
-        toast.error("ข้อมูลไม่ถูกต้อง", {
-          description: "วันเวลาสิ้นสุดต้องมากกว่าวันเวลาเริ่มต้น",
+        setError(t('task.endDateMustBeAfterStart'));
+        toast.error(t('task.invalidData'), {
+          description: t('task.endDateMustBeAfterStart'),
           duration: TOAST_DURATION.ERROR,
         });
         return;
@@ -86,7 +89,7 @@ export default function CreateTaskModal({
 
     const targetProjectId = projectId || selectedProjectId;
     if (!targetProjectId) {
-      setError("ไม่พบ Project ID");
+      setError(t('task.pleaseSelectProject'));
       return;
     }
 
@@ -120,10 +123,10 @@ export default function CreateTaskModal({
         setSelectedProjectId("");
       }
 
-      toast.success("สร้าง Task สำเร็จ", {
+      toast.success(t('task.taskCreatedSuccess'), {
         description: (
           <>
-            Task <strong>{payload.name}</strong> ถูกสร้างเรียบร้อยแล้ว
+            {t('task.taskCreatedDescription').replace('{name}', '')} <strong>{payload.name}</strong>
           </>
         ),
         duration: TOAST_DURATION.SUCCESS,
@@ -131,9 +134,9 @@ export default function CreateTaskModal({
       handleClose(false);
       onSuccess();
     } catch (err) {
-      setError("ไม่สามารถสร้าง Task ได้ กรุณาลองใหม่");
-      toast.error("สร้าง Task ไม่สำเร็จ", {
-        description: "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง",
+      setError(t('task.taskCreateFailedDescription'));
+      toast.error(t('task.taskCreateFailed'), {
+        description: t('task.taskCreateFailedDescription'),
         duration: TOAST_DURATION.ERROR,
       });
     } finally {
@@ -171,7 +174,7 @@ export default function CreateTaskModal({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[500px] max-w-[95vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>สร้าง Task ใหม่</DialogTitle>
+          <DialogTitle>{t('task.createNewTask')}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
@@ -183,14 +186,14 @@ export default function CreateTaskModal({
 
           {needsProjectSelection && (
             <div className="space-y-2">
-              <Label>Project <span className="text-rose-500">*</span></Label>
+              <Label>{t('navbar.project')} <span className="text-rose-500">*</span></Label>
               <Select
                 value={selectedProjectId}
                 onValueChange={setSelectedProjectId}
                 disabled={isLoading || !projects || projects.length === 0}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder={projects && projects.length > 0 ? "เลือก Project" : "ไม่มี Project"} />
+                  <SelectValue placeholder={projects && projects.length > 0 ? t('task.pleaseSelectProject') : t('sidebar.noProjects')} />
                 </SelectTrigger>
                 <SelectContent>
                   {projects && projects.length > 0 ? (
@@ -201,7 +204,7 @@ export default function CreateTaskModal({
                     ))
                   ) : (
                     <div className="px-2 py-1.5 text-sm text-gray-500">
-                      ไม่มี Project
+                      {t('sidebar.noProjects')}
                     </div>
                   )}
                 </SelectContent>
@@ -210,42 +213,42 @@ export default function CreateTaskModal({
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="name">ชื่อ Task <span className="text-rose-500">*</span></Label>
+            <Label htmlFor="name">{t('task.taskName')} <span className="text-rose-500">*</span></Label>
             <Input
               id="name"
               value={formData.name}
               onChange={(e) => handleChange("name", e.target.value)}
-              placeholder="เช่น ประชุมทีม, Review code"
+              placeholder={t('task.namePlaceholder')}
               disabled={isLoading}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">รายละเอียด</Label>
+            <Label htmlFor="description">{t('task.description')}</Label>
             <Textarea
               id="description"
               value={formData.description}
               onChange={(e) => handleChange("description", e.target.value)}
-              placeholder="รายละเอียดเพิ่มเติม..."
+              placeholder={t('task.descriptionPlaceholder')}
               rows={3}
               disabled={isLoading}
             />
           </div>
 
           <div className="space-y-2">
-            <Label>Priority <span className="text-rose-500">*</span></Label>
+            <Label>{t('task.priority')} <span className="text-rose-500">*</span></Label>
             <Select
               value={formData.priority}
               onValueChange={(value) => handleChange("priority", value)}
               disabled={isLoading}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="เลือก Priority" />
+                <SelectValue placeholder={t('task.selectPriority')} />
               </SelectTrigger>
               <SelectContent>
                 {PRIORITY_OPTIONS.map((opt) => (
                   <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
+                    {t(getPriorityKey(opt.value))}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -253,14 +256,14 @@ export default function CreateTaskModal({
           </div>
 
           <div className="space-y-2">
-            <Label>วันเวลาเริ่มต้น</Label>
+            <Label>{t('task.startDateTime')}</Label>
             <div className="flex gap-2">
               <div className="flex-1">
                 <DateTimePicker
                   value={startDateTime}
                   onChange={setStartDateTime}
                   isDisabled={isLoading}
-                  placeholder="เลือกวันเวลาเริ่มต้น"
+                  placeholder={t('task.selectStartDateTime')}
                 />
               </div>
               {startDateTime.date && (
@@ -279,14 +282,14 @@ export default function CreateTaskModal({
           </div>
 
           <div className="space-y-2">
-            <Label>วันเวลาสิ้นสุด</Label>
+            <Label>{t('task.endDateTime')}</Label>
             <div className="flex gap-2">
               <div className="flex-1">
                 <DateTimePicker
                   value={endDateTime}
                   onChange={setEndDateTime}
                   isDisabled={isLoading}
-                  placeholder="เลือกวันเวลาสิ้นสุด"
+                  placeholder={t('task.selectEndDateTime')}
                 />
               </div>
               {endDateTime.date && (
@@ -304,31 +307,31 @@ export default function CreateTaskModal({
             </div>
             {isDateRangeInvalid && (
               <p className="text-xs text-rose-600">
-                วันเวลาสิ้นสุดต้องมากกว่าวันเวลาเริ่มต้น
+                {t('task.endDateMustBeAfterStart')}
               </p>
             )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="location">สถานที่</Label>
+            <Label htmlFor="location">{t('task.location')}</Label>
             <Input
               id="location"
               value={formData.location}
               onChange={(e) => handleChange("location", e.target.value)}
-              placeholder="เช่น ห้องประชุม A, Online"
+              placeholder={t('task.locationPlaceholder')}
               disabled={isLoading}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="recurringDays">ทำซ้ำทุกๆ (วัน)</Label>
+            <Label htmlFor="recurringDays">{t('task.recurringDays')}</Label>
             <Input
               id="recurringDays"
               type="number"
               min="0"
               value={recurringDays ?? ""}
               onChange={(e) => setRecurringDays(e.target.value ? parseInt(e.target.value) : undefined)}
-              placeholder="เช่น 7 สำหรับทำซ้ำทุกสัปดาห์"
+              placeholder={t('task.recurringPlaceholder')}
               disabled={isLoading}
             />
           </div>
@@ -341,16 +344,16 @@ export default function CreateTaskModal({
               disabled={isLoading}
               className="w-full sm:w-auto order-2 sm:order-1"
             >
-              ยกเลิก
+              {t('common.cancel')}
             </Button>
             <Button type="submit" disabled={isLoading} className="w-full sm:w-auto order-1 sm:order-2">
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  กำลังสร้าง...
+                  {t('common.creating')}
                 </>
               ) : (
-                "สร้าง Task"
+                t('task.createTask')
               )}
             </Button>
           </div>

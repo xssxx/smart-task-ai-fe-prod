@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Loader2, CalendarCheck, Folder, Trash2, ChevronDown } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { getPriorityColor, getStatusColor } from "@/constants";
-import { getStatusLabel } from "@/lib/task-utils";
+import { getStatusKey } from "@/lib/task-utils";
 import { TaskWithProject, updateTask } from "@/services/api";
 import { toast } from "@/lib/enhanced-toast";
 
@@ -35,6 +36,7 @@ export default function TodayTasksSection({
   onTaskClick,
   onStatusChange,
 }: TodayTasksSectionProps) {
+  const t = useTranslations();
   const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [selectedTask, setSelectedTask] = useState<TaskWithProject | null>(null);
@@ -70,13 +72,13 @@ export default function TodayTasksSection({
     try {
       setUpdatingTaskId(taskId);
       await updateTask(taskId, { status: newStatus });
-      toast.success("อัพเดท Status สำเร็จ");
+      toast.success(t('task.statusUpdatedSuccess'));
       if (onStatusChange) {
         onStatusChange();
       }
     } catch (error) {
       console.error("Failed to update task status:", error);
-      toast.error("ไม่สามารถอัพเดท Status ได้");
+      toast.error(t('task.statusUpdateFailed'));
     } finally {
       setUpdatingTaskId(null);
     }
@@ -94,21 +96,20 @@ export default function TodayTasksSection({
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-xl">
             <CalendarCheck className="w-5 h-5" />
-            งานที่ต้องทำในวันนี้
+            {t('dashboard.todayTasks')}
           </CardTitle>
           <CardDescription>
-            งานที่มีกำหนดวันที่ในวันนี้ ให้ความสำคัญกับงานเหล่านี้เพื่อให้ทันตามกำหนด
+            {t('dashboard.todayTasksDescription')}
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="min-h-[300px] flex items-center justify-center">
           {tasks.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <CalendarCheck className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-              <p className="text-sm">ไม่มีงานที่ต้องทำในวันนี้</p>
+            <div className="flex flex-col items-center justify-center text-gray-500">
+              <CalendarCheck className="w-12 h-12 md:w-16 md:h-16 mb-3 text-gray-300" />
+              <p className="text-sm md:text-base">{t('dashboard.noTodayTasks')}</p>
             </div>
           ) : (
-            <div className="space-y-4">
-              {tasks.map((task) => (
+            <div className="space-y-4 w-full">{tasks.map((task) => (
                 <div
                   key={task.id}
                   className="flex items-center justify-between gap-3 md:gap-6 p-4 md:p-6 border rounded-lg hover:bg-gray-50 transition-colors min-h-[140px] cursor-pointer"
@@ -144,7 +145,7 @@ export default function TodayTasksSection({
                       variant="outline"
                       className={`${getStatusColor(task.status)} px-3 py-1.5 md:px-4 md:py-2 text-sm font-medium rounded-md whitespace-nowrap`}
                     >
-                      {getStatusLabel(task.status)}
+                      {t(getStatusKey(task.status))}
                     </Badge>
 
                     <DropdownMenu>
@@ -169,7 +170,7 @@ export default function TodayTasksSection({
                         >
                           <span className="flex items-center gap-2">
                             <span className="w-2 h-2 rounded-full bg-[#737373]"></span>
-                            รอดำเนินการ
+                            {t('status.todo')}
                           </span>
                         </DropdownMenuItem>
                         <DropdownMenuItem
@@ -178,7 +179,7 @@ export default function TodayTasksSection({
                         >
                           <span className="flex items-center gap-2">
                             <span className="w-2 h-2 rounded-full bg-[#00a6f4]"></span>
-                            กำลังดำเนินการ
+                            {t('status.inProgress')}
                           </span>
                         </DropdownMenuItem>
                         <DropdownMenuItem
@@ -187,7 +188,7 @@ export default function TodayTasksSection({
                         >
                           <span className="flex items-center gap-2">
                             <span className="w-2 h-2 rounded-full bg-[#f0b100]"></span>
-                            รอตรวจสอบ
+                            {t('status.inReview')}
                           </span>
                         </DropdownMenuItem>
                         <DropdownMenuItem
@@ -196,7 +197,7 @@ export default function TodayTasksSection({
                         >
                           <span className="flex items-center gap-2">
                             <span className="w-2 h-2 rounded-full bg-[#7ccf00]"></span>
-                            เสร็จสิ้น
+                            {t('status.done')}
                           </span>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -226,10 +227,9 @@ export default function TodayTasksSection({
       <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
-            <DialogTitle className="text-rose-600">ยืนยันการลบ Task</DialogTitle>
+            <DialogTitle className="text-rose-600">{t('task.confirmDelete')}</DialogTitle>
             <DialogDescription>
-              คุณต้องการลบ Task &quot;{selectedTask?.name}&quot; หรือไม่?
-              การดำเนินการนี้ไม่สามารถย้อนกลับได้
+              {t('task.confirmDeleteDescription', { name: selectedTask?.name || '' })}
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-3 pt-4">
@@ -238,7 +238,7 @@ export default function TodayTasksSection({
               onClick={handleCancelDelete}
               disabled={deletingTaskId !== null}
             >
-              ยกเลิก
+              {t('common.cancel')}
             </Button>
             <Button
               variant="destructive"
@@ -248,10 +248,10 @@ export default function TodayTasksSection({
               {deletingTaskId !== null ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  กำลังลบ...
+                  {t('common.deleting')}
                 </>
               ) : (
-                "ลบ Task"
+                t('common.delete')
               )}
             </Button>
           </div>

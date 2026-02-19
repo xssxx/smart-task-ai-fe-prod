@@ -93,7 +93,7 @@ export default function EditWorkspaceModal({
 
       await updateProject(project.id, payload);
       
-      toast.success("แก้ไข Workspace สำเร็จ", {
+      toast.success("แก้ไข พื้นที่ทำงาน สำเร็จ", {
         description: (
           <>
             Workspace <strong>{formData.name.trim()}</strong> ถูกอัพเดทเรียบร้อยแล้ว
@@ -126,9 +126,9 @@ export default function EditWorkspaceModal({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[600px] max-w-[95vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>แก้ไข Workspace</DialogTitle>
+          <DialogTitle>แก้ไข พื้นที่ทำงาน</DialogTitle>
           <DialogDescription>
-            แก้ไขข้อมูล workspace &quot;{project.name}&quot;
+            แก้ไขข้อมูล พื้นที่ทำงาน &quot;{project.name}&quot;
           </DialogDescription>
         </DialogHeader>
 
@@ -141,7 +141,7 @@ export default function EditWorkspaceModal({
 
           <div className="space-y-2">
               <Label htmlFor="name">
-                ชื่อ Workspace <span className="text-rose-500">*</span>
+                ชื่อ พื้นที่ทำงาน <span className="text-rose-500">*</span>
               </Label>
             <Input
               id="name"
@@ -165,14 +165,14 @@ export default function EditWorkspaceModal({
                     showAdvanced && "rotate-180"
                   )}
                 />
-                ตั้งค่า AI Assistant (ไม่บังคับ)
+                ตั้งค่า AI ผู้ช่วย (ไม่บังคับ)
               </button>
             </CollapsibleTrigger>
 
             <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
               <div className="space-y-4 pt-4 mt-2 border-t border-gray-100">
                 <div className="space-y-2">
-                  <Label htmlFor="nickname">ชื่อเล่น AI</Label>
+                  <Label htmlFor="nickname">ชื่อเล่น ผู้ช่วย</Label>
                   <Input
                     id="nickname"
                     placeholder="เช่น Jarvis, Assistant"
@@ -186,7 +186,7 @@ export default function EditWorkspaceModal({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="context">Context</Label>
+                  <Label htmlFor="context">อธิบายบทบาทและหน้าที่</Label>
                   <Textarea
                     id="context"
                     placeholder="เช่น You are a helpful assistant for software developers."
@@ -201,7 +201,7 @@ export default function EditWorkspaceModal({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="domain_knowledge">Domain Knowledge</Label>
+                  <Label htmlFor="domain_knowledge">ความรู้เฉพาะทาง</Label>
                   <Textarea
                     id="domain_knowledge"
                     placeholder="เช่น Expert in Golang, Clean Architecture, and PostgreSQL"

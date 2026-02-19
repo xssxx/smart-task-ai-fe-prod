@@ -1,20 +1,23 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface PageLoaderProps {
   message?: string;
   isExiting?: boolean;
 }
 
-export function PageLoader({ message = "กำลังโหลด...", isExiting = false }: PageLoaderProps) {
+export function PageLoader({ message, isExiting = false }: PageLoaderProps) {
+  const t = useTranslations();
+  const displayMessage = message || t('common.loading');
+
   return (
-    <div className={`fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm ${
-      isExiting ? 'loading-fade-out' : 'loading-fade-in'
-    }`}>
+    <div className={`fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm ${isExiting ? 'loading-fade-out' : 'loading-fade-in'
+      }`}>
       <div className="flex flex-col items-center gap-3">
         <Loader2 className="w-12 h-12 animate-spin text-gray-900" />
-        <p className="text-sm text-gray-600 font-medium">{message}</p>
+        <p className="text-sm text-gray-600 font-medium">{displayMessage}</p>
       </div>
     </div>
   );

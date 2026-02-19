@@ -1,14 +1,18 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { getProfile, updateProfile, requestPresignedURL, UploadFileS3 } from "@/services/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "@/lib/enhanced-toast";
 import { validateFile } from "@/utils/fileValidation";
 import { uploadToSupabase } from "@/utils/uploadToSupabase";
+import { useProfile } from "@/contexts/ProfileContext";
 import axios from "axios";
 
 export default function ProfilePage() {
+  const t = useTranslations();
+  const { refreshProfile } = useProfile();
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
   const [formData, setFormData] = useState({
@@ -35,8 +39,8 @@ export default function ProfilePage() {
           avatarPath: profile.avatar_path || "",
         });
       } catch (err) {
-        toast.error("เกิดข้อผิดพลาด", {
-          description: "ไม่สามารถโหลดข้อมูลโปรไฟล์ได้",
+        toast.error(t('common.error'), {
+          description: t('profile.cannotLoadProfile'),
         });
       } finally {
         setIsFetching(false);
@@ -53,7 +57,7 @@ export default function ProfilePage() {
   const handleFileSelect = (file: File) => {
     const validation = validateFile(file);
     if (!validation.valid) {
-      toast.error("ไฟล์ไม่ถูกต้อง", {
+      toast.error(t('profile.invalidFile'), {
         description: validation.error,
       });
       return;
@@ -82,34 +86,34 @@ export default function ProfilePage() {
       } catch (uploadError) {
         if (uploadError instanceof Error) {
           if (uploadError.message.includes('อินเทอร์เน็ต')) {
-            throw new Error("ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต");
+            throw new Error(t('profile.connectionError'));
           }
           throw uploadError;
         }
-        throw new Error("การอัปโหลดล้มเหลว กรุณาลองใหม่อีกครั้ง");
+        throw new Error(t('profile.uploadFailed'));
       }
       try {
         const UploadResponse = await UploadFileS3({ key });
         return UploadResponse.data.data.url;
       } catch (completeError) {
         if (axios.isAxiosError(completeError)) {
-          const errorMsg = completeError.response?.data?.error?.message || "ไม่สามารถยืนยันการอัปโหลด กรุณาลองใหม่อีกครั้ง";
+          const errorMsg = completeError.response?.data?.error?.message || t('profile.confirmUploadFailed');
           throw new Error(errorMsg);
         }
-        throw new Error("ไม่สามารถยืนยันการอัปโหลด กรุณาลองใหม่อีกครั้ง");
+        throw new Error(t('profile.confirmUploadFailed'));
       }
     } catch (error) {
       if (axios.isAxiosError(error)) {
         if (error.response?.status === 401) {
-          throw new Error("กรุณาเข้าสู่ระบบใหม่");
+          throw new Error(t('profile.pleaseLoginAgain'));
         }
-        const errorMsg = error.response?.data?.error?.message || "การอัปโหลดล้มเหลว กรุณาลองใหม่อีกครั้ง";
+        const errorMsg = error.response?.data?.error?.message || t('profile.uploadFailed');
         throw new Error(errorMsg);
       }
       if (error instanceof Error) {
         throw error;
       }
-      throw new Error("การอัปโหลดล้มเหลว กรุณาลองใหม่อีกครั้ง");
+      throw new Error(t('profile.uploadFailed'));
     }
   };
 
@@ -117,29 +121,29 @@ export default function ProfilePage() {
     e.preventDefault();
 
     if (!formData.firstName || !formData.lastName) {
-      toast.error("ข้อมูลไม่ครบถ้วน", {
-        description: "กรุณากรอกชื่อและนามสกุล",
+      toast.error(t('profile.incompleteData'), {
+        description: t('profile.firstNameAndLastNameRequired'),
       });
       return;
     }
 
     if (formData.firstName.length < 4 || formData.firstName.length > 50) {
-      toast.error("ข้อมูลไม่ถูกต้อง", {
-        description: "ชื่อต้องมี 4-50 ตัวอักษร",
+      toast.error(t('profile.invalidData'), {
+        description: t('profile.firstNameLength'),
       });
       return;
     }
 
     if (formData.lastName.length < 4 || formData.lastName.length > 50) {
-      toast.error("ข้อมูลไม่ถูกต้อง", {
-        description: "นามสกุลต้องมี 4-50 ตัวอักษร",
+      toast.error(t('profile.invalidData'), {
+        description: t('profile.lastNameLength'),
       });
       return;
     }
 
     if (formData.nickname && formData.nickname.length > 20) {
-      toast.error("ข้อมูลไม่ถูกต้อง", {
-        description: "ชื่อเล่นต้องไม่เกิน 20 ตัวอักษร",
+      toast.error(t('profile.invalidData'), {
+        description: t('profile.nicknameLength'),
       });
       return;
     }
@@ -158,8 +162,8 @@ export default function ProfilePage() {
         } catch (uploadError) {
           setIsUploading(false);
           setIsLoading(false);
-          toast.error("เกิดข้อผิดพลาด", {
-            description: uploadError instanceof Error ? uploadError.message : "การอัปโหลดล้มเหลว",
+          toast.error(t('common.error'), {
+            description: uploadError instanceof Error ? uploadError.message : t('profile.uploadFailed'),
           });
           return;
         } finally {
@@ -176,10 +180,13 @@ export default function ProfilePage() {
 
       await updateProfile(payload);
 
-      toast.success("อัพเดทโปรไฟล์สำเร็จ", {
+      // Refresh profile in context to update Navbar
+      await refreshProfile();
+
+      toast.success(t('profile.profileUpdatedSuccess'), {
         description: selectedFile 
-          ? "อัปโหลดรูปภาพและอัพเดทโปรไฟล์เรียบร้อยแล้ว"
-          : "อัพเดทโปรไฟล์เรียบร้อยแล้ว",
+          ? t('profile.profileUpdatedWithImageSuccess')
+          : t('profile.profileUpdatedSuccess'),
       });
 
       setFormData((prev) => ({ ...prev, avatarPath: avatarUrl }));
@@ -190,8 +197,8 @@ export default function ProfilePage() {
       setImageLoadError(false);
     } catch (err) {
       if (axios.isAxiosError(err)) {
-        const errorMsg = err.response?.data?.message || "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง";
-        toast.error("เกิดข้อผิดพลาด", {
+        const errorMsg = err.response?.data?.message || t('profile.profileUpdateFailed');
+        toast.error(t('common.error'), {
           description: errorMsg,
         });
       }
@@ -250,11 +257,11 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-semibold text-gray-900 mb-2 lg:hidden">
-          โปรไฟล์ของฉัน
+          {t('profile.pageTitle')}
         </h1>
 
         <div className="mb-6">
-          <p className="text-base text-gray-600">จัดการข้อมูลส่วนตัวของคุณ</p>
+          <p className="text-base text-gray-600">{t('profile.pageSubtitle')}</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -287,39 +294,39 @@ export default function ProfilePage() {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-4">
                 <label className="block text-sm font-medium text-gray-700">
-                  ชื่อ <span className="text-rose-500">*</span>
+                  {t('profile.firstName')} <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={formData.firstName}
                   onChange={(e) => handleInputChange("firstName", e.target.value)}
-                  placeholder="ชื่อ"
+                  placeholder={t('profile.firstName')}
                   className="w-full h-12 px-4 rounded-xl bg-gray-50 border-2 border-gray-100 outline-none focus:border-gray-900 focus:bg-white transition-all duration-200 text-gray-700 placeholder:text-gray-400 text-sm"
                 />
               </div>
 
               <div className="space-y-4">
                 <label className="block text-sm font-medium text-gray-700">
-                  นามสกุล <span className="text-rose-500">*</span>
+                  {t('profile.lastName')} <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={formData.lastName}
                   onChange={(e) => handleInputChange("lastName", e.target.value)}
-                  placeholder="นามสกุล"
+                  placeholder={t('profile.lastName')}
                   className="w-full h-12 px-4 rounded-xl bg-gray-50 border-2 border-gray-100 outline-none focus:border-gray-900 focus:bg-white transition-all duration-200 text-gray-700 placeholder:text-gray-400 text-sm"
                 />
               </div>
 
               <div className="space-y-4">
                 <label className="block text-sm font-medium text-gray-700">
-                  ชื่อเล่น <span className="text-gray-400">(ไม่บังคับ)</span>
+                  {t('profile.nickname')} <span className="text-gray-400">({t('common.optional')})</span>
                 </label>
                 <input
                   type="text"
                   value={formData.nickname}
                   onChange={(e) => handleInputChange("nickname", e.target.value)}
-                  placeholder="ชื่อเล่น"
+                  placeholder={t('profile.nickname')}
                   className="w-full h-12 px-4 rounded-xl bg-gray-50 border-2 border-gray-100 outline-none focus:border-gray-900 focus:bg-white transition-all duration-200 text-gray-700 placeholder:text-gray-400 text-sm"
                 />
               </div>
@@ -327,7 +334,7 @@ export default function ProfilePage() {
               {/* Avatar Upload */}
               <div className="space-y-4">
                 <label className="block text-sm font-medium text-gray-700">
-                  รูปโปรไฟล์ <span className="text-gray-400">(ไม่บังคับ)</span>
+                  {t('profile.avatar')} <span className="text-gray-400">({t('common.optional')})</span>
                 </label>
                 <div className="flex items-center gap-4">
                   <input
@@ -346,7 +353,7 @@ export default function ProfilePage() {
                     htmlFor="avatar-upload"
                     className="cursor-pointer px-6 h-12 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-all duration-200 flex items-center justify-center"
                   >
-                    เลือกรูปภาพ
+                    {t('profile.selectImage')}
                   </label>
                   {selectedFile && (
                     <div className="flex items-center gap-2">
@@ -362,7 +369,7 @@ export default function ProfilePage() {
                           if (fileInput) fileInput.value = '';
                         }}
                         className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-                        title="ลบไฟล์"
+                        title={t('profile.deleteImage')}
                       >
                         <svg
                           className="w-5 h-5 text-gray-500 hover:text-red-600"
@@ -383,7 +390,7 @@ export default function ProfilePage() {
                 </div>
                 {previewUrl && (
                   <div className="mt-4">
-                    <p className="text-sm text-gray-600 mb-2">ตัวอย่าง:</p>
+                    <p className="text-sm text-gray-600 mb-2">{t('profile.preview')}:</p>
                     <div className="relative w-32 h-32 rounded-xl overflow-hidden border-2 border-gray-200">
                       <img
                         src={previewUrl}
@@ -399,7 +406,7 @@ export default function ProfilePage() {
                           if (fileInput) fileInput.value = '';
                         }}
                         className="absolute top-2 right-2 p-1.5 bg-white/90 hover:bg-white rounded-full shadow-md transition-all"
-                        title="ลบรูปภาพ"
+                        title={t('profile.deleteImage')}
                       >
                         <svg
                           className="w-4 h-4 text-gray-700 hover:text-red-600"
@@ -421,7 +428,7 @@ export default function ProfilePage() {
                 {isUploading && (
                   <div className="mt-4">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-gray-600">กำลังอัปโหลด...</span>
+                      <span className="text-sm text-gray-600">{t('profile.uploading')}</span>
                       <span className="text-sm font-medium text-gray-900">{uploadProgress}%</span>
                     </div>
                     <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -462,10 +469,10 @@ export default function ProfilePage() {
                           d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                         ></path>
                       </svg>
-                      <span>กำลังบันทึก...</span>
+                      <span>{t('profile.saving')}</span>
                     </div>
                   ) : (
-                    "บันทึกการเปลี่ยนแปลง"
+                    t('profile.saveChanges')
                   )}
                 </button>
               </div>

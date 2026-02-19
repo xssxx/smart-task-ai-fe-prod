@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { Pencil, Loader2, Trash2, X } from "lucide-react";
 import {
   Dialog,
@@ -24,6 +25,7 @@ import { getTaskById, updateTask, deleteTask, UpdateTaskRequest } from "@/servic
 import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { toast } from "@/lib/enhanced-toast";
 import { PRIORITY_OPTIONS, STATUS_OPTIONS, TOAST_DURATION } from "@/constants";
+import { getPriorityKey, getStatusKey } from "@/lib/task-utils";
 
 interface TaskDetailModalProps {
   open: boolean;
@@ -51,6 +53,7 @@ export default function TaskDetailModal({
   onSuccess,
   taskId,
 }: TaskDetailModalProps) {
+  const t = useTranslations();
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -85,7 +88,6 @@ export default function TaskDetailModal({
       setShowDeleteConfirm(false);
       setError(null);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, taskId]);
 
   const fetchTaskData = async () => {
@@ -138,7 +140,7 @@ export default function TaskDetailModal({
         setRecurringEndType(recurringUntilValue ? "on_date" : "never");
       }
     } catch (err) {
-      setError("ไม่สามารถโหลดข้อมูล Task ได้");
+      setError(t('task.cannotLoadTask'));
     } finally {
       setIsLoading(false);
     }
@@ -146,9 +148,9 @@ export default function TaskDetailModal({
 
   const handleSave = async () => {
     if (!formData.name.trim()) {
-      setError("กรุณากรอกชื่อ Task");
-      toast.error("ข้อมูลไม่ครบถ้วน", {
-        description: "กรุณากรอกชื่อ Task",
+      setError(t('task.pleaseEnterTaskName'));
+      toast.error(t('task.incompleteData'), {
+        description: t('task.pleaseEnterTaskName'),
         duration: TOAST_DURATION.ERROR,
       });
       return;
@@ -156,9 +158,9 @@ export default function TaskDetailModal({
 
     if (startDateTime.date && endDateTime.date) {
       if (endDateTime.date <= startDateTime.date) {
-        setError("วันเวลาสิ้นสุดต้องมากกว่าวันเวลาเริ่มต้น");
-        toast.error("ข้อมูลไม่ถูกต้อง", {
-          description: "วันเวลาสิ้นสุดต้องมากกว่าวันเวลาเริ่มต้น",
+        setError(t('task.endDateMustBeAfterStart'));
+        toast.error(t('task.invalidData'), {
+          description: t('task.endDateMustBeAfterStart'),
           duration: TOAST_DURATION.ERROR,
         });
         return;
@@ -168,9 +170,9 @@ export default function TaskDetailModal({
       if (formData.recurring_days && formData.recurring_days > 0) {
         const daysDiff = Math.ceil((endDateTime.date.getTime() - startDateTime.date.getTime()) / (1000 * 60 * 60 * 24));
         if (formData.recurring_days <= daysDiff) {
-          setError(`Task มีระยะเวลา ${daysDiff} วัน แต่ทำประจำทุก ${formData.recurring_days} วัน จะทำให้เกิดการซ้ำซ้อน`);
-          toast.error("การตั้งค่าไม่เหมาะสม", {
-            description: `Task มีระยะเวลา ${daysDiff} วัน ควรตั้งทำประจำอย่างน้อย ${daysDiff + 1} วัน หรือลบการทำประจำออก`,
+          setError(t('task.recurringOverlapWarning', { days: daysDiff, recurring: formData.recurring_days }));
+          toast.error(t('task.invalidData'), {
+            description: t('task.recurringOverlapSuggestion', { days: daysDiff, suggested: daysDiff + 1 }),
             duration: TOAST_DURATION.ERROR,
           });
           return;
@@ -207,12 +209,8 @@ export default function TaskDetailModal({
       await updateTask(formData.id, payload);
 
       setIsEditing(false);
-      toast.success("บันทึก Task สำเร็จ", {
-        description: (
-          <>
-            Task <strong>{formData.name}</strong> ถูกอัพเดทเรียบร้อยแล้ว
-          </>
-        ),
+      toast.success(t('task.taskUpdatedSuccess'), {
+        description: t('task.taskUpdatedDescription', { name: formData.name }),
         duration: TOAST_DURATION.SUCCESS,
         metadata: {
           taskName: formData.name,
@@ -222,9 +220,9 @@ export default function TaskDetailModal({
       onOpenChange(false);
       onSuccess();
     } catch (err) {
-      setError("ไม่สามารถบันทึก Task ได้ กรุณาลองใหม่");
-      toast.error("บันทึก Task ไม่สำเร็จ", {
-        description: "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง",
+      setError(t('task.taskUpdateFailedDescription'));
+      toast.error(t('task.taskUpdateFailed'), {
+        description: t('task.taskUpdateFailedDescription'),
         duration: TOAST_DURATION.ERROR,
       });
     } finally {
@@ -253,12 +251,8 @@ export default function TaskDetailModal({
       setError(null);
       await deleteTask(formData.id);
       setShowDeleteConfirm(false);
-      toast.success("ลบ Task สำเร็จ", {
-        description: (
-          <>
-            Task <strong>{formData.name}</strong> ถูกลบเรียบร้อยแล้ว
-          </>
-        ),
+      toast.success(t('task.taskDeletedSuccess'), {
+        description: t('task.taskDeletedDescription', { name: formData.name }),
         duration: TOAST_DURATION.SUCCESS,
         metadata: {
           taskName: formData.name,
@@ -268,9 +262,9 @@ export default function TaskDetailModal({
       onOpenChange(false);
       onSuccess();
     } catch (err) {
-      setError("ไม่สามารถลบ Task ได้ กรุณาลองใหม่");
-      toast.error("ลบ Task ไม่สำเร็จ", {
-        description: "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง",
+      setError(t('task.taskDeleteFailedDescription'));
+      toast.error(t('task.taskDeleteFailed'), {
+        description: t('task.taskDeleteFailedDescription'),
         duration: TOAST_DURATION.ERROR,
       });
     } finally {
@@ -283,7 +277,7 @@ export default function TaskDetailModal({
       <DialogContent className="sm:max-w-[500px] max-w-[95vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-2">
-            <DialogTitle>รายละเอียด Task</DialogTitle>
+            <DialogTitle>{t('task.taskDetails')}</DialogTitle>
             {!isEditing && !isLoading && (
               <>
                 <Button
@@ -292,7 +286,7 @@ export default function TaskDetailModal({
                   onClick={() => setIsEditing(true)}
                 >
                   <Pencil className="w-4 h-4 mr-2" />
-                  Edit
+                  {t('common.edit')}
                 </Button>
                 <Button
                   variant="ghost"
@@ -320,24 +314,24 @@ export default function TaskDetailModal({
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="name">ชื่อ Task <span className="text-rose-500">*</span></Label>
+              <Label htmlFor="name">{t('task.taskName')} <span className="text-rose-500">*</span></Label>
               <Input
                 id="name"
                 value={formData.name}
                 onChange={(e) => handleChange("name", e.target.value)}
-                placeholder="เช่น ประชุมทีม, Review code"
+                placeholder={t('task.namePlaceholder')}
                 disabled={!isEditing || isSaving}
                 className={!isEditing ? "bg-gray-50" : ""}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">รายละเอียด</Label>
+              <Label htmlFor="description">{t('task.description')}</Label>
               <Textarea
                 id="description"
                 value={formData.description}
                 onChange={(e) => handleChange("description", e.target.value)}
-                placeholder="รายละเอียดเพิ่มเติม..."
+                placeholder={t('task.descriptionPlaceholder')}
                 rows={3}
                 disabled={!isEditing || isSaving}
                 className={!isEditing ? "bg-gray-50" : ""}
@@ -346,19 +340,19 @@ export default function TaskDetailModal({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Priority <span className="text-rose-500">*</span></Label>
+                <Label>{t('task.priority')} <span className="text-rose-500">*</span></Label>
                 <Select
                   value={formData.priority}
                   onValueChange={(value) => handleChange("priority", value)}
                   disabled={!isEditing || isSaving}
                 >
                   <SelectTrigger className={cn("w-full", !isEditing && "bg-gray-50")}>
-                    <SelectValue placeholder="เลือก Priority" />
+                    <SelectValue placeholder={t('task.selectPriority')} />
                   </SelectTrigger>
                   <SelectContent>
                     {PRIORITY_OPTIONS.map((opt) => (
                       <SelectItem key={opt.value} value={opt.value}>
-                        {opt.label}
+                        {t(getPriorityKey(opt.value))}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -366,19 +360,19 @@ export default function TaskDetailModal({
               </div>
 
               <div className="space-y-2">
-                <Label>Status</Label>
+                <Label>{t('task.status')}</Label>
                 <Select
                   value={formData.status}
                   onValueChange={(value) => handleChange("status", value)}
                   disabled={!isEditing || isSaving}
                 >
                   <SelectTrigger className={cn("w-full", !isEditing && "bg-gray-50")}>
-                    <SelectValue placeholder="เลือก Status" />
+                    <SelectValue placeholder={t('task.selectStatus')} />
                   </SelectTrigger>
                   <SelectContent>
                     {STATUS_OPTIONS.map((opt) => (
                       <SelectItem key={opt.value} value={opt.value}>
-                        {opt.label}
+                        {t(getStatusKey(opt.value))}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -387,14 +381,14 @@ export default function TaskDetailModal({
             </div>
 
             <div className="space-y-2">
-              <Label>วันเวลาเริ่มต้น</Label>
+              <Label>{t('task.startDateTime')}</Label>
               <div className="flex gap-2">
                 <div className="flex-1">
                   <DateTimePicker
                     value={startDateTime}
                     onChange={setStartDateTime}
                     isDisabled={!isEditing || isSaving}
-                    placeholder="เลือกวันเวลาเริ่มต้น"
+                    placeholder={t('task.selectStartDateTime')}
                   />
                 </div>
                 {isEditing && startDateTime.date && (
@@ -413,14 +407,14 @@ export default function TaskDetailModal({
             </div>
 
             <div className="space-y-2">
-              <Label>วันเวลาสิ้นสุด</Label>
+              <Label>{t('task.endDateTime')}</Label>
               <div className="flex gap-2">
                 <div className="flex-1">
                   <DateTimePicker
                     value={endDateTime}
                     onChange={setEndDateTime}
                     isDisabled={!isEditing || isSaving || formData.status !== 'todo'}
-                    placeholder="เลือกวันเวลาสิ้นสุด"
+                    placeholder={t('task.selectEndDateTime')}
                   />
                 </div>
                 {isEditing && endDateTime.date && formData.status === 'todo' && (
@@ -438,30 +432,30 @@ export default function TaskDetailModal({
               </div>
               {isDateRangeInvalid && (
                 <p className="text-xs text-rose-600">
-                  วันเวลาสิ้นสุดต้องมากกว่าวันเวลาเริ่มต้น
+                  {t('task.endDateMustBeAfterStart')}
                 </p>
               )}
               {formData.status !== 'todo' && (
                 <p className="text-xs text-muted-foreground">
-                  ไม่สามารถแก้ไขวันเวลาสิ้นสุดได้เมื่อ status ไม่ใช่ Todo
+                  {t('task.cannotEditEndDateWhenNotTodo')}
                 </p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="location">สถานที่</Label>
+              <Label htmlFor="location">{t('task.location')}</Label>
               <Input
                 id="location"
                 value={formData.location || ""}
                 onChange={(e) => handleChange("location", e.target.value)}
-                placeholder="เช่น ห้องประชุม A, Online"
+                placeholder={t('task.locationPlaceholder')}
                 disabled={!isEditing || isSaving}
                 className={!isEditing ? "bg-gray-50" : ""}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="recurringDays">ทำประจำ</Label>
+              <Label htmlFor="recurringDays">{t('task.recurring')}</Label>
               <Select
                 value={formData.recurring_days ? formData.recurring_days.toString() : "0"}
                 onValueChange={(value) => {
@@ -478,14 +472,14 @@ export default function TaskDetailModal({
                 disabled={!isEditing || isSaving}
               >
                 <SelectTrigger className={cn("w-full", !isEditing && "bg-gray-50")}>
-                  <SelectValue placeholder="ไม่ทำประจำ" />
+                  <SelectValue placeholder={t('task.noRecurring')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="0">ไม่ทำประจำ</SelectItem>
-                  <SelectItem value="1">ทุกวัน</SelectItem>
-                  <SelectItem value="7">ทุกสัปดาห์</SelectItem>
-                  <SelectItem value="14">ทุก 2 สัปดาห์</SelectItem>
-                  <SelectItem value="30">ทุกเดือน</SelectItem>
+                  <SelectItem value="0">{t('task.noRecurring')}</SelectItem>
+                  <SelectItem value="1">{t('task.daily')}</SelectItem>
+                  <SelectItem value="7">{t('task.weekly')}</SelectItem>
+                  <SelectItem value="14">{t('task.biweekly')}</SelectItem>
+                  <SelectItem value="30">{t('task.monthly')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -493,7 +487,7 @@ export default function TaskDetailModal({
             {formData.recurring_days && formData.recurring_days > 0 && (
               <>
                 <div className="space-y-2">
-                  <Label>สิ้นสุดการทำประจำ</Label>
+                  <Label>{t('task.recurringEnd')}</Label>
                   <Select
                     value={recurringEndType}
                     onValueChange={(value: "never" | "on_date") => {
@@ -508,22 +502,22 @@ export default function TaskDetailModal({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="never">ไม่เลย</SelectItem>
-                      <SelectItem value="on_date">ในวันที่</SelectItem>
+                      <SelectItem value="never">{t('task.never')}</SelectItem>
+                      <SelectItem value="on_date">{t('task.onDate')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 {recurringEndType === "on_date" && (
                   <div className="space-y-2">
-                    <Label>วันที่สิ้นสุด</Label>
+                    <Label>{t('task.recurringEndDate')}</Label>
                     <div className="flex gap-2">
                       <div className="flex-1">
                         <DateTimePicker
                           value={recurringUntil}
                           onChange={setRecurringUntil}
                           isDisabled={!isEditing || isSaving}
-                          placeholder="เลือกวันที่สิ้นสุดการทำประจำ"
+                          placeholder={t('task.selectRecurringEndDate')}
                         />
                       </div>
                       {isEditing && recurringUntil.date && (
@@ -556,7 +550,7 @@ export default function TaskDetailModal({
                   disabled={isSaving}
                   className="w-full sm:w-auto order-2 sm:order-1"
                 >
-                  ยกเลิก
+                  {t('common.cancel')}
                 </Button>
                 <Button
                   onClick={handleSave}
@@ -566,10 +560,10 @@ export default function TaskDetailModal({
                   {isSaving ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      กำลังบันทึก...
+                      {t('common.saving')}
                     </>
                   ) : (
-                    "บันทึก"
+                    t('common.save')
                   )}
                 </Button>
               </div>
@@ -581,9 +575,9 @@ export default function TaskDetailModal({
       <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
-            <DialogTitle className="text-rose-600">ยืนยันการลบ Task</DialogTitle>
+            <DialogTitle className="text-rose-600">{t('task.confirmDelete')}</DialogTitle>
             <DialogDescription>
-              คุณต้องการลบ Task &quot;{formData.name}&quot; หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้
+              {t('task.confirmDeleteDescription', { name: formData.name })}
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-3 pt-4">
@@ -592,7 +586,7 @@ export default function TaskDetailModal({
               onClick={() => setShowDeleteConfirm(false)}
               disabled={isDeleting}
             >
-              ยกเลิก
+              {t('common.cancel')}
             </Button>
             <Button
               variant="destructive"
@@ -602,10 +596,10 @@ export default function TaskDetailModal({
               {isDeleting ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  กำลังลบ...
+                  {t('common.deleting')}
                 </>
               ) : (
-                "ลบ Task"
+                t('common.delete')
               )}
             </Button>
           </div>

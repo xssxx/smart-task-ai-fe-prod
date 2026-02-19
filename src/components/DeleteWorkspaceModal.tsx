@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   Dialog,
   DialogContent,
@@ -27,6 +28,7 @@ export default function DeleteWorkspaceModal({
   onSuccess,
   project,
 }: DeleteWorkspaceModalProps) {
+  const t = useTranslations();
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,10 +42,10 @@ export default function DeleteWorkspaceModal({
       const projectName = project.name;
       await deleteProject(project.id);
       
-      toast.success("ลบ Workspace สำเร็จ", {
+      toast.success(t('project.workspaceDeletedSuccess'), {
         description: (
           <>
-            Workspace <strong>{projectName}</strong> ถูกลบเรียบร้อยแล้ว
+            Workspace <strong>{projectName}</strong> {t('project.workspaceDeletedDescription', { name: '' }).replace('{name}', '').trim()}
           </>
         ),
       });
@@ -51,9 +53,9 @@ export default function DeleteWorkspaceModal({
       onOpenChange(false);
       onSuccess?.();
     } catch (err) {
-      setError("ไม่สามารถลบ Workspace ได้ กรุณาลองใหม่อีกครั้ง");
-      toast.error("เกิดข้อผิดพลาด", {
-        description: "ไม่สามารถลบ Workspace ได้ กรุณาลองใหม่อีกครั้ง",
+      setError(t('project.workspaceDeleteFailedDescription'));
+      toast.error(t('project.workspaceDeleteFailed'), {
+        description: t('project.workspaceDeleteFailedDescription'),
       });
     } finally {
       setIsDeleting(false);
@@ -75,10 +77,10 @@ export default function DeleteWorkspaceModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-rose-600">
             <Trash2 className="w-5 h-5" />
-            ลบ Workspace
+            {t('project.deleteWorkspace')}
           </DialogTitle>
           <DialogDescription>
-            การดำเนินการนี้ไม่สามารถย้อนกลับได้
+            {t('project.cannotUndo')}
           </DialogDescription>
         </DialogHeader>
 
@@ -91,10 +93,10 @@ export default function DeleteWorkspaceModal({
 
           <div className="bg-rose-50 border border-rose-200 rounded-lg p-4">
             <p className="text-sm text-rose-700">
-              คุณแน่ใจหรือไม่ที่จะลบ workspace <strong>&quot;{project.name}&quot;</strong>?
+              {t('project.confirmDeleteWorkspace', { name: project.name })}
             </p>
             <p className="text-xs text-rose-600 mt-2">
-              ข้อมูลทั้งหมดใน workspace นี้จะถูกลบอย่างถาวร รวมถึง tasks และ chat history
+              {t('project.confirmDeleteWarning')}
             </p>
           </div>
         </div>
@@ -106,7 +108,7 @@ export default function DeleteWorkspaceModal({
             disabled={isDeleting}
             className="w-full sm:w-auto"
           >
-            ยกเลิก
+            {t('common.cancel')}
           </Button>
           <Button
             variant="destructive"
@@ -117,12 +119,12 @@ export default function DeleteWorkspaceModal({
             {isDeleting ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                กำลังลบ...
+                {t('common.deleting')}
               </>
             ) : (
               <>
                 <Trash2 className="w-4 h-4 mr-2" />
-                ลบ Workspace
+                {t('project.deleteWorkspace')}
               </>
             )}
           </Button>

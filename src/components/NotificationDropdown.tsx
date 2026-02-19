@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Bell } from "lucide-react";
+import { useTranslations, useLocale } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -42,15 +43,25 @@ const NotificationItem = ({
 }: {
   notification: Notification;
 }) => {
-  const [relativeTime, setRelativeTime] = useState(getRelativeTimeText(notification.timestamp));
+  const t = useTranslations();
+  const locale = useLocale();
+  const timeSuffixes = {
+    second: t('time.second'),
+    minute: t('time.minute'),
+    hour: t('time.hour'),
+    day: t('time.day'),
+    month: t('time.month'),
+    year: t('time.year'),
+  };
+  const [relativeTime, setRelativeTime] = useState(getRelativeTimeText(notification.timestamp, timeSuffixes));
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setRelativeTime(getRelativeTimeText(notification.timestamp));
+      setRelativeTime(getRelativeTimeText(notification.timestamp, timeSuffixes));
     }, 60000);
 
     return () => clearInterval(interval);
-  }, [notification.timestamp]);
+  }, [notification.timestamp, locale]);
 
   const actionMessage = notification.message.split(' - ')[0];
   const displayName = notification.metadata?.taskName 
@@ -80,7 +91,7 @@ const NotificationItem = ({
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2 mb-0.5">
           <p className="text-sm text-gray-500 font-medium truncate">
-            {displayName || displayId || "การแจ้งเตือน"}
+            {displayName || displayId || t('notification.notifications')}
           </p>
           <p className="text-xs text-gray-400 shrink-0">{relativeTime}</p>
         </div>
@@ -94,6 +105,7 @@ const NotificationItem = ({
 };
 
 export const NotificationDropdown = () => {
+  const t = useTranslations();
   const { notifications, clearAllNotifications, unreadCount, markAllAsRead } =
     useNotifications();
   const [open, setOpen] = useState(false);
@@ -160,13 +172,13 @@ export const NotificationDropdown = () => {
         <div className="flex flex-col max-h-[80vh]">
           {/* Header */}
           <div className="flex items-center justify-between px-4 pt-4 pb-2 bg-white sticky top-0 z-10">
-            <h4 className="font-semibold text-gray-900">การแจ้งเตือน</h4>
+            <h4 className="font-semibold text-gray-900">{t('notification.notifications')}</h4>
             {!isMobile && notifications.length > 0 && (
               <button
                 onClick={clearAllNotifications}
                 className="text-sm text-gray-600 hover:text-gray-700 transition-colors"
               >
-                ลบทั้งหมด
+                {t('notification.clearAll')}
               </button>
             )}
           </div>
@@ -181,7 +193,7 @@ export const NotificationDropdown = () => {
             {notifications.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 px-4">
                 <Bell className="w-12 h-12 text-gray-300 mb-3" />
-                <p className="text-sm text-gray-500 text-center">ไม่มีการแจ้งเตือน</p>
+                <p className="text-sm text-gray-500 text-center">{t('notification.noNotifications')}</p>
               </div>
             ) : (
               <div className="px-3 pb-3 pt-1 space-y-2">
@@ -202,7 +214,7 @@ export const NotificationDropdown = () => {
                 onClick={clearAllNotifications}
                 className="w-full text-sm text-gray-600 hover:text-gray-700 transition-colors"
               >
-                ลบทั้งหมด
+                {t('notification.clearAll')}
               </button>
             </div>
           )}
