@@ -104,9 +104,9 @@ export default function UnscheduledTasksSection({
         </CardHeader>
         <CardContent className={tasks.length === 0 ? "" : tasks.length <= 3 ? "" : "max-h-[500px] overflow-y-auto"}>
           {tasks.length === 0 ? (
-            <div className="py-8 flex items-center justify-center text-gray-500">
+            <div className="py-8 flex items-center justify-center text-muted-foreground">
               <div className="text-center">
-                <Calendar className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                <Calendar className="w-12 h-12 mx-auto mb-3 text-muted" />
                 <p className="text-sm">{t('dashboard.noUnscheduledTasks')}</p>
               </div>
             </div>
@@ -115,17 +115,17 @@ export default function UnscheduledTasksSection({
               {tasks.map((task) => (
                 <div
                   key={task.id}
-                  className="flex items-center justify-between gap-3 md:gap-6 p-4 md:p-6 border rounded-lg hover:bg-gray-50 transition-colors min-h-[140px] cursor-pointer"
+                  className="flex items-center justify-between gap-3 md:gap-6 p-4 md:p-6 border border-border rounded-lg hover:bg-accent transition-colors min-h-[140px] cursor-pointer"
                   onClick={() => handleCardClick(task.id)}
                 >
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2 text-gray-600">
+                    <div className="flex items-center gap-2 mb-2 text-muted-foreground">
                       <Folder className="w-4 h-4 shrink-0" />
                       <span className="text-sm truncate">{task.project.name}</span>
                     </div>
 
                     <div className="flex items-center gap-2 md:gap-3 mb-3">
-                      <h4 className="text-lg md:text-2xl font-semibold text-gray-900 truncate">
+                      <h4 className="text-lg md:text-2xl font-semibold text-foreground truncate">
                         {task.name}
                       </h4>
                       <Badge
@@ -137,7 +137,7 @@ export default function UnscheduledTasksSection({
                     </div>
 
                     {task.description && (
-                      <p className="text-sm md:text-base text-gray-600 line-clamp-2">
+                      <p className="text-sm md:text-base text-muted-foreground line-clamp-2">
                         {task.description}
                       </p>
                     )}
@@ -172,7 +172,7 @@ export default function UnscheduledTasksSection({
                           onClick={() => handleStatusChange(task.id, "todo")}
                         >
                           <span className="flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-[#737373]"></span>
+                            <span className="w-2 h-2 rounded-full status-dot-todo"></span>
                             {t('status.todo')}
                           </span>
                         </DropdownMenuItem>
@@ -181,7 +181,7 @@ export default function UnscheduledTasksSection({
                           onClick={() => handleStatusChange(task.id, "in_progress")}
                         >
                           <span className="flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-[#00a6f4]"></span>
+                            <span className="w-2 h-2 rounded-full status-dot-in-progress"></span>
                             {t('status.inProgress')}
                           </span>
                         </DropdownMenuItem>
@@ -190,7 +190,7 @@ export default function UnscheduledTasksSection({
                           onClick={() => handleStatusChange(task.id, "in_review")}
                         >
                           <span className="flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-[#f0b100]"></span>
+                            <span className="w-2 h-2 rounded-full status-dot-in-review"></span>
                             {t('status.inReview')}
                           </span>
                         </DropdownMenuItem>
@@ -199,7 +199,7 @@ export default function UnscheduledTasksSection({
                           onClick={() => handleStatusChange(task.id, "done")}
                         >
                           <span className="flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-[#7ccf00]"></span>
+                            <span className="w-2 h-2 rounded-full status-dot-done"></span>
                             {t('status.done')}
                           </span>
                         </DropdownMenuItem>

@@ -7,6 +7,7 @@ import { getMessages } from 'next-intl/server';
 import { cookies } from 'next/headers';
 import { defaultLocale, locales, Locale } from '@/i18n/config';
 import { AppLayoutClient } from '@/components/AppLayoutClient';
+import { ThemeProvider } from 'next-themes';
 
 const kanit = Kanit({
   variable: "--font-kanit",
@@ -37,18 +38,25 @@ export default async function RootLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale}>
+    <html lang={locale} suppressHydrationWarning>
       <body
         className={`${kanit.variable} ${momoSignature.variable} antialiased font-sans`}
         suppressHydrationWarning
       >
-        <NextIntlClientProvider messages={messages} locale={locale}>
-          <Suspense fallback={<PageLoader />}>
-            <AppLayoutClient>
-              {children}
-            </AppLayoutClient>
-          </Suspense>
-        </NextIntlClientProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange={false}
+        >
+          <NextIntlClientProvider messages={messages} locale={locale}>
+            <Suspense fallback={<PageLoader />}>
+              <AppLayoutClient>
+                {children}
+              </AppLayoutClient>
+            </Suspense>
+          </NextIntlClientProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

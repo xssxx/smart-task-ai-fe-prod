@@ -52,7 +52,6 @@ export function AppLayoutClient({ children }: { children: React.ReactNode }) {
             </div>
             <Toaster
               position="top-right"
-              richColors
               closeButton={false}
               duration={2000}
               expand={false}

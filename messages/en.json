@@ -9,6 +9,7 @@
     "profile": "Profile",
     "logout": "Logout",
     "changeLanguage": "Change Language",
+    "changeTheme": "Change Theme",
     "smartTask": "Smart Task",
     "settings": "Settings"
   },
@@ -298,5 +299,10 @@
     "description": "The page you are looking for might have been moved, deleted, or never existed. Please check the URL again or return to the home page.",
     "goBack": "Go Back",
     "goHome": "Go Home"
+  },
+  "themeModal": {
+    "title": "Select Theme",
+    "light": "Light",
+    "dark": "Dark"
   }
 }

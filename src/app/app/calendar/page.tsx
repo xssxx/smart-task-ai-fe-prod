@@ -112,23 +112,21 @@ function CalendarPageContent() {
 
     if (viewMode === "month") {
       const tasksByDate = new Map<string, typeof tasks>();
-      
+
       tasks.forEach((task) => {
         const occurrenceDate = (task as any).occurrence_date;
         if (!occurrenceDate) return;
 
-        try {
-          const taskDate = new Date(occurrenceDate);
-          if (
-            taskDate.getMonth() === currentDate.getMonth() &&
-            taskDate.getFullYear() === currentDate.getFullYear()
-          ) {
-            if (!tasksByDate.has(occurrenceDate)) {
-              tasksByDate.set(occurrenceDate, []);
-            }
-            tasksByDate.get(occurrenceDate)!.push(task);
+        const taskDate = new Date(occurrenceDate);
+        if (
+          taskDate.getMonth() === currentDate.getMonth() &&
+          taskDate.getFullYear() === currentDate.getFullYear()
+        ) {
+          if (!tasksByDate.has(occurrenceDate)) {
+            tasksByDate.set(occurrenceDate, []);
           }
-        } catch {}
+          tasksByDate.get(occurrenceDate)!.push(task);
+        }
       });
 
       let totalCount = 0;
@@ -146,20 +144,18 @@ function CalendarPageContent() {
       weekEnd.setDate(weekStart.getDate() + 7);
 
       const tasksByDate = new Map<string, typeof tasks>();
-      
+
       tasks.forEach((task) => {
         const occurrenceDate = (task as any).occurrence_date;
         if (!occurrenceDate) return;
 
-        try {
-          const taskDate = new Date(occurrenceDate);
-          if (taskDate >= weekStart && taskDate < weekEnd) {
-            if (!tasksByDate.has(occurrenceDate)) {
-              tasksByDate.set(occurrenceDate, []);
-            }
-            tasksByDate.get(occurrenceDate)!.push(task);
+        const taskDate = new Date(occurrenceDate);
+        if (taskDate >= weekStart && taskDate < weekEnd) {
+          if (!tasksByDate.has(occurrenceDate)) {
+            tasksByDate.set(occurrenceDate, []);
           }
-        } catch {}
+          tasksByDate.get(occurrenceDate)!.push(task);
+        }
       });
 
       let totalCount = 0;
@@ -184,26 +180,26 @@ function CalendarPageContent() {
 
   return (
     <CalendarErrorBoundary>
-      <div className="h-screen flex flex-col bg-gray-50 text-base">
+      <div className="min-h-screen flex flex-col bg-background text-base">
         <main className="flex-1 flex flex-col p-3 sm:p-4 md:p-6 max-w-[1600px] mx-auto w-full">
-          <h1 className="text-3xl font-semibold text-gray-900 mb-2 lg:hidden">
+          <h1 className="text-3xl font-semibold text-foreground mb-2 lg:hidden">
             {t('calendar.pageTitle')}
           </h1>
 
           <div className="mb-4">
-            <p className="text-base sm:text-lg text-gray-600">
+            <p className="text-base sm:text-lg text-muted-foreground">
               {t('calendar.pageSubtitle')}
             </p>
           </div>
 
-          <div className="flex-1 bg-white rounded-lg border border-gray-200 overflow-y-auto flex flex-col">
+          <div className="flex-1 bg-card rounded-lg border border-border overflow-y-auto flex flex-col">
             {tasksError ? (
               <CalendarErrorState error={tasksError} onRetry={refetch} />
             ) : loading ? (
               <CalendarSkeleton viewMode={viewMode} />
             ) : (
               <div className="flex flex-col h-full">
-                <div className="p-3 sm:p-4 border-b">
+                <div className="p-3 sm:p-4 border-b border-border">
                   <CalendarHeader
                     currentDate={currentDate}
                     viewMode={viewMode}

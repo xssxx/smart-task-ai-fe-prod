@@ -123,15 +123,15 @@ function DraggableTaskCard({
       ref={setNodeRef}
       {...listeners}
       {...attributes}
-      className="border-gray-200 hover:border-gray-300 hover:shadow-md transition-all cursor-grab active:cursor-grabbing touch-manipulation"
+      className="border-border hover:border-muted-foreground hover:shadow-md transition-all cursor-grab active:cursor-grabbing touch-manipulation"
       onClick={handleClick}
     >
       <CardContent className="p-4 cursor-pointer select-none">
         <div className="space-y-3">
           <div>
-            <h4 className="font-medium text-gray-900 mb-1">{task.title}</h4>
+            <h4 className="font-medium text-foreground mb-1">{task.title}</h4>
             {task.description && (
-              <p className="text-xs text-gray-600 line-clamp-2">
+              <p className="text-xs text-muted-foreground line-clamp-2">
                 {task.description}
               </p>
             )}
@@ -144,7 +144,7 @@ function DraggableTaskCard({
               {task.priority}
             </Badge>
             {task.dueDate && (
-              <div className="flex items-center gap-1 text-xs text-gray-500">
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Calendar className="w-3 h-3" />
                 {task.dueDate}
               </div>
@@ -169,7 +169,7 @@ function DroppableColumn({
   return (
     <Card
       ref={setNodeRef}
-      className={`h-full flex flex-col transition-all ${isOver ? "ring-2 ring-gray-900 ring-offset-2" : ""
+      className={`h-full flex flex-col transition-all ${isOver ? "ring-2 ring-primary ring-offset-2" : ""
         }`}
     >
       <CardHeader className="pb-3 shrink-0">
@@ -193,13 +193,13 @@ function DroppableColumn({
 
 function TaskCardOverlay({ task }: { task: BoardTask }) {
   return (
-    <Card className="shadow-2xl border-2 border-gray-900 cursor-move w-[280px]">
+    <Card className="shadow-2xl border-2 border-primary cursor-move w-[280px]">
       <CardContent className="p-4 select-none">
         <div className="space-y-3">
           <div>
-            <h4 className="font-medium text-gray-900 mb-1">{task.title}</h4>
+            <h4 className="font-medium text-foreground mb-1">{task.title}</h4>
             {task.description && (
-              <p className="text-xs text-gray-600 line-clamp-2">
+              <p className="text-xs text-muted-foreground line-clamp-2">
                 {task.description}
               </p>
             )}
@@ -212,7 +212,7 @@ function TaskCardOverlay({ task }: { task: BoardTask }) {
               {task.priority}
             </Badge>
             {task.dueDate && (
-              <div className="flex items-center gap-1 text-xs text-gray-500">
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Calendar className="w-3 h-3" />
                 {task.dueDate}
               </div>
@@ -525,10 +525,10 @@ export default function BoardPage() {
 
   if (!projectId) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <AlertCircle className="w-12 h-12 text-rose-500 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900">
+          <h2 className="text-xl font-semibold text-foreground">
             {t('board.projectNotFound')}
           </h2>
         </div>
@@ -537,17 +537,17 @@ export default function BoardPage() {
   }
 
   return (
-    <div className="h-full bg-gray-50 flex flex-col overflow-hidden">
+    <div className="h-full bg-background flex flex-col overflow-hidden">
       <main className="flex-1 flex flex-col p-4 lg:p-6 w-full overflow-hidden">
         <div className="mb-4 lg:mb-6 shrink-0">
           {/* Page Title */}
-          <h1 className="text-3xl font-semibold text-gray-900 mb-2 lg:hidden">
+          <h1 className="text-3xl font-semibold text-foreground mb-2 lg:hidden">
             {t('board.pageTitle')}
           </h1>
           
           {/* Page Subtitle and Action Buttons */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-            <p className="text-base sm:text-lg text-gray-600">
+            <p className="text-base sm:text-lg text-muted-foreground">
               {t('board.pageSubtitle')}
             </p>
 

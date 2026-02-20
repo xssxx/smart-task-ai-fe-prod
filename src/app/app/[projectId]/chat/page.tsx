@@ -300,7 +300,7 @@ function EditProposedTaskModal({ task, isOpen, onClose, onSave }: EditProposedTa
           </Button>
           <Button
             onClick={handleSave}
-            className="bg-gray-900 hover:bg-gray-800 w-full sm:w-auto"
+            className="w-full sm:w-auto"
           >
             <Check className="w-4 h-4 mr-1" />
             {t('chat.saveAndAccept')}
@@ -332,10 +332,10 @@ function TaskProposalCard({
   return (
     <Card
       className={`border transition-all ${task.userAction === "accepted"
-        ? "border-green-300 bg-green-50"
+        ? "border-primary/30 bg-accent"
         : task.userAction === "rejected"
-          ? "border-rose-300 bg-rose-50 opacity-60"
-          : "border-gray-200 hover:border-gray-300"
+          ? "border-muted bg-muted/50 opacity-60"
+          : "border-border hover:border-muted-foreground"
         }`}
     >
       <CardContent className="p-3 sm:p-4">
@@ -343,7 +343,7 @@ function TaskProposalCard({
           {/* Content */}
           <div className="flex-1 min-w-0">
             <div className="flex flex-wrap items-center gap-2 mb-2">
-              <h4 className="font-semibold text-gray-900 text-sm sm:text-base truncate max-w-[200px] sm:max-w-none">
+              <h4 className="font-semibold text-foreground text-sm sm:text-base truncate max-w-[200px] sm:max-w-none">
                 {task.name}
               </h4>
               <Badge
@@ -355,11 +355,11 @@ function TaskProposalCard({
               </Badge>
             </div>
 
-            <p className="text-xs sm:text-sm text-gray-600 mb-2 sm:mb-3 line-clamp-2">
+            <p className="text-xs sm:text-sm text-muted-foreground mb-2 sm:mb-3 line-clamp-2">
               {task.description}
             </p>
 
-            <div className="flex flex-col sm:flex-row sm:flex-wrap gap-1 sm:gap-3 text-xs text-gray-500">
+            <div className="flex flex-col sm:flex-row sm:flex-wrap gap-1 sm:gap-3 text-xs text-muted-foreground">
               <div className="flex items-center gap-1">
                 <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 <span className="text-[11px] sm:text-xs">
@@ -376,13 +376,13 @@ function TaskProposalCard({
           </div>
 
           {/* Action buttons or status */}
-          <div className="flex items-center gap-2 pt-2 border-t border-gray-100">
+          <div className="flex items-center gap-2 pt-2 border-t border-border">
             {isProcessed ? (
               <Badge
                 variant="outline"
                 className={`text-xs ${task.userAction === "accepted"
-                  ? "bg-green-100 text-green-700 border-green-300"
-                  : "bg-rose-100 text-rose-700 border-rose-300"
+                  ? "bg-primary/10 text-primary border-primary/20"
+                  : "bg-muted text-muted-foreground border-muted-foreground/20"
                   }`}
               >
                 {task.userAction === "accepted" ? (
@@ -402,7 +402,7 @@ function TaskProposalCard({
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-7 sm:h-8 px-2 sm:px-3 text-xs sm:text-sm text-green-600 border-green-300 hover:bg-green-50 flex-1"
+                  className="h-7 sm:h-8 px-2 sm:px-3 text-xs sm:text-sm hover:bg-accent flex-1"
                   onClick={() => onAccept(task)}
                 >
                   <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1" />
@@ -411,7 +411,7 @@ function TaskProposalCard({
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-7 sm:h-8 px-2 sm:px-3 text-xs sm:text-sm text-blue-600 border-blue-300 hover:bg-blue-50 flex-1"
+                  className="h-7 sm:h-8 px-2 sm:px-3 text-xs sm:text-sm hover:bg-accent flex-1"
                   onClick={() => onEdit(task)}
                 >
                   <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1" />
@@ -420,7 +420,7 @@ function TaskProposalCard({
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-7 sm:h-8 px-2 sm:px-3 text-xs sm:text-sm text-rose-600 border-rose-300 hover:bg-rose-50 flex-1"
+                  className="h-7 sm:h-8 px-2 sm:px-3 text-xs sm:text-sm hover:bg-accent flex-1"
                   onClick={() => onReject(task)}
                 >
                   <X className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1" />
@@ -724,26 +724,26 @@ export default function AIChatPage() {
   };
 
   return (
-    <div className="h-full bg-gray-50">
+    <div className="h-full bg-background">
       <div className="flex h-full">
         {/* Main Chat Area */}
         <main className={`flex-1 flex flex-col transition-all duration-300 ${isRightPanelOpen ? 'mr-0' : ''}`}>
           {/* Header */}
-          <div className="p-6 bg-white border-b border-gray-200">
+          <div className="p-6 bg-card border-b border-border">
             {/* Page Title */}
-            <h1 className="text-3xl font-semibold text-gray-900 mb-2 lg:hidden">
+            <h1 className="text-3xl font-semibold text-foreground mb-2 lg:hidden">
               {t('chat.pageTitle')}
             </h1>
 
             <div className="flex items-center justify-between">
-              <p className="text-base text-gray-600">
+              <p className="text-base text-muted-foreground">
                 {t('chat.pageSubtitle')}
               </p>
               <Button
                 variant="outline"
                 size="icon"
                 onClick={() => setIsRightPanelOpen(!isRightPanelOpen)}
-                className={isRightPanelOpen ? "bg-gray-100" : ""}
+                className={isRightPanelOpen ? "bg-accent" : ""}
               >
                 <PanelRight className="w-5 h-5" />
               </Button>
@@ -774,21 +774,21 @@ export default function AIChatPage() {
               >
                 <div className="shrink-0">
                   {message.role === "assistant" ? (
-                    <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center">
-                      <Bot className="w-4 h-4 text-white" />
+                    <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+                      <Bot className="w-4 h-4 text-primary-foreground" />
                     </div>
                   ) : (
                     <Avatar className="w-8 h-8">
                       {profile?.avatarPath ? (
                         <AvatarImage src={profile.avatarPath} alt={profile.firstName} />
                       ) : null}
-                      <AvatarFallback className="bg-gray-200">
+                      <AvatarFallback className="bg-muted">
                         {profile?.firstName && profile?.lastName ? (
-                          <span className="text-xs font-medium text-gray-700">
+                          <span className="text-xs font-medium text-muted-foreground">
                             {profile.firstName[0]}{profile.lastName[0]}
                           </span>
                         ) : (
-                          <User className="w-4 h-4 text-gray-600" />
+                          <User className="w-4 h-4 text-muted-foreground" />
                         )}
                       </AvatarFallback>
                     </Avatar>
@@ -801,20 +801,20 @@ export default function AIChatPage() {
                 >
                   <div
                     className={`inline-block max-w-2xl ${message.role === "user"
-                      ? "bg-gray-900 text-white rounded-2xl rounded-tr-sm"
-                      : "bg-white border border-gray-200 rounded-2xl rounded-tl-sm"
+                      ? "bg-primary text-primary-foreground rounded-2xl rounded-tr-sm"
+                      : "bg-card border border-border rounded-2xl rounded-tl-sm"
                       } p-4 shadow-sm`}
                   >
                     <p
-                      className={`text-sm whitespace-pre-wrap ${message.role === "user" ? "text-white" : "text-gray-900"
+                      className={`text-sm whitespace-pre-wrap ${message.role === "user" ? "text-primary-foreground" : "text-foreground"
                         }`}
                     >
                       {message.content}
                     </p>
                     <p
                       className={`text-xs mt-2 ${message.role === "user"
-                        ? "text-gray-300"
-                        : "text-gray-500"
+                        ? "text-primary-foreground/70"
+                        : "text-muted-foreground"
                         }`}
                     >
                       {message.timestamp?.toLocaleTimeString("th-TH", {
@@ -827,13 +827,13 @@ export default function AIChatPage() {
                   {message.taskActions && message.taskActions.length > 0 && (
                     <div className="mt-4 space-y-2">
                       {message.taskActions.map((action, idx) => (
-                        <Card key={idx} className="border-gray-200">
+                        <Card key={idx} className="border-border">
                           <CardContent className="p-3">
                             <div className="flex items-center gap-3">
                               <CheckCircle2 className="w-5 h-5 text-green-500" />
                               <div className="flex-1">
-                                <span className="font-medium">{action.name}</span>
-                                <span className="text-gray-500 text-sm ml-2">
+                                <span className="font-medium text-foreground">{action.name}</span>
+                                <span className="text-muted-foreground text-sm ml-2">
                                   ({action.task_id})
                                 </span>
                               </div>
@@ -850,7 +850,6 @@ export default function AIChatPage() {
                     </div>
                   )}
 
-                  {/* Proposed Tasks notification - show only when panel is closed */}
                   {!isRightPanelOpen && message.proposedTasks && message.proposedTasks.length > 0 && (
                     <div className="mt-4">
                       <Button
@@ -870,11 +869,11 @@ export default function AIChatPage() {
 
             {isLoading && (
               <div className="flex gap-4">
-                <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center">
-                  <Bot className="w-4 h-4 text-white" />
+                <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+                  <Bot className="w-4 h-4 text-primary-foreground" />
                 </div>
-                <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-sm p-4 shadow-sm">
-                  <div className="flex items-center gap-2 text-gray-600">
+                <div className="bg-card border border-border rounded-2xl rounded-tl-sm p-4 shadow-sm">
+                  <div className="flex items-center gap-2 text-muted-foreground">
                     <Loader2 className="w-4 h-4 animate-spin" />
                     <span className="text-sm">{t('common.loading')}</span>
                   </div>
@@ -885,7 +884,7 @@ export default function AIChatPage() {
           </div>
 
           {/* Input Area */}
-          <div className="p-6 bg-white border-t border-gray-200">
+          <div className="p-6 bg-card border-t border-border">
             <div className="max-w-4xl mx-auto">
               <div className="flex gap-3 items-end">
                 <div className="flex-1 relative flex items-end">
@@ -895,7 +894,7 @@ export default function AIChatPage() {
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder={t('chat.inputPlaceholder')}
-                    className="w-full resize-none rounded-xl border border-gray-300 px-4 py-3 pr-12 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent min-h-[52px] max-h-32"
+                    className="w-full resize-none rounded-xl border border-input bg-background text-foreground px-4 py-3 pr-12 focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent min-h-[52px] max-h-32 placeholder:text-muted-foreground"
                     rows={1}
                     style={{ height: "auto" }}
                     onInput={(e) => {
@@ -909,16 +908,16 @@ export default function AIChatPage() {
                   onClick={handleSendMessage}
                   disabled={!input.trim() || isLoading}
                   size="lg"
-                  className="h-[52px] px-6 shrink-0 rounded-xl bg-gray-900 hover:bg-gray-800 text-white"
+                  className="h-[52px] px-6 shrink-0 rounded-xl"
                 >
                   {isLoading ? (
-                    <Loader2 className="w-5 h-5 animate-spin text-white" />
+                    <Loader2 className="w-5 h-5 animate-spin" />
                   ) : (
-                    <Send className="w-5 h-5 text-white" />
+                    <Send className="w-5 h-5" />
                   )}
                 </Button>
               </div>
-              <p className="text-xs text-gray-500 mt-2 text-center">
+              <p className="text-xs text-muted-foreground mt-2 text-center">
                 {t('chat.inputHint')}
               </p>
             </div>
@@ -929,15 +928,15 @@ export default function AIChatPage() {
         <aside
           className={`
             ${isRightPanelOpen ? 'w-80 lg:w-96 opacity-100' : 'w-0 opacity-0'} 
-            bg-white border-l border-gray-200 flex flex-col h-full
+            bg-card border-l border-border flex flex-col h-full
             transition-all duration-300 ease-in-out overflow-hidden
             fixed right-0 top-0 lg:relative z-40
           `}
         >
-          <div className="p-4 border-b border-gray-200 flex items-center justify-between min-w-[320px] lg:min-w-[384px]">
+          <div className="p-4 border-b border-border flex items-center justify-between min-w-[320px] lg:min-w-[384px]">
             <div>
-              <h3 className="font-semibold text-gray-900">{t('chat.proposedTasks')}</h3>
-              <p className="text-xs text-gray-500">
+              <h3 className="font-semibold text-foreground">{t('chat.proposedTasks')}</h3>
+              <p className="text-xs text-muted-foreground">
                 {getAllProposedTasks().length} {t('chat.aiCreatedTasks')}
               </p>
             </div>
@@ -952,8 +951,8 @@ export default function AIChatPage() {
 
           <div className="flex-1 overflow-y-auto p-4 space-y-3 min-w-[320px] lg:min-w-[384px]">
             {getAllProposedTasks().length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <Flag className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+              <div className="text-center py-8 text-muted-foreground">
+                <Flag className="w-12 h-12 mx-auto mb-3 text-muted" />
                 <p className="text-sm">{t('chat.noProposedTasks')}</p>
                 <p className="text-xs mt-1">{t('chat.askAIToCreateTasks')}</p>
               </div>
