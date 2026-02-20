@@ -188,21 +188,15 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
       <aside
         className={`
           fixed lg:relative z-40
-          w-72 bg-white border-r border-gray-200 h-screen overflow-y-auto shrink-0
+          w-72 bg-sidebar border-r border-sidebar-border h-screen overflow-y-auto shrink-0
           transform transition-transform duration-300 ease-in-out
           ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
         `}
       >
         <div className="p-5 pt-16 lg:pt-5">
           <div className="hidden lg:flex items-center gap-3 mb-8">
-            <Image
-              src="/logo.svg"
-              alt="Smart Task AI"
-              width={40}
-              height={40}
-              className="object-contain"
-            />
-            <h1 className="text-2xl font-momo text-gray-900">Smart Task</h1>
+            <Image src="/logo.svg" alt="Smart Task AI" width={40} height={40} className="object-contain" />
+            <h1 className="text-2xl font-momo text-sidebar-foreground">Smart Task</h1>
           </div>
 
           <nav className="space-y-1 mb-6">
@@ -216,11 +210,10 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
                 <LinkWithLoading
                   key={item.id}
                   href={item.href}
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-base font-medium transition-colors ${
-                    isActive
-                      ? "bg-gray-100 text-gray-900"
-                      : "text-gray-600 hover:bg-gray-50"
-                  }`}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-base font-medium transition-colors ${isActive
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                    : "text-sidebar-foreground hover:bg-sidebar-accent/50"
+                    }`}
                 >
                   <div className="flex items-center gap-3">
                     <Icon className="w-6 h-6" />
@@ -231,11 +224,11 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
             })}
           </nav>
 
-          <div className="border-t border-gray-200 my-4"></div>
+          <div className="border-t border-sidebar-border my-4"></div>
 
           <div>
             <div className="flex items-center justify-between mb-3 px-4">
-              <span className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
+              <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
                 {t('sidebar.workspaces')}
               </span>
               <Button
@@ -244,7 +237,7 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
                 className="h-7 w-7"
                 onClick={() => setShowCreateModal(true)}
               >
-                <Plus className="w-5 h-5 text-gray-500" />
+                <Plus className="w-5 h-5 text-muted-foreground" />
               </Button>
             </div>
 
@@ -260,14 +253,14 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
                   ))}
                 </div>
               ) : workspaces.length === 0 ? (
-                <p className="text-base text-gray-500 px-4 py-2">{t('sidebar.noProjects')}</p>
+                <p className="text-base text-muted-foreground px-4 py-2">{t('sidebar.noProjects')}</p>
               ) : (
                 workspaces.map((workspace) => (
                   <div key={workspace.id} className="group">
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => toggleWorkspace(workspace.id)}
-                        className="flex-1 flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+                        className="flex-1 flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
                       >
                         <ChevronRight
                           className={`w-5 h-5 transition-transform ${
@@ -292,7 +285,7 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
                             className="h-9 w-9 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
                             onClick={(e) => e.stopPropagation()}
                           >
-                            <MoreHorizontal className="w-5 h-5 text-gray-500" />
+                            <MoreHorizontal className="w-5 h-5 text-muted-foreground" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48">
@@ -354,11 +347,10 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
                             <LinkWithLoading
                               key={item.id}
                               href={item.to ?? "#"}
-                              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-base transition-colors ${
-                                isActive
-                                  ? "bg-gray-100 text-gray-900 font-medium"
-                                  : "text-gray-500 hover:bg-gray-50"
-                              }`}
+                              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-base transition-colors ${isActive
+                                ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                                : "text-muted-foreground hover:bg-sidebar-accent/50"
+                                }`}
                             >
                               <Icon className="w-5 h-5" />
                               <span>{item.label}</span>
@@ -373,7 +365,7 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
             </div>
           </div>
 
-          <div className="border-t border-gray-200 my-4"></div>
+          <div className="border-t border-sidebar-border my-4"></div>
         </div>
       </aside>
 

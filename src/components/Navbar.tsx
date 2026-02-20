@@ -19,12 +19,14 @@ import {
   LogOut,
   User,
   Languages,
+  Palette,
 } from "lucide-react";
 import { logout } from "@/services/api";
 import { ROUTES } from "@/constants";
 import { useLoading } from "@/components/LoadingProvider";
 import { NotificationDropdown } from "@/components/NotificationDropdown";
 import { LanguageModal } from "@/components/LanguageModal";
+import { ThemeModal } from "@/components/ThemeModal";
 import { useProfile } from "@/contexts/ProfileContext";
 
 const Navbar = () => {
@@ -33,6 +35,7 @@ const Navbar = () => {
   const { startLoading } = useLoading();
   const t = useTranslations("navbar");
   const [languageModalOpen, setLanguageModalOpen] = useState(false);
+  const [themeModalOpen, setThemeModalOpen] = useState(false);
   const { profile, getInitials, getDisplayName } = useProfile();
 
   const handleLogout = () => {
@@ -73,12 +76,12 @@ const Navbar = () => {
   const pageTitle = getCurrentPageTitle();
 
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
+    <header className="bg-background border-b border-border sticky top-0 z-10 dark:bg-background dark:border-border">
       <div className="flex items-center justify-between px-6 py-5 lg:px-8 pl-16 lg:pl-8">
         <div className="flex items-center gap-4 lg:hidden">
           <div className="flex items-center gap-2">
             <Image src="/logo.svg" alt={t("smartTask")} width={40} height={40} className="object-contain" />
-            <h1 className="text-2xl font-momo text-gray-900">
+            <h1 className="text-2xl font-momo text-foreground">
               {t("smartTask")}
             </h1>
           </div>
@@ -86,7 +89,7 @@ const Navbar = () => {
 
         {pageTitle && (
           <div className="hidden lg:block">
-            <h1 className="text-4xl font-semibold text-gray-900">
+            <h1 className="text-4xl font-semibold text-foreground">
               {pageTitle}
             </h1>
           </div>
@@ -105,7 +108,7 @@ const Navbar = () => {
                 className="h-12 w-12 sm:h-13 sm:w-13 hover:bg-transparent"
                 aria-label={t("settings")}
               >
-                <Settings className="w-5.5! h-5.5! text-gray-600 hover:text-gray-900 transition-colors" />
+                <Settings className="w-5.5! h-5.5! text-muted-foreground hover:text-foreground transition-colors" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
@@ -113,24 +116,28 @@ const Navbar = () => {
                 <Languages className="w-4 h-4 mr-2" />
                 {t("changeLanguage")}
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setThemeModalOpen(true)} className="cursor-pointer">
+                <Palette className="w-4 h-4 mr-2" />
+                {t("changeTheme")}
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-2 sm:gap-3 ml-1 sm:ml-2 p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 transition-colors focus:outline-none">
+              <button className="flex items-center gap-2 sm:gap-3 ml-1 sm:ml-2 p-1.5 sm:p-2 rounded-lg hover:bg-accent transition-colors focus:outline-none">
                 <Avatar className="w-9 h-9 sm:w-10 sm:h-10">
                   {profile?.avatarPath && (
                     <AvatarImage src={profile.avatarPath} alt={getDisplayName()} />
                   )}
-                  <AvatarFallback className="bg-gray-900 text-white text-sm sm:text-base">
+                  <AvatarFallback className="bg-primary text-primary-foreground text-sm sm:text-base">
                     {getInitials()}
                   </AvatarFallback>
                 </Avatar>
-                <span className="hidden md:block text-sm sm:text-base font-medium text-gray-700">
+                <span className="hidden md:block text-sm sm:text-base font-medium text-foreground">
                   {getDisplayName()}
                 </span>
-                <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+                <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
@@ -151,6 +158,11 @@ const Navbar = () => {
       <LanguageModal
         open={languageModalOpen}
         onOpenChange={setLanguageModalOpen}
+      />
+
+      <ThemeModal
+        open={themeModalOpen}
+        onOpenChange={setThemeModalOpen}
       />
     </header>
   );

@@ -37,7 +37,7 @@ import { toast } from "@/lib/enhanced-toast";
 
 export default function HomePage() {
   const t = useTranslations();
-  
+
   // New state for dashboard data
   const [statistics, setStatistics] = useState<TaskStatistics | null>(null);
   const [unscheduledTasks, setUnscheduledTasks] = useState<TaskWithProject[]>([]);
@@ -180,17 +180,17 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 text-base">
+    <div className="min-h-screen bg-background text-base">
       {/* Main Content */}
       <main className="p-6 max-w-[1600px] mx-auto">
         {/* Page Title */}
-        <h1 className="text-3xl font-semibold text-gray-900 mb-2 lg:hidden">
+        <h1 className="text-3xl font-semibold text-foreground mb-2 lg:hidden">
           {t('dashboard.pageTitle')}
         </h1>
-        
+
         {/* Page Subtitle */}
         <div className="mb-6">
-          <p className="text-lg text-gray-600">
+          <p className="text-lg text-muted-foreground">
             {t('dashboard.pageSubtitle')}
           </p>
         </div>
@@ -199,17 +199,17 @@ export default function HomePage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-base font-medium text-gray-600">
+              <CardTitle className="text-base font-medium text-muted-foreground">
                 {t('dashboard.allTasks')}
               </CardTitle>
-              <BookCheck className="w-5 h-5" style={{ color: 'zinc-800' }} />
+              <BookCheck className="w-5 h-5 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-gray-900">
+              <div className="text-3xl font-bold text-foreground">
                 {stats.total}
               </div>
               {stats.total > 0 && (
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   {t('dashboard.allTasksDescription')}
                 </p>
               )}
@@ -218,62 +218,62 @@ export default function HomePage() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-base font-medium text-gray-600">
+              <CardTitle className="text-base font-medium text-muted-foreground">
                 {t('dashboard.todoTasks')}
               </CardTitle>
-              <CircleMinus className="w-5 h-5" style={{ color: 'zinc-500' }} />
+              <CircleMinus className="w-5 h-5 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-gray-900">
+              <div className="text-3xl font-bold text-foreground">
                 {stats.todo}
               </div>
-              <p className="text-sm text-gray-600 mt-1">{t('dashboard.todoTasksDescription')}</p>
+              <p className="text-sm text-muted-foreground mt-1">{t('dashboard.todoTasksDescription')}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-base font-medium text-gray-600">
+              <CardTitle className="text-base font-medium text-muted-foreground">
                 {t('dashboard.inProgressTasks')}
               </CardTitle>
-              <Clock className="w-5 h-5" style={{ color: '#00a6f4' }} />
+              <Clock className="w-5 h-5 text-sky-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-gray-900">
+              <div className="text-3xl font-bold text-foreground">
                 {stats.inProgress}
               </div>
-              <p className="text-sm text-gray-600 mt-1">{t('dashboard.inProgressTasksDescription')}</p>
+              <p className="text-sm text-muted-foreground mt-1">{t('dashboard.inProgressTasksDescription')}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-base font-medium text-gray-600">
+              <CardTitle className="text-base font-medium text-muted-foreground">
                 {t('dashboard.inReviewTasks')}
               </CardTitle>
-              <AlertCircle className="w-5 h-5" style={{ color: '#f0b100' }} />
+              <AlertCircle className="w-5 h-5 text-yellow-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-gray-900">
+              <div className="text-3xl font-bold text-foreground">
                 {stats.inReview}
               </div>
-              <p className="text-sm text-gray-600 mt-1">{t('dashboard.inReviewTasksDescription')}</p>
+              <p className="text-sm text-muted-foreground mt-1">{t('dashboard.inReviewTasksDescription')}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-base font-medium text-gray-600">
+              <CardTitle className="text-base font-medium text-muted-foreground">
                 {t('dashboard.completedTasks')}
               </CardTitle>
-              <CheckCircle2 className="w-5 h-5" style={{ color: '#7ccf00' }} />
+              <CheckCircle2 className="w-5 h-5 text-lime-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-gray-900">
+              <div className="text-3xl font-bold text-foreground">
                 {stats.completed}
               </div>
               {stats.total > 0 && (
-                <p className="text-sm text-gray-600 mt-1">{t('dashboard.completedTasksDescription')}</p>
+                <p className="text-sm text-muted-foreground mt-1">{t('dashboard.completedTasksDescription')}</p>
               )}
             </CardContent>
           </Card>
@@ -302,7 +302,7 @@ export default function HomePage() {
               <CardContent>
                 <div className="py-8 flex flex-col items-center justify-center text-center">
                   <AlertCircle className="w-12 h-12 text-rose-500 mb-3" />
-                  <p className="text-sm text-gray-600 mb-3">{todayError}</p>
+                  <p className="text-sm text-muted-foreground mb-3">{todayError}</p>
                   <Button
                     variant="outline"
                     size="sm"
@@ -344,7 +344,7 @@ export default function HomePage() {
               <CardContent>
                 <div className="h-[200px] flex flex-col items-center justify-center text-center">
                   <AlertCircle className="w-12 h-12 text-rose-500 mb-3" />
-                  <p className="text-sm text-gray-600 mb-3">{statisticsError}</p>
+                  <p className="text-sm text-muted-foreground mb-3">{statisticsError}</p>
                   <Button
                     variant="outline"
                     size="sm"
@@ -385,7 +385,7 @@ export default function HomePage() {
               <CardContent>
                 <div className="py-8 flex flex-col items-center justify-center text-center">
                   <AlertCircle className="w-12 h-12 text-rose-500 mb-3" />
-                  <p className="text-sm text-gray-600 mb-3">{unscheduledError}</p>
+                  <p className="text-sm text-muted-foreground mb-3">{unscheduledError}</p>
                   <Button
                     variant="outline"
                     size="sm"

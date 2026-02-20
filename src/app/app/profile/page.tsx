@@ -156,7 +156,7 @@ export default function ProfilePage() {
       if (selectedFile) {
         setIsUploading(true);
         setUploadProgress(0);
-        
+
         try {
           avatarUrl = await handleAvatarUpload(selectedFile);
         } catch (uploadError) {
@@ -184,7 +184,7 @@ export default function ProfilePage() {
       await refreshProfile();
 
       toast.success(t('profile.profileUpdatedSuccess'), {
-        description: selectedFile 
+        description: selectedFile
           ? t('profile.profileUpdatedWithImageSuccess')
           : t('profile.profileUpdatedSuccess'),
       });
@@ -209,14 +209,14 @@ export default function ProfilePage() {
 
   if (isFetching) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8 px-4">
+      <div className="min-h-screen bg-background py-8 px-4">
         <div className="max-w-4xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="md:col-span-1 flex flex-col items-center md:items-start">
               <Skeleton className="w-48 h-48 rounded-2xl" />
             </div>
 
-            <div className="md:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+            <div className="md:col-span-2 bg-card rounded-2xl shadow-sm border border-border p-8">
               <div className="space-y-6">
                 <div>
                   <Skeleton className="h-4 w-24 mb-2" />
@@ -254,14 +254,14 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
+    <div className="min-h-screen bg-background py-8 px-4">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-semibold text-gray-900 mb-2 lg:hidden">
+        <h1 className="text-3xl font-semibold text-foreground mb-2 lg:hidden">
           {t('profile.pageTitle')}
         </h1>
 
         <div className="mb-6">
-          <p className="text-base text-gray-600">{t('profile.pageSubtitle')}</p>
+          <p className="text-base text-muted-foreground">{t('profile.pageSubtitle')}</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -269,31 +269,31 @@ export default function ProfilePage() {
             <div className="w-48 h-48 rounded-2xl overflow-hidden">
               <Avatar className="w-full h-full">
                 {formData.avatarPath && !imageLoadError ? (
-                  <AvatarImage 
-                    src={formData.avatarPath} 
+                  <AvatarImage
+                    src={formData.avatarPath}
                     alt="Profile"
                     onError={() => setImageLoadError(true)}
                   />
                 ) : null}
-                <AvatarFallback className="text-4xl font-bold bg-gray-900 text-white">
+                <AvatarFallback className="text-4xl font-bold bg-primary text-primary-foreground">
                   {getInitials()}
                 </AvatarFallback>
               </Avatar>
             </div>
             <div className="mt-4 text-center md:text-left">
-              <p className="text-lg font-semibold text-gray-900">
+              <p className="text-lg font-semibold text-foreground">
                 {formData.firstName} {formData.lastName}
               </p>
               {formData.nickname && (
-                <p className="text-sm text-gray-600">@{formData.nickname}</p>
+                <p className="text-sm text-muted-foreground">@{formData.nickname}</p>
               )}
             </div>
           </div>
 
-          <div className="md:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+          <div className="md:col-span-2 bg-card rounded-2xl shadow-sm border border-border p-8">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-4">
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-foreground">
                   {t('profile.firstName')} <span className="text-rose-500">*</span>
                 </label>
                 <input
@@ -301,12 +301,12 @@ export default function ProfilePage() {
                   value={formData.firstName}
                   onChange={(e) => handleInputChange("firstName", e.target.value)}
                   placeholder={t('profile.firstName')}
-                  className="w-full h-12 px-4 rounded-xl bg-gray-50 border-2 border-gray-100 outline-none focus:border-gray-900 focus:bg-white transition-all duration-200 text-gray-700 placeholder:text-gray-400 text-sm"
+                  className="w-full h-12 px-4 rounded-xl bg-muted border-2 border-border outline-none focus:border-ring focus:bg-background transition-all duration-200 text-foreground placeholder:text-muted-foreground text-sm"
                 />
               </div>
 
               <div className="space-y-4">
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-foreground">
                   {t('profile.lastName')} <span className="text-rose-500">*</span>
                 </label>
                 <input
@@ -314,27 +314,27 @@ export default function ProfilePage() {
                   value={formData.lastName}
                   onChange={(e) => handleInputChange("lastName", e.target.value)}
                   placeholder={t('profile.lastName')}
-                  className="w-full h-12 px-4 rounded-xl bg-gray-50 border-2 border-gray-100 outline-none focus:border-gray-900 focus:bg-white transition-all duration-200 text-gray-700 placeholder:text-gray-400 text-sm"
+                  className="w-full h-12 px-4 rounded-xl bg-muted border-2 border-border outline-none focus:border-ring focus:bg-background transition-all duration-200 text-foreground placeholder:text-muted-foreground text-sm"
                 />
               </div>
 
               <div className="space-y-4">
-                <label className="block text-sm font-medium text-gray-700">
-                  {t('profile.nickname')} <span className="text-gray-400">({t('common.optional')})</span>
+                <label className="block text-sm font-medium text-foreground">
+                  {t('profile.nickname')} <span className="text-muted-foreground">({t('common.optional')})</span>
                 </label>
                 <input
                   type="text"
                   value={formData.nickname}
                   onChange={(e) => handleInputChange("nickname", e.target.value)}
                   placeholder={t('profile.nickname')}
-                  className="w-full h-12 px-4 rounded-xl bg-gray-50 border-2 border-gray-100 outline-none focus:border-gray-900 focus:bg-white transition-all duration-200 text-gray-700 placeholder:text-gray-400 text-sm"
+                  className="w-full h-12 px-4 rounded-xl bg-muted border-2 border-border outline-none focus:border-ring focus:bg-background transition-all duration-200 text-foreground placeholder:text-muted-foreground text-sm"
                 />
               </div>
 
               {/* Avatar Upload */}
               <div className="space-y-4">
-                <label className="block text-sm font-medium text-gray-700">
-                  {t('profile.avatar')} <span className="text-gray-400">({t('common.optional')})</span>
+                <label className="block text-sm font-medium text-foreground">
+                  {t('profile.avatar')} <span className="text-muted-foreground">({t('common.optional')})</span>
                 </label>
                 <div className="flex items-center gap-4">
                   <input
@@ -351,13 +351,13 @@ export default function ProfilePage() {
                   />
                   <label
                     htmlFor="avatar-upload"
-                    className="cursor-pointer px-6 h-12 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-all duration-200 flex items-center justify-center"
+                    className="cursor-pointer px-6 h-12 bg-muted hover:bg-accent text-foreground rounded-xl font-medium transition-all duration-200 flex items-center justify-center"
                   >
                     {t('profile.selectImage')}
                   </label>
                   {selectedFile && (
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-600">
+                      <span className="text-sm text-muted-foreground">
                         {selectedFile.name}
                       </span>
                       <button
@@ -390,8 +390,8 @@ export default function ProfilePage() {
                 </div>
                 {previewUrl && (
                   <div className="mt-4">
-                    <p className="text-sm text-gray-600 mb-2">{t('profile.preview')}:</p>
-                    <div className="relative w-32 h-32 rounded-xl overflow-hidden border-2 border-gray-200">
+                    <p className="text-sm text-muted-foreground mb-2">{t('profile.preview')}:</p>
+                    <div className="relative w-32 h-32 rounded-xl overflow-hidden border-2 border-border">
                       <img
                         src={previewUrl}
                         alt="Preview"
@@ -428,12 +428,12 @@ export default function ProfilePage() {
                 {isUploading && (
                   <div className="mt-4">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-gray-600">{t('profile.uploading')}</span>
-                      <span className="text-sm font-medium text-gray-900">{uploadProgress}%</span>
+                      <span className="text-sm text-muted-foreground">{t('profile.uploading')}</span>
+                      <span className="text-sm font-medium text-foreground">{uploadProgress}%</span>
                     </div>
-                    <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-black transition-all duration-300"
+                        className="h-full bg-primary transition-all duration-300"
                         style={{ width: `${uploadProgress}%` }}
                       />
                     </div>
@@ -445,7 +445,7 @@ export default function ProfilePage() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full h-12 bg-black hover:bg-gray-800 text-white rounded-xl font-medium shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                  className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-medium shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
                   {isLoading ? (
                     <div className="flex items-center justify-center space-x-2">
