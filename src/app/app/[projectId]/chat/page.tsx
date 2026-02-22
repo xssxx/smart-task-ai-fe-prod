@@ -22,6 +22,7 @@ import {
   PanelRight,
   Mic,
   MicOff,
+  Upload,
 } from "lucide-react";
 import { sendChatMessage, createTask, CreateTaskRequest } from "@/services/api";
 import { ChatMessage, Message, ProposedTask } from "@/types/chat";
@@ -133,7 +134,7 @@ function EditProposedTaskModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px] max-w-[95vw] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-125 max-w-[95vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>แก้ไข Task</DialogTitle>
         </DialogHeader>
@@ -504,8 +505,10 @@ export default function AIChatPage() {
   // Voice recording state
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
+  const [isDraggingAudio, setIsDraggingAudio] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const dragCounterRef = useRef(0);
 
   // Edit modal state
   const [editingTask, setEditingTask] = useState<ProposedTask | null>(null);
@@ -768,6 +771,104 @@ export default function AIChatPage() {
     }
   };
 
+  // Drag and drop audio handlers
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current++;
+    if (e.dataTransfer.types.includes("Files")) {
+      setIsDraggingAudio(true);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current--;
+    if (dragCounterRef.current === 0) {
+      setIsDraggingAudio(false);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingAudio(false);
+    dragCounterRef.current = 0;
+
+    const files = Array.from(e.dataTransfer.files);
+    const audioFile = files.find((file) => file.type.startsWith("audio/"));
+
+    if (!audioFile) {
+      setError("กรุณาลากไฟล์เสียงเท่านั้น (เช่น .mp3, .wav, .m4a, .webm)");
+      return;
+    }
+
+    // Create object URL for audio playback
+    const audioUrl = URL.createObjectURL(audioFile);
+
+    // Add user message with audio player immediately
+    const userMessage: ChatMessage = {
+      id: Date.now().toString(),
+      role: "user",
+      content: "",
+      audioUrl,
+      timestamp: new Date(),
+    };
+    setMessages((prev) => [...prev, userMessage]);
+    setIsLoading(true);
+    setError(null);
+
+    // Transcribe audio via Groq
+    setIsTranscribing(true);
+    try {
+      const groq = new Groq({
+        apiKey: process.env.NEXT_PUBLIC_GROQ_API_KEY,
+        dangerouslyAllowBrowser: true,
+      });
+
+      const transcription = await groq.audio.transcriptions.create({
+        file: audioFile,
+        model: "whisper-large-v3",
+        temperature: 0,
+        response_format: "verbose_json",
+        language: "th",
+      });
+
+      if (!transcription.text) {
+        setError("ไม่สามารถแปลงเสียงเป็นข้อความได้");
+        setIsLoading(false);
+        setIsTranscribing(false);
+        return;
+      }
+
+      // Update the user message with the transcribed text
+      const transcribedText = transcription.text;
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === userMessage.id
+            ? { ...msg, content: transcribedText }
+            : msg,
+        ),
+      );
+      setIsTranscribing(false);
+
+      // Send transcribed text to chat API
+      const sessionHistory = getSessionHistory();
+      await handleNonStreamingResponse(transcribedText, sessionHistory);
+    } catch (err) {
+      console.error("Transcription error:", err);
+      setError("เกิดข้อผิดพลาดในการแปลงเสียง");
+      setIsLoading(false);
+      setIsTranscribing(false);
+    }
+  };
+
   // Update task action in message
   const updateTaskAction = (
     messageId: string,
@@ -953,13 +1054,32 @@ export default function AIChatPage() {
                         : "bg-white border border-gray-200 rounded-2xl rounded-tl-sm"
                     } p-4 shadow-sm`}
                   >
-                    <p
-                      className={`text-sm whitespace-pre-wrap ${
-                        message.role === "user" ? "text-white" : "text-gray-900"
-                      }`}
-                    >
-                      {message.content}
-                    </p>
+                    {message.audioUrl && (
+                      <div className="mb-2">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <Mic className="w-3.5 h-3.5 text-gray-300" />
+                          <span className="text-xs text-gray-300">
+                            ข้อความเสียง
+                          </span>
+                        </div>
+                        <audio
+                          controls
+                          src={message.audioUrl}
+                          className="w-full max-w-xs h-8 [&::-webkit-media-controls-panel]:bg-gray-800 [&::-webkit-media-controls-panel]:rounded-lg"
+                        />
+                      </div>
+                    )}
+                    {message.content && (
+                      <p
+                        className={`text-sm whitespace-pre-wrap ${
+                          message.role === "user"
+                            ? "text-white"
+                            : "text-gray-900"
+                        }`}
+                      >
+                        {message.content}
+                      </p>
+                    )}
                     <p
                       className={`text-xs mt-2 ${
                         message.role === "user"
@@ -1039,7 +1159,27 @@ export default function AIChatPage() {
           </div>
 
           {/* Input Area */}
-          <div className="p-6 bg-white border-t border-gray-200">
+          <div
+            className="p-6 bg-white border-t border-gray-200 relative"
+            onDragEnter={handleDragEnter}
+            onDragLeave={handleDragLeave}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+          >
+            {/* Drop overlay */}
+            {isDraggingAudio && (
+              <div className="absolute inset-0 z-10 bg-blue-50/90 border-2 border-dashed border-blue-400 rounded-lg flex items-center justify-center pointer-events-none">
+                <div className="flex flex-col items-center gap-2 text-blue-600">
+                  <Upload className="w-8 h-8" />
+                  <p className="text-sm font-medium">
+                    วางไฟล์เสียงที่นี่เพื่อแปลงเป็นข้อความ
+                  </p>
+                  <p className="text-xs text-blue-400">
+                    .mp3, .wav, .m4a, .webm
+                  </p>
+                </div>
+              </div>
+            )}
             <div className="max-w-4xl mx-auto">
               <div className="flex gap-3 items-end">
                 <div className="flex-1 relative flex items-end">
@@ -1048,7 +1188,7 @@ export default function AIChatPage() {
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder="พิมพ์ข้อความ"
+                    placeholder="พิมพ์ข้อความ หรือลากไฟล์เสียงมาวางที่นี่"
                     disabled={isRecording || isTranscribing}
                     className="w-full resize-none rounded-xl border border-gray-300 px-4 py-3 pr-12 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent min-h-[52px] max-h-32 disabled:opacity-50"
                     rows={1}
