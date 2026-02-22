@@ -1,7 +1,11 @@
 import apiClient, { clearAuthCookie } from ".";
 import { SigninRequest } from "@/types/auth/signin";
 import { SignupRequest } from "@/types/auth/signup";
-import { SendMessageRequest, SendMessageResponse, ApiResponse } from "@/types/chat";
+import {
+  SendMessageRequest,
+  SendMessageResponse,
+  ApiResponse,
+} from "@/types/chat";
 import { CreateProfileRequest, CreateProfileResponse } from "@/types/profile";
 import { ROUTES } from "@/constants";
 
@@ -10,15 +14,53 @@ export const signup = (payload: SignupRequest) => {
 };
 
 export const createProfile = (payload: CreateProfileRequest) => {
-  return apiClient.post<{ success: boolean; message: string; data: CreateProfileResponse; error: unknown }>("/api/profiles", payload);
+  return apiClient.post<{
+    success: boolean;
+    message: string;
+    data: CreateProfileResponse;
+    error: unknown;
+  }>("/api/profiles", payload);
 };
 
 export const getProfile = () => {
-  return apiClient.get<{ success: boolean; message: string; data: { account_id: string; first_name: string; last_name: string; nickname?: string; avatar_path?: string; state: string; created_at: string; updated_at: string }; error: unknown }>("/api/profiles");
+  return apiClient.get<{
+    success: boolean;
+    message: string;
+    data: {
+      account_id: string;
+      first_name: string;
+      last_name: string;
+      nickname?: string;
+      avatar_path?: string;
+      state: string;
+      created_at: string;
+      updated_at: string;
+    };
+    error: unknown;
+  }>("/api/profiles");
 };
 
-export const updateProfile = (payload: { first_name: string; last_name: string; nickname?: string; avatar_path?: string }) => {
-  return apiClient.patch<{ success: boolean; message: string; data: { account_id: string; first_name: string; last_name: string; nickname?: string; avatar_path?: string; state: string; created_at: string; updated_at: string }; error: unknown }>("/api/profiles", payload);
+export const updateProfile = (payload: {
+  first_name: string;
+  last_name: string;
+  nickname?: string;
+  avatar_path?: string;
+}) => {
+  return apiClient.patch<{
+    success: boolean;
+    message: string;
+    data: {
+      account_id: string;
+      first_name: string;
+      last_name: string;
+      nickname?: string;
+      avatar_path?: string;
+      state: string;
+      created_at: string;
+      updated_at: string;
+    };
+    error: unknown;
+  }>("/api/profiles", payload);
 };
 
 export interface TaskStatistics {
@@ -53,15 +95,30 @@ export interface TodayTasksResponse {
 }
 
 export const getTaskStatistics = () => {
-  return apiClient.get<{ success: boolean; message: string; data: TaskStatistics; error: unknown }>("/api/dashboard/statistics");
+  return apiClient.get<{
+    success: boolean;
+    message: string;
+    data: TaskStatistics;
+    error: unknown;
+  }>("/api/dashboard/statistics");
 };
 
 export const getUnscheduledTasks = () => {
-  return apiClient.get<{ success: boolean; message: string; data: UnscheduledTasksResponse; error: unknown }>("/api/dashboard/unscheduled-tasks");
+  return apiClient.get<{
+    success: boolean;
+    message: string;
+    data: UnscheduledTasksResponse;
+    error: unknown;
+  }>("/api/dashboard/unscheduled-tasks");
 };
 
 export const getTodayTasks = () => {
-  return apiClient.get<{ success: boolean; message: string; data: TodayTasksResponse; error: unknown }>("/api/dashboard/today-tasks");
+  return apiClient.get<{
+    success: boolean;
+    message: string;
+    data: TodayTasksResponse;
+    error: unknown;
+  }>("/api/dashboard/today-tasks");
 };
 
 export const signin = (payload: SigninRequest) => {
@@ -100,7 +157,12 @@ export interface ListProjectsResponse {
 }
 
 export const listProjects = (limit = 10, offset = 0) => {
-  return apiClient.get<{ success: boolean; message: string; data: ListProjectsResponse; error: unknown }>(`/api/projects?limit=${limit}&offset=${offset}`);
+  return apiClient.get<{
+    success: boolean;
+    message: string;
+    data: ListProjectsResponse;
+    error: unknown;
+  }>(`/api/projects?limit=${limit}&offset=${offset}`);
 };
 
 export interface CreateProjectRequest {
@@ -117,7 +179,12 @@ export interface CreateProjectResponse {
 }
 
 export const createProject = (payload: CreateProjectRequest) => {
-  return apiClient.post<{ success: boolean; message: string; data: CreateProjectResponse; error: unknown }>("/api/projects", payload);
+  return apiClient.post<{
+    success: boolean;
+    message: string;
+    data: CreateProjectResponse;
+    error: unknown;
+  }>("/api/projects", payload);
 };
 
 export interface UpdateProjectRequest {
@@ -129,12 +196,24 @@ export interface UpdateProjectRequest {
   };
 }
 
-export const updateProject = (projectId: string, payload: UpdateProjectRequest) => {
-  return apiClient.patch<{ success: boolean; message: string; data: Project; error: unknown }>(`/api/projects/${projectId}`, payload);
+export const updateProject = (
+  projectId: string,
+  payload: UpdateProjectRequest,
+) => {
+  return apiClient.patch<{
+    success: boolean;
+    message: string;
+    data: Project;
+    error: unknown;
+  }>(`/api/projects/${projectId}`, payload);
 };
 
 export const deleteProject = (projectId: string) => {
-  return apiClient.delete<{ success: boolean; message: string; error: unknown }>(`/api/projects/${projectId}`);
+  return apiClient.delete<{
+    success: boolean;
+    message: string;
+    error: unknown;
+  }>(`/api/projects/${projectId}`);
 };
 
 export interface Task {
@@ -157,14 +236,26 @@ export interface ListTasksResponse {
   pagination: Pagination;
 }
 
-export const listTasksByProject = (projectId: string, limit = 10, offset = 0) => {
-  return apiClient.get<{ success: boolean; message: string; data: ListTasksResponse; error: unknown }>(
-    `/api/${projectId}/tasks?limit=${limit}&offset=${offset}`
-  );
+export const listTasksByProject = (
+  projectId: string,
+  limit = 10,
+  offset = 0,
+) => {
+  return apiClient.get<{
+    success: boolean;
+    message: string;
+    data: ListTasksResponse;
+    error: unknown;
+  }>(`/api/${projectId}/tasks?limit=${limit}&offset=${offset}`);
 };
 
 export const getTaskById = (taskId: string) => {
-  return apiClient.get<{ success: boolean; message: string; data: Task; error: unknown }>(`/api/tasks/${taskId}`);
+  return apiClient.get<{
+    success: boolean;
+    message: string;
+    data: Task;
+    error: unknown;
+  }>(`/api/tasks/${taskId}`);
 };
 
 export interface CreateTaskRequest {
@@ -179,10 +270,12 @@ export interface CreateTaskRequest {
 }
 
 export const createTask = (projectId: string, payload: CreateTaskRequest) => {
-  return apiClient.post<{ success: boolean; message: string; data: { task_id: string }; error: unknown }>(
-    `/api/${projectId}/tasks`,
-    payload
-  );
+  return apiClient.post<{
+    success: boolean;
+    message: string;
+    data: { task_id: string };
+    error: unknown;
+  }>(`/api/${projectId}/tasks`, payload);
 };
 
 export interface UpdateTaskRequest {
@@ -198,25 +291,30 @@ export interface UpdateTaskRequest {
 }
 
 export const updateTask = (taskId: string, payload: UpdateTaskRequest) => {
-  return apiClient.patch<{ success: boolean; message: string; data: Task; error: unknown }>(
-    `/api/tasks/${taskId}`,
-    payload
-  );
+  return apiClient.patch<{
+    success: boolean;
+    message: string;
+    data: Task;
+    error: unknown;
+  }>(`/api/tasks/${taskId}`, payload);
 };
 
 export const deleteTask = (taskId: string) => {
-  return apiClient.delete<{ success: boolean; message: string; data: { task_id: string }; error: unknown }>(
-    `/api/tasks/${taskId}`
-  );
+  return apiClient.delete<{
+    success: boolean;
+    message: string;
+    data: { task_id: string };
+    error: unknown;
+  }>(`/api/tasks/${taskId}`);
 };
 
 export const sendChatMessage = (
   projectId: string,
-  payload: SendMessageRequest
+  payload: SendMessageRequest,
 ) => {
   return apiClient.post<ApiResponse<SendMessageResponse>>(
     `/api/${projectId}/chat`,
-    payload
+    payload,
   );
 };
 
@@ -242,15 +340,72 @@ export interface UploadFileS3Response {
 }
 
 export const requestPresignedURL = (payload: PresignRequest) => {
-  return apiClient.post<{ success: boolean; message: string; data: PresignResponse; error: unknown }>(
-    "/api/files/avatar/presign",
-    payload
-  );
+  return apiClient.post<{
+    success: boolean;
+    message: string;
+    data: PresignResponse;
+    error: unknown;
+  }>("/api/files/avatar/presign", payload);
 };
 
 export const UploadFileS3 = (payload: UploadFileS3Request) => {
-  return apiClient.post<{ success: boolean; message: string; data: UploadFileS3Response; error: unknown }>(
-    "/api/files/avatar/upload",
-    payload
-  );
+  return apiClient.post<{
+    success: boolean;
+    message: string;
+    data: UploadFileS3Response;
+    error: unknown;
+  }>("/api/files/avatar/upload", payload);
+};
+
+// Member Management APIs
+export interface ProjectMember {
+  account_id: string;
+  email?: string;
+  role: "owner" | "member";
+  created_at: string;
+}
+
+export interface AddMemberRequest {
+  email: string;
+  role?: "owner" | "member";
+}
+
+export interface AddMemberResponse {
+  project_id: string;
+  account_id: string;
+  role: string;
+}
+
+export interface ListMembersResponse {
+  members: ProjectMember[];
+}
+
+export const addProjectMember = (
+  projectId: string,
+  payload: AddMemberRequest,
+) => {
+  return apiClient.post<{
+    success: boolean;
+    message: string;
+    data: AddMemberResponse;
+    error: unknown;
+  }>(`/api/projects/${projectId}/members`, payload);
+};
+
+export const removeProjectMember = (projectId: string, accountId: string) => {
+  return apiClient.delete<{
+    success: boolean;
+    message: string;
+    data: { project_id: string; account_id: string };
+    error: unknown;
+  }>(`/api/projects/${projectId}/members/${accountId}`);
+};
+
+export const listProjectMembers = (projectId: string) => {
+  return apiClient.get<{
+    success: boolean;
+    message: string;
+    data: ListMembersResponse;
+    error: unknown;
+  }>(`/api/projects/${projectId}/members`);
 };
