@@ -187,14 +187,14 @@ export const createTask = (projectId: string, payload: CreateTaskRequest) => {
 
 export interface UpdateTaskRequest {
   name?: string;
-  description?: string;
+  description?: string | null;
   priority?: string;
-  start_datetime?: string;
-  end_datetime?: string;
-  location?: string;
+  start_datetime?: string | null;
+  end_datetime?: string | null;
+  location?: string | null;
   status?: string;
-  recurring_days?: number;
-  recurring_until?: string;
+  recurring_days?: number | null;
+  recurring_until?: string | null;
 }
 
 export const updateTask = (taskId: string, payload: UpdateTaskRequest) => {
@@ -216,6 +216,41 @@ export const sendChatMessage = (
 ) => {
   return apiClient.post<ApiResponse<SendMessageResponse>>(
     `/api/${projectId}/chat`,
+    payload
+  );
+};
+
+export interface PresignRequest {
+  file_name: string;
+  file_size: number;
+  content_type: string;
+}
+
+export interface PresignResponse {
+  presigned_url: string;
+  key: string;
+  expires_datetime: string;
+}
+
+export interface UploadFileS3Request {
+  key: string;
+}
+
+export interface UploadFileS3Response {
+  url: string;
+  updated_at: string;
+}
+
+export const requestPresignedURL = (payload: PresignRequest) => {
+  return apiClient.post<{ success: boolean; message: string; data: PresignResponse; error: unknown }>(
+    "/api/files/avatar/presign",
+    payload
+  );
+};
+
+export const UploadFileS3 = (payload: UploadFileS3Request) => {
+  return apiClient.post<{ success: boolean; message: string; data: UploadFileS3Response; error: unknown }>(
+    "/api/files/avatar/upload",
     payload
   );
 };

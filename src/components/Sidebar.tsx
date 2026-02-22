@@ -155,7 +155,7 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
     <>
       <button
         onClick={onToggle}
-        className="lg:hidden fixed top-7 left-4 z-50 p-2 bg-white rounded-lg flex items-center justify-center"
+        className="lg:hidden fixed top-7 left-4 z-50 p-1 bg-transparent flex items-center justify-center"
         aria-label="Toggle menu"
       >
         {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}

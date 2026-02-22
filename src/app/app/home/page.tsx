@@ -32,7 +32,7 @@ import { TaskStatusChart } from "@/components/TaskStatusChart";
 import UnscheduledTasksSection from "@/components/UnscheduledTasksSection";
 import TodayTasksSection from "@/components/TodayTasksSection";
 import TaskDetailModal from "@/components/TaskDetailModal";
-import { toast } from "sonner";
+import { toast } from "@/lib/enhanced-toast";
 
 export default function HomePage() {
   // New state for dashboard data
@@ -276,8 +276,51 @@ export default function HomePage() {
           </Card>
         </div>
 
-        {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* Today's Tasks Section */}
+          {todayLoading ? (
+            <Card>
+              <CardHeader>
+                <Skeleton className="h-6 w-48" />
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <Skeleton key={i} className="h-20 w-full" />
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ) : todayError ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>งานที่ต้องทำในวันนี้</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="py-8 flex flex-col items-center justify-center text-center">
+                  <AlertCircle className="w-12 h-12 text-rose-500 mb-3" />
+                  <p className="text-sm text-gray-600 mb-3">{todayError}</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={fetchTodayTasks}
+                    className="gap-2"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                    ลองอีกครั้ง
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <TodayTasksSection
+              tasks={todayTasks}
+              onDelete={handleDeleteTask}
+              onTaskClick={handleTaskClick}
+              onStatusChange={handleStatusChange}
+            />
+          )}
+
           {/* Task Status Chart */}
           {statisticsLoading ? (
             <Card>
@@ -314,8 +357,10 @@ export default function HomePage() {
           ) : statistics ? (
             <TaskStatusChart statistics={statistics} />
           ) : null}
+        </div>
 
-          {/* Unscheduled Tasks Section */}
+        {/* Unscheduled Tasks Section */}
+        <div className="mb-6">
           {unscheduledLoading ? (
             <Card>
               <CardHeader>
@@ -359,52 +404,6 @@ export default function HomePage() {
             />
           )}
         </div>
-
-        {/* Today's Tasks Section */}
-        {todayLoading ? (
-          <Card className="mb-6">
-            <CardHeader>
-              <Skeleton className="h-6 w-48" />
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {[1, 2, 3].map((i) => (
-                  <Skeleton key={i} className="h-20 w-full" />
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        ) : todayError ? (
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>งานที่ต้องทำในวันนี้</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="py-8 flex flex-col items-center justify-center text-center">
-                <AlertCircle className="w-12 h-12 text-rose-500 mb-3" />
-                <p className="text-sm text-gray-600 mb-3">{todayError}</p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={fetchTodayTasks}
-                  className="gap-2"
-                >
-                  <RefreshCw className="w-4 h-4" />
-                  ลองอีกครั้ง
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="mb-6">
-            <TodayTasksSection
-              tasks={todayTasks}
-              onDelete={handleDeleteTask}
-              onTaskClick={handleTaskClick}
-              onStatusChange={handleStatusChange}
-            />
-          </div>
-        )}
       </main>
 
       {/* Modals */}

@@ -21,6 +21,7 @@ import {
 import { Loader2, ChevronDown } from "lucide-react";
 import { updateProject, UpdateProjectRequest, Project } from "@/services/api";
 import { cn } from "@/lib/utils";
+import { toast } from "@/lib/enhanced-toast";
 
 interface EditWorkspaceModalProps {
   open: boolean;
@@ -92,10 +93,21 @@ export default function EditWorkspaceModal({
 
       await updateProject(project.id, payload);
       
+      toast.success("แก้ไข Workspace สำเร็จ", {
+        description: (
+          <>
+            Workspace <strong>{formData.name.trim()}</strong> ถูกอัพเดทเรียบร้อยแล้ว
+          </>
+        ),
+      });
+
       onOpenChange(false);
       onSuccess?.();
     } catch (err) {
       setError("ไม่สามารถอัพเดท Workspace ได้ กรุณาลองใหม่อีกครั้ง");
+      toast.error("เกิดข้อผิดพลาด", {
+        description: "ไม่สามารถอัพเดท Workspace ได้ กรุณาลองใหม่อีกครั้ง",
+      });
     } finally {
       setIsLoading(false);
     }

@@ -20,7 +20,7 @@ import {
 import { getPriorityColor, getStatusColor } from "@/constants";
 import { getStatusLabel } from "@/lib/task-utils";
 import { TaskWithProject, updateTask } from "@/services/api";
-import { toast } from "sonner";
+import { toast } from "@/lib/enhanced-toast";
 
 interface UnscheduledTasksSectionProps {
   tasks: TaskWithProject[];
@@ -100,9 +100,9 @@ export default function UnscheduledTasksSection({
             งานที่ยังไม่มีกำหนดวันที่ชัดเจน ควรจัดลำดับความสำคัญและกำหนดวันที่ให้เร็วที่สุด
           </CardDescription>
         </CardHeader>
-        <CardContent className="h-[360px] overflow-y-auto pr-2">
+        <CardContent className={tasks.length === 0 ? "" : tasks.length <= 3 ? "" : "max-h-[500px] overflow-y-auto"}>
           {tasks.length === 0 ? (
-            <div className="h-full flex items-center justify-center text-gray-500">
+            <div className="py-8 flex items-center justify-center text-gray-500">
               <div className="text-center">
                 <Calendar className="w-12 h-12 mx-auto mb-3 text-gray-300" />
                 <p className="text-sm">ไม่มีงานที่ยังไม่ได้กำหนดวันที่</p>

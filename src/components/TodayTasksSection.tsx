@@ -20,7 +20,7 @@ import {
 import { getPriorityColor, getStatusColor } from "@/constants";
 import { getStatusLabel } from "@/lib/task-utils";
 import { TaskWithProject, updateTask } from "@/services/api";
-import { toast } from "sonner";
+import { toast } from "@/lib/enhanced-toast";
 
 interface TodayTasksSectionProps {
   tasks: TaskWithProject[];
