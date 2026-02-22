@@ -1,4 +1,3 @@
-// Re-export color utilities from constants
 export { getPriorityColor, getStatusColor } from "@/constants";
 
 export interface DraggedTask {

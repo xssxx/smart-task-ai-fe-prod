@@ -22,7 +22,7 @@ import {
 import { cn } from "@/lib/utils";
 import { getTaskById, updateTask, deleteTask, UpdateTaskRequest } from "@/services/api";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
-import { toast } from "sonner";
+import { toast } from "@/lib/enhanced-toast";
 import { PRIORITY_OPTIONS, STATUS_OPTIONS, TOAST_DURATION } from "@/constants";
 
 interface TaskDetailModalProps {
@@ -42,6 +42,7 @@ interface TaskData {
   end_datetime: string | null;
   location: string | null;
   recurring_days: number | null;
+  recurring_until: string | null;
 }
 
 export default function TaskDetailModal({
@@ -56,10 +57,12 @@ export default function TaskDetailModal({
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const [startDateTime, setStartDateTime] = useState<{ date?: Date | null, hasTime: boolean }>({ hasTime: true });
   const [endDateTime, setEndDateTime] = useState<{ date?: Date | null, hasTime: boolean }>({ hasTime: true });
-  
+  const [recurringUntil, setRecurringUntil] = useState<{ date?: Date | null; hasTime: boolean }>({ hasTime: false });
+  const [recurringEndType, setRecurringEndType] = useState<"never" | "on_date">("never");
+
   const [formData, setFormData] = useState<TaskData>({
     id: "",
     name: "",
@@ -70,6 +73,7 @@ export default function TaskDetailModal({
     end_datetime: null,
     location: null,
     recurring_days: null,
+    recurring_until: null,
   });
 
   useEffect(() => {
@@ -86,28 +90,26 @@ export default function TaskDetailModal({
 
   const fetchTaskData = async () => {
     if (!taskId) return;
-    
+
     try {
       setIsLoading(true);
       setError(null);
-      
-      // Removed blue loading toast - will be replaced with notification system later
-      
+
       const response = await getTaskById(taskId);
       const task = response.data?.data;
-      
+
       if (task) {
-        // Type assertion for API response with flexible field names
         const rawTask = task as unknown as Record<string, unknown>;
-        const statusValue = typeof rawTask.status === 'string' 
-          ? rawTask.status.toLowerCase() 
+        const statusValue = typeof rawTask.status === 'string'
+          ? rawTask.status.toLowerCase()
           : 'todo';
-        
+
         const startDateTimeValue = (rawTask.start_datetime || rawTask.startDateTime) as string | null;
         const endDateTimeValue = (rawTask.end_datetime || rawTask.endDateTime) as string | null;
         const locationValue = (rawTask.location) as string | null;
         const recurringDaysValue = (rawTask.recurring_days || rawTask.recurringDays) as number | null;
-        
+        const recurringUntilValue = (rawTask.recurring_until || rawTask.recurringUntil) as string | null;
+
         setFormData({
           id: task.id,
           name: task.name || "",
@@ -118,8 +120,9 @@ export default function TaskDetailModal({
           end_datetime: endDateTimeValue || null,
           location: locationValue || null,
           recurring_days: recurringDaysValue || null,
+          recurring_until: recurringUntilValue || null,
         });
-        
+
         setStartDateTime({
           date: startDateTimeValue ? new Date(startDateTimeValue) : null,
           hasTime: true,
@@ -128,6 +131,11 @@ export default function TaskDetailModal({
           date: endDateTimeValue ? new Date(endDateTimeValue) : null,
           hasTime: true,
         });
+        setRecurringUntil({
+          date: recurringUntilValue ? new Date(recurringUntilValue) : null,
+          hasTime: false,
+        });
+        setRecurringEndType(recurringUntilValue ? "on_date" : "never");
       }
     } catch (err) {
       setError("ไม่สามารถโหลดข้อมูล Task ได้");
@@ -146,7 +154,6 @@ export default function TaskDetailModal({
       return;
     }
 
-    // Validate date range
     if (startDateTime.date && endDateTime.date) {
       if (endDateTime.date <= startDateTime.date) {
         setError("วันเวลาสิ้นสุดต้องมากกว่าวันเวลาเริ่มต้น");
@@ -156,41 +163,61 @@ export default function TaskDetailModal({
         });
         return;
       }
+
+      // Validate recurring for multi-day tasks
+      if (formData.recurring_days && formData.recurring_days > 0) {
+        const daysDiff = Math.ceil((endDateTime.date.getTime() - startDateTime.date.getTime()) / (1000 * 60 * 60 * 24));
+        if (formData.recurring_days <= daysDiff) {
+          setError(`Task มีระยะเวลา ${daysDiff} วัน แต่ทำประจำทุก ${formData.recurring_days} วัน จะทำให้เกิดการซ้ำซ้อน`);
+          toast.error("การตั้งค่าไม่เหมาะสม", {
+            description: `Task มีระยะเวลา ${daysDiff} วัน ควรตั้งทำประจำอย่างน้อย ${daysDiff + 1} วัน หรือลบการทำประจำออก`,
+            duration: TOAST_DURATION.ERROR,
+          });
+          return;
+        }
+      }
     }
 
     try {
       setIsSaving(true);
       setError(null);
-      
+
       const payload: UpdateTaskRequest = {
         name: formData.name.trim(),
         priority: formData.priority,
         status: formData.status,
       };
-      
-      if (formData.description?.trim()) {
-        payload.description = formData.description.trim();
-      }
-      
-      if (startDateTime.date) {
-        payload.start_datetime = startDateTime.date.toISOString();
-      }
-      if (endDateTime.date) {
-        payload.end_datetime = endDateTime.date.toISOString();
-      }
-      if (formData.location?.trim()) {
-        payload.location = formData.location.trim();
-      }
+
+      payload.description = formData.description?.trim() || null;
+      payload.location = formData.location?.trim() || null;
+      payload.start_datetime = startDateTime.date ? startDateTime.date.toISOString() : null;
+      payload.end_datetime = endDateTime.date ? endDateTime.date.toISOString() : null;
       if (formData.recurring_days && formData.recurring_days > 0) {
         payload.recurring_days = formData.recurring_days;
+        if (recurringEndType === "on_date" && recurringUntil.date) {
+          payload.recurring_until = recurringUntil.date.toISOString();
+        } else {
+          payload.recurring_until = null;
+        }
+      } else {
+        payload.recurring_days = null;
+        payload.recurring_until = null;
       }
 
       await updateTask(formData.id, payload);
-      
+
       setIsEditing(false);
       toast.success("บันทึก Task สำเร็จ", {
-        description: `Task "${formData.name}" ถูกอัพเดทเรียบร้อยแล้ว`,
+        description: (
+          <>
+            Task <strong>{formData.name}</strong> ถูกอัพเดทเรียบร้อยแล้ว
+          </>
+        ),
         duration: TOAST_DURATION.SUCCESS,
+        metadata: {
+          taskName: formData.name,
+          taskId: formData.id,
+        },
       });
       onOpenChange(false);
       onSuccess();
@@ -210,7 +237,6 @@ export default function TaskDetailModal({
     setError(null);
   };
 
-  // Check if date range is valid
   const isDateRangeInvalid = startDateTime.date && endDateTime.date && endDateTime.date <= startDateTime.date;
 
   const handleClose = () => {
@@ -221,15 +247,23 @@ export default function TaskDetailModal({
 
   const handleDelete = async () => {
     if (!formData.id) return;
-    
+
     try {
       setIsDeleting(true);
       setError(null);
       await deleteTask(formData.id);
       setShowDeleteConfirm(false);
       toast.success("ลบ Task สำเร็จ", {
-        description: `Task "${formData.name}" ถูกลบเรียบร้อยแล้ว`,
+        description: (
+          <>
+            Task <strong>{formData.name}</strong> ถูกลบเรียบร้อยแล้ว
+          </>
+        ),
         duration: TOAST_DURATION.SUCCESS,
+        metadata: {
+          taskName: formData.name,
+          taskId: formData.id,
+        },
       });
       onOpenChange(false);
       onSuccess();
@@ -264,7 +298,7 @@ export default function TaskDetailModal({
                   variant="ghost"
                   size="sm"
                   onClick={() => setShowDeleteConfirm(true)}
-                  className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                  className="text-rose-500 hover:text-rose-600 hover:bg-rose-50"
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>
@@ -280,13 +314,13 @@ export default function TaskDetailModal({
         ) : (
           <div className="space-y-4 mt-4">
             {error && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-rose-700 text-sm">
                 {error}
               </div>
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="name">ชื่อ Task <span className="text-red-500">*</span></Label>
+              <Label htmlFor="name">ชื่อ Task <span className="text-rose-500">*</span></Label>
               <Input
                 id="name"
                 value={formData.name}
@@ -312,7 +346,7 @@ export default function TaskDetailModal({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Priority <span className="text-red-500">*</span></Label>
+                <Label>Priority <span className="text-rose-500">*</span></Label>
                 <Select
                   value={formData.priority}
                   onValueChange={(value) => handleChange("priority", value)}
@@ -352,7 +386,6 @@ export default function TaskDetailModal({
               </div>
             </div>
 
-            {/* Start DateTime */}
             <div className="space-y-2">
               <Label>วันเวลาเริ่มต้น</Label>
               <div className="flex gap-2">
@@ -379,7 +412,6 @@ export default function TaskDetailModal({
               </div>
             </div>
 
-            {/* End DateTime */}
             <div className="space-y-2">
               <Label>วันเวลาสิ้นสุด</Label>
               <div className="flex gap-2">
@@ -387,11 +419,11 @@ export default function TaskDetailModal({
                   <DateTimePicker
                     value={endDateTime}
                     onChange={setEndDateTime}
-                    isDisabled={!isEditing || isSaving}
+                    isDisabled={!isEditing || isSaving || formData.status !== 'todo'}
                     placeholder="เลือกวันเวลาสิ้นสุด"
                   />
                 </div>
-                {isEditing && endDateTime.date && (
+                {isEditing && endDateTime.date && formData.status === 'todo' && (
                   <Button
                     type="button"
                     variant="outline"
@@ -405,13 +437,17 @@ export default function TaskDetailModal({
                 )}
               </div>
               {isDateRangeInvalid && (
-                <p className="text-xs text-red-600">
+                <p className="text-xs text-rose-600">
                   วันเวลาสิ้นสุดต้องมากกว่าวันเวลาเริ่มต้น
+                </p>
+              )}
+              {formData.status !== 'todo' && (
+                <p className="text-xs text-muted-foreground">
+                  ไม่สามารถแก้ไขวันเวลาสิ้นสุดได้เมื่อ status ไม่ใช่ Todo
                 </p>
               )}
             </div>
 
-            {/* Location */}
             <div className="space-y-2">
               <Label htmlFor="location">สถานที่</Label>
               <Input
@@ -424,23 +460,89 @@ export default function TaskDetailModal({
               />
             </div>
 
-            {/* Recurring Days */}
             <div className="space-y-2">
-              <Label htmlFor="recurringDays">ทำซ้ำทุกๆ (วัน)</Label>
-              <Input
-                id="recurringDays"
-                type="number"
-                min="0"
-                value={formData.recurring_days ?? ""}
-                onChange={(e) => setFormData((prev) => ({ 
-                  ...prev, 
-                  recurring_days: e.target.value ? parseInt(e.target.value) : null 
-                }))}
-                placeholder="เช่น 7 สำหรับทำซ้ำทุกสัปดาห์"
+              <Label htmlFor="recurringDays">ทำประจำ</Label>
+              <Select
+                value={formData.recurring_days ? formData.recurring_days.toString() : "0"}
+                onValueChange={(value) => {
+                  const numValue = parseInt(value);
+                  setFormData((prev) => ({
+                    ...prev,
+                    recurring_days: numValue === 0 ? null : numValue
+                  }));
+                  if (numValue === 0) {
+                    setRecurringEndType("never");
+                    setRecurringUntil({ hasTime: false });
+                  }
+                }}
                 disabled={!isEditing || isSaving}
-                className={!isEditing ? "bg-gray-50" : ""}
-              />
+              >
+                <SelectTrigger className={cn("w-full", !isEditing && "bg-gray-50")}>
+                  <SelectValue placeholder="ไม่ทำประจำ" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">ไม่ทำประจำ</SelectItem>
+                  <SelectItem value="1">ทุกวัน</SelectItem>
+                  <SelectItem value="7">ทุกสัปดาห์</SelectItem>
+                  <SelectItem value="14">ทุก 2 สัปดาห์</SelectItem>
+                  <SelectItem value="30">ทุกเดือน</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
+
+            {formData.recurring_days && formData.recurring_days > 0 && (
+              <>
+                <div className="space-y-2">
+                  <Label>สิ้นสุดการทำประจำ</Label>
+                  <Select
+                    value={recurringEndType}
+                    onValueChange={(value: "never" | "on_date") => {
+                      setRecurringEndType(value);
+                      if (value === "never") {
+                        setRecurringUntil({ hasTime: false });
+                      }
+                    }}
+                    disabled={!isEditing || isSaving}
+                  >
+                    <SelectTrigger className={cn("w-full", !isEditing && "bg-gray-50")}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="never">ไม่เลย</SelectItem>
+                      <SelectItem value="on_date">ในวันที่</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {recurringEndType === "on_date" && (
+                  <div className="space-y-2">
+                    <Label>วันที่สิ้นสุด</Label>
+                    <div className="flex gap-2">
+                      <div className="flex-1">
+                        <DateTimePicker
+                          value={recurringUntil}
+                          onChange={setRecurringUntil}
+                          isDisabled={!isEditing || isSaving}
+                          placeholder="เลือกวันที่สิ้นสุดการทำประจำ"
+                        />
+                      </div>
+                      {isEditing && recurringUntil.date && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={() => setRecurringUntil({ date: null, hasTime: false })}
+                          disabled={isSaving}
+                          className="shrink-0"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
 
             {isEditing && (
               <div className="flex justify-end gap-3 pt-4 flex-col sm:flex-row">
@@ -476,11 +578,10 @@ export default function TaskDetailModal({
         )}
       </DialogContent>
 
-      {/* Delete Confirmation Modal */}
       <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
-            <DialogTitle className="text-red-600">ยืนยันการลบ Task</DialogTitle>
+            <DialogTitle className="text-rose-600">ยืนยันการลบ Task</DialogTitle>
             <DialogDescription>
               คุณต้องการลบ Task &quot;{formData.name}&quot; หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้
             </DialogDescription>

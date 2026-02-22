@@ -5,6 +5,7 @@
 
 @theme inline {
   --font-sans: var(--font-kanit), sans-serif;
+  --font-momo: var(--font-momo), cursive;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -118,11 +119,12 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-kanit), sans-serif;
   }
-  
+
   /* Set Kanit as default font for all elements */
   html {
     font-family: var(--font-kanit), sans-serif;
@@ -135,6 +137,7 @@
     opacity: 0;
     transform: scale(0.95);
   }
+
   100% {
     opacity: 1;
     transform: scale(1);
@@ -146,6 +149,7 @@
     opacity: 1;
     transform: scale(1);
   }
+
   100% {
     opacity: 0;
     transform: scale(0.95);
@@ -166,6 +170,7 @@
     height: 0;
     opacity: 0;
   }
+
   to {
     height: var(--radix-collapsible-content-height);
     opacity: 1;
@@ -177,6 +182,7 @@
     height: var(--radix-collapsible-content-height);
     opacity: 1;
   }
+
   to {
     height: 0;
     opacity: 0;
@@ -190,6 +196,7 @@
 .animate-collapsible-up {
   animation: collapsible-up 0.2s ease-out;
 }
+
 /* Custom Sonner Toast Styles */
 [data-sonner-toaster] {
   --normal-bg: oklch(1 0 0) !important;
@@ -253,12 +260,43 @@
 .board-nav-dot.active {
   @apply bg-gray-600;
 }
+
 /* Global font override to ensure Kanit is used everywhere */
 * {
   font-family: var(--font-kanit), sans-serif !important;
 }
 
 /* Specific overrides for common elements */
-input, textarea, select, button {
+input,
+textarea,
+select,
+button {
   font-family: var(--font-kanit), sans-serif !important;
+}
+
+/* Momo Signature font for logo */
+.font-momo {
+  font-family: var(--font-momo), cursive !important;
+}
+
+/* Board column responsive width */
+.board-column {
+  width: 88vw;
+  flex-shrink: 0;
+}
+
+/* Tablet Landscape and Desktop (1024px+) */
+@media (min-width: 1024px) {
+  .board-column {
+    width: var(--column-width);
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .board-column.single {
+    width: 100%;
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
 }

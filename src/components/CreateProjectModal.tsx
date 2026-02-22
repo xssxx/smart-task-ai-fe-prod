@@ -21,6 +21,7 @@ import {
 import { Loader2, ChevronDown } from "lucide-react";
 import { createProject, CreateProjectRequest } from "@/services/api";
 import { cn } from "@/lib/utils";
+import { toast } from "@/lib/enhanced-toast";
 
 interface CreateProjectModalProps {
   open: boolean;
@@ -51,7 +52,7 @@ export default function CreateProjectModal({
     setError(null);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
 
@@ -67,7 +68,6 @@ export default function CreateProjectModal({
         name: formData.name.trim(),
       };
 
-      // Add config if any advanced fields are filled
       if (formData.nickname || formData.context || formData.domain_knowledge) {
         payload.config = {};
         if (formData.nickname) payload.config.nickname = formData.nickname;
@@ -76,8 +76,7 @@ export default function CreateProjectModal({
       }
 
       await createProject(payload);
-      
-      // Reset form
+
       setFormData({
         name: "",
         nickname: "",
@@ -85,11 +84,22 @@ export default function CreateProjectModal({
         domain_knowledge: "",
       });
       setShowAdvanced(false);
-      
+
+      toast.success("สร้าง Workspace สำเร็จ", {
+        description: (
+          <>
+            Workspace <strong>{formData.name.trim()}</strong> ถูกสร้างเรียบร้อยแล้ว
+          </>
+        ),
+      });
+
       onOpenChange(false);
       onSuccess?.();
     } catch (err) {
       setError("ไม่สามารถสร้าง Workspace ได้ กรุณาลองใหม่อีกครั้ง");
+      toast.error("เกิดข้อผิดพลาด", {
+        description: "ไม่สามารถสร้าง Workspace ได้ กรุณาลองใหม่อีกครั้ง",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -120,17 +130,15 @@ export default function CreateProjectModal({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Error Message */}
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
+            <div className="bg-rose-50 border border-rose-200 rounded-lg p-3 text-sm text-rose-700">
               {error}
             </div>
           )}
 
-          {/* Name Field (Required) */}
-          <div className="space-y-2">
-            <Label htmlFor="name" className="text-sm font-medium">
-              ชื่อ Workspace <span className="text-red-500">*</span>
+          <div className="space-y-3">
+            <Label htmlFor="name">
+              ชื่อ Workspace <span className="text-rose-500">*</span>
             </Label>
             <Input
               id="name"
@@ -142,7 +150,6 @@ export default function CreateProjectModal({
             />
           </div>
 
-          {/* Advanced Settings Toggle */}
           <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
             <CollapsibleTrigger asChild>
               <button
@@ -159,10 +166,8 @@ export default function CreateProjectModal({
               </button>
             </CollapsibleTrigger>
 
-            {/* Advanced Fields */}
             <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
               <div className="space-y-4 pt-4 mt-2 border-t border-gray-100">
-                {/* Nickname Field */}
                 <div className="space-y-2">
                   <Label htmlFor="nickname">ชื่อเล่น AI</Label>
                   <Input
@@ -177,8 +182,7 @@ export default function CreateProjectModal({
                   </p>
                 </div>
 
-                {/* Context Field */}
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <Label htmlFor="context">Context</Label>
                   <Textarea
                     id="context"
@@ -193,8 +197,7 @@ export default function CreateProjectModal({
                   </p>
                 </div>
 
-                {/* Domain Knowledge Field */}
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <Label htmlFor="domain_knowledge">Domain Knowledge</Label>
                   <Textarea
                     id="domain_knowledge"

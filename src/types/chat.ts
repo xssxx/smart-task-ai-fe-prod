@@ -1,5 +1,3 @@
-// Chat API Types
-
 export interface Message {
   role: "user" | "assistant" | "system";
   content: string;
@@ -29,7 +27,6 @@ export interface ApiResponse<T> {
   data: T;
 }
 
-// Proposed Task from LLM (before user accepts)
 export interface ProposedTask {
   id: string;
   name: string;
@@ -41,7 +38,6 @@ export interface ProposedTask {
   userAction?: "accepted" | "rejected" | "pending";
 }
 
-// Backend task format (from API response)
 export interface BackendTask {
   name: string;
   description?: string;
@@ -53,12 +49,12 @@ export interface BackendTask {
   recurring_until?: string;
 }
 
-// UI-specific types
 export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
   timestamp: Date;
+  audioUrl?: string;
   taskActions?: TaskAction[];
   proposedTasks?: ProposedTask[];
 }

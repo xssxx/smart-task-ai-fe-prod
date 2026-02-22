@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import Groq from "groq-sdk";
 import {
   Send,
   Bot,
@@ -19,12 +20,16 @@ import {
   Clock,
   Flag,
   PanelRight,
+  Mic,
+  MicOff,
+  Upload,
 } from "lucide-react";
 import { sendChatMessage, createTask, CreateTaskRequest } from "@/services/api";
 import { ChatMessage, Message, ProposedTask } from "@/types/chat";
 import { getActionBadgeColor, PRIORITY_OPTIONS } from "@/constants";
-import { format } from "date-fns";
-import { th } from "date-fns/locale";
+import { formatDateTime } from "@/lib/date-utils";
+import { getPriorityLabel } from "@/lib/task-utils";
+import { useProfile } from "@/hooks/useProfile";
 import {
   Dialog,
   DialogContent,
@@ -43,56 +48,43 @@ import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-
-// Priority badge colors
-function getPriorityColor(priority: string) {
-  switch (priority) {
-    case "high":
-      return "bg-red-100 text-red-700 border-red-200";
-    case "medium":
-      return "bg-yellow-100 text-yellow-700 border-yellow-200";
-    case "low":
-      return "bg-green-100 text-green-700 border-green-200";
-    default:
-      return "bg-gray-100 text-gray-700 border-gray-200";
-  }
-}
-
-function getPriorityLabel(priority: string) {
-  switch (priority) {
-    case "high":
-      return "สูง";
-    case "medium":
-      return "ปานกลาง";
-    case "low":
-      return "ต่ำ";
-    default:
-      return priority;
-  }
-}
-
-// Format datetime for display
-function formatDateTime(dateString: string) {
-  try {
-    const date = new Date(dateString);
-    return format(date, "d MMM yyyy HH:mm", { locale: th });
-  } catch {
-    return dateString;
-  }
-}
+import { getPriorityColor } from "@/constants";
 
 // Edit Proposed Task Modal Component
 interface EditProposedTaskModalProps {
   task: ProposedTask | null;
   isOpen: boolean;
   onClose: () => void;
-  onSave: (task: ProposedTask, location?: string, recurringDays?: number) => void;
+  onSave: (
+    task: ProposedTask,
+    location?: string,
+    recurringDays?: number,
+    recurringUntil?: string,
+  ) => void;
 }
 
-function EditProposedTaskModal({ task, isOpen, onClose, onSave }: EditProposedTaskModalProps) {
+function EditProposedTaskModal({
+  task,
+  isOpen,
+  onClose,
+  onSave,
+}: EditProposedTaskModalProps) {
   const [editedTask, setEditedTask] = useState<ProposedTask | null>(null);
-  const [startDateTime, setStartDateTime] = useState<{ date?: Date | null, hasTime: boolean }>({ hasTime: true });
-  const [endDateTime, setEndDateTime] = useState<{ date?: Date | null, hasTime: boolean }>({ hasTime: true });
+  const [startDateTime, setStartDateTime] = useState<{
+    date?: Date | null;
+    hasTime: boolean;
+  }>({ hasTime: true });
+  const [endDateTime, setEndDateTime] = useState<{
+    date?: Date | null;
+    hasTime: boolean;
+  }>({ hasTime: true });
+  const [recurringUntil, setRecurringUntil] = useState<{
+    date?: Date | null;
+    hasTime: boolean;
+  }>({ hasTime: false });
+  const [recurringEndType, setRecurringEndType] = useState<"never" | "on_date">(
+    "never",
+  );
   const [location, setLocation] = useState("");
   const [recurringDays, setRecurringDays] = useState<number | null>(null);
 
@@ -109,6 +101,8 @@ function EditProposedTaskModal({ task, isOpen, onClose, onSave }: EditProposedTa
       });
       setLocation("");
       setRecurringDays(null);
+      setRecurringUntil({ date: null, hasTime: false });
+      setRecurringEndType("never");
     }
   }, [task]);
 
@@ -117,22 +111,39 @@ function EditProposedTaskModal({ task, isOpen, onClose, onSave }: EditProposedTa
   const handleSave = () => {
     const updatedTask = {
       ...editedTask,
-      start_datetime: startDateTime.date?.toISOString() || editedTask.start_datetime,
+      start_datetime:
+        startDateTime.date?.toISOString() || editedTask.start_datetime,
       end_datetime: endDateTime.date?.toISOString() || editedTask.end_datetime,
     };
-    onSave(updatedTask, location || undefined, recurringDays || undefined);
+    const recurringUntilValue =
+      recurringEndType === "on_date" && recurringUntil.date
+        ? recurringUntil.date.toISOString()
+        : undefined;
+    onSave(
+      updatedTask,
+      location || undefined,
+      recurringDays || undefined,
+      recurringUntilValue,
+    );
   };
+
+  const isDateRangeInvalid =
+    startDateTime.date &&
+    endDateTime.date &&
+    endDateTime.date <= startDateTime.date;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px] max-w-[95vw] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-125 max-w-[95vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>แก้ไข Task</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="name">ชื่อ Task <span className="text-red-500">*</span></Label>
+            <Label htmlFor="name">
+              ชื่อ Task <span className="text-rose-500">*</span>
+            </Label>
             <Input
               id="name"
               value={editedTask.name}
@@ -155,7 +166,9 @@ function EditProposedTaskModal({ task, isOpen, onClose, onSave }: EditProposedTa
           </div>
 
           <div className="space-y-2">
-            <Label>Priority <span className="text-red-500">*</span></Label>
+            <Label>
+              Priority <span className="text-rose-500">*</span>
+            </Label>
             <Select
               value={editedTask.priority}
               onValueChange={(value: "high" | "medium" | "low") =>
@@ -191,7 +204,9 @@ function EditProposedTaskModal({ task, isOpen, onClose, onSave }: EditProposedTa
                   type="button"
                   variant="outline"
                   size="icon"
-                  onClick={() => setStartDateTime({ date: null, hasTime: true })}
+                  onClick={() =>
+                    setStartDateTime({ date: null, hasTime: true })
+                  }
                   className="shrink-0"
                 >
                   <X className="w-4 h-4" />
@@ -223,6 +238,11 @@ function EditProposedTaskModal({ task, isOpen, onClose, onSave }: EditProposedTa
                 </Button>
               )}
             </div>
+            {isDateRangeInvalid && (
+              <p className="text-xs text-rose-600">
+                วันเวลาสิ้นสุดต้องมากกว่าวันเวลาเริ่มต้น
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -236,20 +256,91 @@ function EditProposedTaskModal({ task, isOpen, onClose, onSave }: EditProposedTa
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="recurringDays">ทำซ้ำทุกๆ (วัน)</Label>
-            <Input
-              id="recurringDays"
-              type="number"
-              min="0"
-              value={recurringDays ?? ""}
-              onChange={(e) => setRecurringDays(e.target.value ? parseInt(e.target.value) : null)}
-              placeholder="เช่น 7 สำหรับทำซ้ำทุกสัปดาห์"
-            />
+            <Label htmlFor="recurringDays">ทำประจำ</Label>
+            <Select
+              value={recurringDays ? recurringDays.toString() : "0"}
+              onValueChange={(value) => {
+                const numValue = parseInt(value);
+                setRecurringDays(numValue === 0 ? null : numValue);
+                if (numValue === 0) {
+                  setRecurringEndType("never");
+                  setRecurringUntil({ date: null, hasTime: false });
+                }
+              }}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="ไม่ทำประจำ" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="0">ไม่ทำประจำ</SelectItem>
+                <SelectItem value="1">ทุกวัน</SelectItem>
+                <SelectItem value="7">ทุกสัปดาห์</SelectItem>
+                <SelectItem value="14">ทุก 2 สัปดาห์</SelectItem>
+                <SelectItem value="30">ทุกเดือน</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
+
+          {recurringDays && recurringDays > 0 && (
+            <>
+              <div className="space-y-2">
+                <Label>สิ้นสุดการทำประจำ</Label>
+                <Select
+                  value={recurringEndType}
+                  onValueChange={(value: "never" | "on_date") => {
+                    setRecurringEndType(value);
+                    if (value === "never") {
+                      setRecurringUntil({ date: null, hasTime: false });
+                    }
+                  }}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="never">ไม่เลย</SelectItem>
+                    <SelectItem value="on_date">ในวันที่</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {recurringEndType === "on_date" && (
+                <div className="space-y-2">
+                  <Label>วันที่สิ้นสุด</Label>
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <DateTimePicker
+                        value={recurringUntil}
+                        onChange={setRecurringUntil}
+                        placeholder="เลือกวันที่สิ้นสุดการทำประจำ"
+                      />
+                    </div>
+                    {recurringUntil.date && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() =>
+                          setRecurringUntil({ date: null, hasTime: false })
+                        }
+                        className="shrink-0"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </div>
 
         <DialogFooter className="flex-col sm:flex-row gap-2">
-          <Button variant="outline" onClick={onClose} className="w-full sm:w-auto">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            className="w-full sm:w-auto"
+          >
             ยกเลิก
           </Button>
           <Button
@@ -287,8 +378,8 @@ function TaskProposalCard({
         task.userAction === "accepted"
           ? "border-green-300 bg-green-50"
           : task.userAction === "rejected"
-          ? "border-red-300 bg-red-50 opacity-60"
-          : "border-gray-200 hover:border-gray-300"
+            ? "border-rose-300 bg-rose-50 opacity-60"
+            : "border-gray-200 hover:border-gray-300"
       }`}
     >
       <CardContent className="p-3 sm:p-4">
@@ -336,7 +427,7 @@ function TaskProposalCard({
                 className={`text-xs ${
                   task.userAction === "accepted"
                     ? "bg-green-100 text-green-700 border-green-300"
-                    : "bg-red-100 text-red-700 border-red-300"
+                    : "bg-rose-100 text-rose-700 border-rose-300"
                 }`}
               >
                 {task.userAction === "accepted" ? (
@@ -360,7 +451,7 @@ function TaskProposalCard({
                   onClick={() => onAccept(task)}
                 >
                   <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1" />
-                  <span className="hidden sm:inline">Accept</span>
+                  <span className="hidden lg:inline">ยอมรับ</span>
                 </Button>
                 <Button
                   size="sm"
@@ -369,16 +460,16 @@ function TaskProposalCard({
                   onClick={() => onEdit(task)}
                 >
                   <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1" />
-                  <span className="hidden sm:inline">Edit</span>
+                  <span className="hidden lg:inline">แก้ไข</span>
                 </Button>
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-7 sm:h-8 px-2 sm:px-3 text-xs sm:text-sm text-red-600 border-red-300 hover:bg-red-50 flex-1"
+                  className="h-7 sm:h-8 px-2 sm:px-3 text-xs sm:text-sm text-rose-600 border-rose-300 hover:bg-rose-50 flex-1"
                   onClick={() => onReject(task)}
                 >
                   <X className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1" />
-                  <span className="hidden sm:inline">Reject</span>
+                  <span className="hidden lg:inline">ปฏิเสธ</span>
                 </Button>
               </div>
             )}
@@ -401,12 +492,23 @@ export default function AIChatPage() {
   const params = useParams();
   const projectId = params.projectId as string;
 
+  // Get user profile for avatar
+  const { profile } = useProfile();
+
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Voice recording state
+  const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [isDraggingAudio, setIsDraggingAudio] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const dragCounterRef = useRef(0);
 
   // Edit modal state
   const [editingTask, setEditingTask] = useState<ProposedTask | null>(null);
@@ -423,15 +525,15 @@ export default function AIChatPage() {
       const desktop = window.innerWidth >= 1024; // lg breakpoint
       setIsDesktop(desktop);
     };
-    
+
     // Initial check
     checkScreenSize();
     // Set initial panel state based on screen size
     setIsRightPanelOpen(window.innerWidth >= 1024);
-    
+
     // Listen for resize
-    window.addEventListener('resize', checkScreenSize);
-    return () => window.removeEventListener('resize', checkScreenSize);
+    window.addEventListener("resize", checkScreenSize);
+    return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
 
   // Get all proposed tasks from all messages
@@ -533,7 +635,7 @@ export default function AIChatPage() {
 
   const handleNonStreamingResponse = async (
     content: string,
-    sessionHistory: Message[]
+    sessionHistory: Message[],
   ) => {
     try {
       const response = await sendChatMessage(projectId, {
@@ -542,7 +644,7 @@ export default function AIChatPage() {
       });
 
       const responseData = response.data.data;
-      
+
       // Convert backend tasks to ProposedTask format
       const proposedTasks = responseData.tasks?.map((task, idx) => ({
         id: `proposed-${Date.now()}-${idx}`,
@@ -561,7 +663,8 @@ export default function AIChatPage() {
         content: responseData.message,
         timestamp: new Date(),
         taskActions: responseData.task_actions,
-        proposedTasks: proposedTasks && proposedTasks.length > 0 ? proposedTasks : undefined,
+        proposedTasks:
+          proposedTasks && proposedTasks.length > 0 ? proposedTasks : undefined,
       };
 
       setMessages((prev) => [...prev, aiResponse]);
@@ -583,11 +686,194 @@ export default function AIChatPage() {
     }
   };
 
+  // Voice recording functions
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, {
+          type: "audio/webm",
+        });
+        await transcribeAudio(audioBlob);
+
+        // Stop all tracks
+        stream.getTracks().forEach((track) => track.stop());
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+      setError(null);
+    } catch (err) {
+      console.error("Error starting recording:", err);
+      setError("ไม่สามารถเข้าถึงไมโครโฟนได้ กรุณาอนุญาตการใช้งานไมโครโฟน");
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
+  const transcribeAudio = async (audioBlob: Blob) => {
+    setIsTranscribing(true);
+    try {
+      // Initialize Groq client
+      const groq = new Groq({
+        apiKey: process.env.NEXT_PUBLIC_GROQ_API_KEY,
+        dangerouslyAllowBrowser: true,
+      });
+
+      // Convert Blob to File
+      const audioFile = new File([audioBlob], "recording.webm", {
+        type: audioBlob.type,
+      });
+
+      const transcription = await groq.audio.transcriptions.create({
+        file: audioFile,
+        model: "whisper-large-v3",
+        temperature: 0,
+        response_format: "verbose_json",
+        language: "th", // ระบุภาษาไทย
+      });
+
+      if (transcription.text) {
+        setInput(transcription.text);
+        // Auto-focus textarea after transcription
+        textareaRef.current?.focus();
+      } else {
+        setError("ไม่สามารถแปลงเสียงเป็นข้อความได้");
+      }
+    } catch (err) {
+      console.error("Transcription error:", err);
+      setError("เกิดข้อผิดพลาดในการแปลงเสียง");
+    } finally {
+      setIsTranscribing(false);
+    }
+  };
+
+  const toggleRecording = () => {
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  };
+
+  // Drag and drop audio handlers
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current++;
+    if (e.dataTransfer.types.includes("Files")) {
+      setIsDraggingAudio(true);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current--;
+    if (dragCounterRef.current === 0) {
+      setIsDraggingAudio(false);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingAudio(false);
+    dragCounterRef.current = 0;
+
+    const files = Array.from(e.dataTransfer.files);
+    const audioFile = files.find((file) => file.type.startsWith("audio/"));
+
+    if (!audioFile) {
+      setError("กรุณาลากไฟล์เสียงเท่านั้น (เช่น .mp3, .wav, .m4a, .webm)");
+      return;
+    }
+
+    // Create object URL for audio playback
+    const audioUrl = URL.createObjectURL(audioFile);
+
+    // Add user message with audio player immediately
+    const userMessage: ChatMessage = {
+      id: Date.now().toString(),
+      role: "user",
+      content: "",
+      audioUrl,
+      timestamp: new Date(),
+    };
+    setMessages((prev) => [...prev, userMessage]);
+    setIsLoading(true);
+    setError(null);
+
+    // Transcribe audio via Groq
+    setIsTranscribing(true);
+    try {
+      const groq = new Groq({
+        apiKey: process.env.NEXT_PUBLIC_GROQ_API_KEY,
+        dangerouslyAllowBrowser: true,
+      });
+
+      const transcription = await groq.audio.transcriptions.create({
+        file: audioFile,
+        model: "whisper-large-v3",
+        temperature: 0,
+        response_format: "verbose_json",
+        language: "th",
+      });
+
+      if (!transcription.text) {
+        setError("ไม่สามารถแปลงเสียงเป็นข้อความได้");
+        setIsLoading(false);
+        setIsTranscribing(false);
+        return;
+      }
+
+      // Update the user message with the transcribed text
+      const transcribedText = transcription.text;
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === userMessage.id
+            ? { ...msg, content: transcribedText }
+            : msg,
+        ),
+      );
+      setIsTranscribing(false);
+
+      // Send transcribed text to chat API
+      const sessionHistory = getSessionHistory();
+      await handleNonStreamingResponse(transcribedText, sessionHistory);
+    } catch (err) {
+      console.error("Transcription error:", err);
+      setError("เกิดข้อผิดพลาดในการแปลงเสียง");
+      setIsLoading(false);
+      setIsTranscribing(false);
+    }
+  };
+
   // Update task action in message
   const updateTaskAction = (
     messageId: string,
     taskId: string,
-    action: "accepted" | "rejected"
+    action: "accepted" | "rejected",
   ) => {
     setMessages((prev) =>
       prev.map((msg) => {
@@ -595,24 +881,31 @@ export default function AIChatPage() {
           return {
             ...msg,
             proposedTasks: msg.proposedTasks.map((task) =>
-              task.id === taskId ? { ...task, userAction: action } : task
+              task.id === taskId ? { ...task, userAction: action } : task,
             ),
           };
         }
         return msg;
-      })
+      }),
     );
   };
 
   // Convert ProposedTask to CreateTaskRequest
-  const proposedTaskToRequest = (task: ProposedTask, location?: string, recurringDays?: number): CreateTaskRequest => ({
+  const proposedTaskToRequest = (
+    task: ProposedTask,
+    location?: string,
+    recurringDays?: number,
+    recurringUntil?: string,
+  ): CreateTaskRequest => ({
     name: task.name,
     description: task.description,
     priority: task.priority,
     start_datetime: task.start_datetime,
     end_datetime: task.end_datetime,
     ...(location && { location }),
-    ...(recurringDays && recurringDays > 0 && { recurring_days: recurringDays }),
+    ...(recurringDays &&
+      recurringDays > 0 && { recurring_days: recurringDays }),
+    ...(recurringUntil && { recurring_until: recurringUntil }),
   });
 
   // Handle accept task
@@ -640,16 +933,26 @@ export default function AIChatPage() {
   };
 
   // Handle save edited task - create task and mark as accepted
-  const handleSaveEditedTask = async (editedTask: ProposedTask, location?: string, recurringDays?: number) => {
+  const handleSaveEditedTask = async (
+    editedTask: ProposedTask,
+    location?: string,
+    recurringDays?: number,
+    recurringUntil?: string,
+  ) => {
     if (!editingMessageId) return;
-    
+
     try {
-      const payload = proposedTaskToRequest(editedTask, location, recurringDays);
+      const payload = proposedTaskToRequest(
+        editedTask,
+        location,
+        recurringDays,
+        recurringUntil,
+      );
       await createTask(projectId, payload);
-      
+
       // Mark as accepted
       updateTaskAction(editingMessageId, editedTask.id, "accepted");
-      
+
       // Close modal
       setIsEditModalOpen(false);
       setEditingTask(null);
@@ -664,23 +967,20 @@ export default function AIChatPage() {
     <div className="h-full bg-gray-50">
       <div className="flex h-full">
         {/* Main Chat Area */}
-        <main className={`flex-1 flex flex-col transition-all duration-300 ${isRightPanelOpen ? 'mr-0' : ''}`}>
+        <main
+          className={`flex-1 flex flex-col transition-all duration-300 ${isRightPanelOpen ? "mr-0" : ""}`}
+        >
           {/* Header */}
           <div className="p-6 bg-white border-b border-gray-200">
+            {/* Page Title */}
+            <h1 className="text-3xl font-semibold text-gray-900 mb-2 lg:hidden">
+              AI Task Assistant
+            </h1>
+
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-black flex items-center justify-center">
-                  <Bot className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900">
-                    AI Task Assistant
-                  </h2>
-                  <p className="text-sm text-gray-600">
-                    สร้างและจัดการ tasks ด้วย AI
-                  </p>
-                </div>
-              </div>
+              <p className="text-base text-gray-600">
+                สร้างและจัดการ tasks ด้วย AI
+              </p>
               <Button
                 variant="outline"
                 size="icon"
@@ -694,12 +994,12 @@ export default function AIChatPage() {
 
           {/* Error Banner */}
           {error && (
-            <div className="mx-6 mt-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
-              <AlertCircle className="w-5 h-5 text-red-500" />
-              <span className="text-red-700">{error}</span>
+            <div className="mx-6 mt-4 p-4 bg-rose-50 border border-rose-200 rounded-lg flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-rose-500" />
+              <span className="text-rose-700">{error}</span>
               <button
                 onClick={() => setError(null)}
-                className="ml-auto text-red-500 hover:text-red-700"
+                className="ml-auto text-rose-500 hover:text-rose-700"
               >
                 ✕
               </button>
@@ -722,9 +1022,21 @@ export default function AIChatPage() {
                     </div>
                   ) : (
                     <Avatar className="w-8 h-8">
-                      <AvatarImage src="https://api.dicebear.com/7.x/avataaars/svg?seed=user" />
-                      <AvatarFallback>
-                        <User className="w-4 h-4" />
+                      {profile?.avatarPath ? (
+                        <AvatarImage
+                          src={profile.avatarPath}
+                          alt={profile.firstName}
+                        />
+                      ) : null}
+                      <AvatarFallback className="bg-gray-200">
+                        {profile?.firstName && profile?.lastName ? (
+                          <span className="text-xs font-medium text-gray-700">
+                            {profile.firstName[0]}
+                            {profile.lastName[0]}
+                          </span>
+                        ) : (
+                          <User className="w-4 h-4 text-gray-600" />
+                        )}
                       </AvatarFallback>
                     </Avatar>
                   )}
@@ -742,13 +1054,32 @@ export default function AIChatPage() {
                         : "bg-white border border-gray-200 rounded-2xl rounded-tl-sm"
                     } p-4 shadow-sm`}
                   >
-                    <p
-                      className={`text-sm whitespace-pre-wrap ${
-                        message.role === "user" ? "text-white" : "text-gray-900"
-                      }`}
-                    >
-                      {message.content}
-                    </p>
+                    {message.audioUrl && (
+                      <div className="mb-2">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <Mic className="w-3.5 h-3.5 text-gray-300" />
+                          <span className="text-xs text-gray-300">
+                            ข้อความเสียง
+                          </span>
+                        </div>
+                        <audio
+                          controls
+                          src={message.audioUrl}
+                          className="w-full max-w-xs h-8 [&::-webkit-media-controls-panel]:bg-gray-800 [&::-webkit-media-controls-panel]:rounded-lg"
+                        />
+                      </div>
+                    )}
+                    {message.content && (
+                      <p
+                        className={`text-sm whitespace-pre-wrap ${
+                          message.role === "user"
+                            ? "text-white"
+                            : "text-gray-900"
+                        }`}
+                      >
+                        {message.content}
+                      </p>
+                    )}
                     <p
                       className={`text-xs mt-2 ${
                         message.role === "user"
@@ -771,7 +1102,9 @@ export default function AIChatPage() {
                             <div className="flex items-center gap-3">
                               <CheckCircle2 className="w-5 h-5 text-green-500" />
                               <div className="flex-1">
-                                <span className="font-medium">{action.name}</span>
+                                <span className="font-medium">
+                                  {action.name}
+                                </span>
                                 <span className="text-gray-500 text-sm ml-2">
                                   ({action.task_id})
                                 </span>
@@ -790,19 +1123,21 @@ export default function AIChatPage() {
                   )}
 
                   {/* Proposed Tasks notification - show only when panel is closed */}
-                  {!isRightPanelOpen && message.proposedTasks && message.proposedTasks.length > 0 && (
-                    <div className="mt-4">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setIsRightPanelOpen(true)}
-                        className="text-blue-600 border-blue-300 hover:bg-blue-50"
-                      >
-                        <Flag className="w-4 h-4 mr-2" />
-                        ดู {message.proposedTasks.length} Tasks ที่แนะนำ
-                      </Button>
-                    </div>
-                  )}
+                  {!isRightPanelOpen &&
+                    message.proposedTasks &&
+                    message.proposedTasks.length > 0 && (
+                      <div className="mt-4">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setIsRightPanelOpen(true)}
+                          className="text-blue-600 border-blue-300 hover:bg-blue-50"
+                        >
+                          <Flag className="w-4 h-4 mr-2" />
+                          ดู {message.proposedTasks.length} Tasks ที่แนะนำ
+                        </Button>
+                      </div>
+                    )}
                 </div>
               </div>
             ))}
@@ -824,7 +1159,27 @@ export default function AIChatPage() {
           </div>
 
           {/* Input Area */}
-          <div className="p-6 bg-white border-t border-gray-200">
+          <div
+            className="p-6 bg-white border-t border-gray-200 relative"
+            onDragEnter={handleDragEnter}
+            onDragLeave={handleDragLeave}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+          >
+            {/* Drop overlay */}
+            {isDraggingAudio && (
+              <div className="absolute inset-0 z-10 bg-blue-50/90 border-2 border-dashed border-blue-400 rounded-lg flex items-center justify-center pointer-events-none">
+                <div className="flex flex-col items-center gap-2 text-blue-600">
+                  <Upload className="w-8 h-8" />
+                  <p className="text-sm font-medium">
+                    วางไฟล์เสียงที่นี่เพื่อแปลงเป็นข้อความ
+                  </p>
+                  <p className="text-xs text-blue-400">
+                    .mp3, .wav, .m4a, .webm
+                  </p>
+                </div>
+              </div>
+            )}
             <div className="max-w-4xl mx-auto">
               <div className="flex gap-3 items-end">
                 <div className="flex-1 relative flex items-end">
@@ -833,8 +1188,9 @@ export default function AIChatPage() {
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder="พิมพ์ข้อความ"
-                    className="w-full resize-none rounded-xl border border-gray-300 px-4 py-3 pr-12 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent min-h-[52px] max-h-32"
+                    placeholder="พิมพ์ข้อความ หรือลากไฟล์เสียงมาวางที่นี่"
+                    disabled={isRecording || isTranscribing}
+                    className="w-full resize-none rounded-xl border border-gray-300 px-4 py-3 pr-12 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent min-h-[52px] max-h-32 disabled:opacity-50"
                     rows={1}
                     style={{ height: "auto" }}
                     onInput={(e) => {
@@ -845,10 +1201,32 @@ export default function AIChatPage() {
                   />
                 </div>
                 <Button
-                  onClick={handleSendMessage}
-                  disabled={!input.trim() || isLoading}
+                  onClick={toggleRecording}
+                  disabled={isLoading || isTranscribing}
                   size="lg"
-                  className="h-[52px] px-6 shrink-0 rounded-xl bg-gray-900 hover:bg-gray-800 text-white"
+                  variant={isRecording ? "destructive" : "outline"}
+                  className={`h-[52px] px-6 shrink-0 rounded-xl ${
+                    isRecording
+                      ? "bg-red-600 hover:bg-red-700 text-white animate-pulse"
+                      : "border-gray-300"
+                  }`}
+                  title={isRecording ? "หยุดบันทึกเสียง" : "บันทึกเสียง"}
+                >
+                  {isTranscribing ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : isRecording ? (
+                    <MicOff className="w-5 h-5" />
+                  ) : (
+                    <Mic className="w-5 h-5" />
+                  )}
+                </Button>
+                <Button
+                  onClick={handleSendMessage}
+                  disabled={
+                    !input.trim() || isLoading || isRecording || isTranscribing
+                  }
+                  size="lg"
+                  className="h-[52px] px-6 shrink-0 rounded-xl bg-gray-900 hover:bg-gray-800 text-white disabled:opacity-50"
                 >
                   {isLoading ? (
                     <Loader2 className="w-5 h-5 animate-spin text-white" />
@@ -859,15 +1237,25 @@ export default function AIChatPage() {
               </div>
               <p className="text-xs text-gray-500 mt-2 text-center">
                 กด Enter เพื่อส่งข้อความ, Shift + Enter เพื่อขึ้นบรรทัดใหม่
+                {isRecording && (
+                  <span className="text-red-600 font-medium ml-2">
+                    • กำลังบันทึกเสียง...
+                  </span>
+                )}
+                {isTranscribing && (
+                  <span className="text-blue-600 font-medium ml-2">
+                    • กำลังแปลงเสียงเป็นข้อความ...
+                  </span>
+                )}
               </p>
             </div>
           </div>
         </main>
 
         {/* Right Panel - Proposed Tasks */}
-        <aside 
+        <aside
           className={`
-            ${isRightPanelOpen ? 'w-80 lg:w-96 opacity-100' : 'w-0 opacity-0'} 
+            ${isRightPanelOpen ? "w-80 lg:w-96 opacity-100" : "w-0 opacity-0"} 
             bg-white border-l border-gray-200 flex flex-col h-full
             transition-all duration-300 ease-in-out overflow-hidden
             fixed right-0 top-0 lg:relative z-40
@@ -888,7 +1276,7 @@ export default function AIChatPage() {
               <X className="w-4 h-4" />
             </Button>
           </div>
-          
+
           <div className="flex-1 overflow-y-auto p-4 space-y-3 min-w-[320px] lg:min-w-[384px]">
             {getAllProposedTasks().length === 0 ? (
               <div className="text-center py-8 text-gray-500">
@@ -912,7 +1300,7 @@ export default function AIChatPage() {
 
         {/* Overlay for mobile when panel is open */}
         {isRightPanelOpen && !isDesktop && (
-          <div 
+          <div
             className="fixed inset-0 bg-black/30 z-30 lg:hidden transition-opacity duration-300"
             onClick={() => setIsRightPanelOpen(false)}
           />

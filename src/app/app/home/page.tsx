@@ -7,431 +7,406 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Progress } from "@/components/ui/progress";
 import {
   CheckCircle2,
   Clock,
+  CircleMinus,
+  BookCheck,
+  RefreshCw,
   AlertCircle,
-  TrendingUp,
-  Plus,
-  Calendar,
-  BarChart3,
-  FolderOpen,
-  MoreHorizontal,
-  Edit3,
-  Trash2,
 } from "lucide-react";
-import { listProjects, Project } from "@/services/api";
-import CreateProjectModal from "@/components/CreateProjectModal";
+import {
+  listProjects,
+  Project,
+  deleteTask,
+  TaskStatistics,
+  TaskWithProject,
+  getTaskStatistics,
+  getUnscheduledTasks,
+  getTodayTasks,
+} from "@/services/api";
 import CreateTaskModal from "@/components/CreateTaskModal";
-import EditWorkspaceModal from "@/components/EditWorkspaceModal";
-import DeleteWorkspaceModal from "@/components/DeleteWorkspaceModal";
-import { getPriorityColor, getStatusColor, WORKSPACE_COLORS } from "@/constants";
+import { TaskStatusChart } from "@/components/TaskStatusChart";
+import UnscheduledTasksSection from "@/components/UnscheduledTasksSection";
+import TodayTasksSection from "@/components/TodayTasksSection";
+import TaskDetailModal from "@/components/TaskDetailModal";
+import { toast } from "@/lib/enhanced-toast";
 
 export default function HomePage() {
-  const [tasks] = useState([
-    {
-      id: 1,
-      title: "Complete project setup",
-      status: "completed",
-      priority: "high",
-      assignee: "John D",
-      progress: 100,
-      dueDate: "2024-12-10",
-    },
-    {
-      id: 2,
-      title: "Design review meeting",
-      status: "completed",
-      priority: "urgent",
-      assignee: "Mike T",
-      progress: 100,
-      dueDate: "2024-12-15",
-    },
-    {
-      id: 3,
-      title: "Update API documentation",
-      status: "todo",
-      priority: "medium",
-      assignee: "Alex K",
-      progress: 0,
-      dueDate: "2024-12-20",
-    },
-    {
-      id: 4,
-      title: "Database optimization",
-      status: "in-progress",
-      priority: "high",
-      assignee: "John D",
-      progress: 40,
-      dueDate: "2024-12-17",
-    },
-    {
-      id: 5,
-      title: "User testing session",
-      status: "todo",
-      priority: "low",
-      assignee: "Emma W",
-      progress: 0,
-      dueDate: "2024-12-22",
-    },
-  ]);
+  // New state for dashboard data
+  const [statistics, setStatistics] = useState<TaskStatistics | null>(null);
+  const [unscheduledTasks, setUnscheduledTasks] = useState<TaskWithProject[]>([]);
+  const [todayTasks, setTodayTasks] = useState<TaskWithProject[]>([]);
 
+  // Loading states
+  const [statisticsLoading, setStatisticsLoading] = useState(true);
+  const [unscheduledLoading, setUnscheduledLoading] = useState(true);
+  const [todayLoading, setTodayLoading] = useState(true);
+
+  // Error states
+  const [statisticsError, setStatisticsError] = useState<string | null>(null);
+  const [unscheduledError, setUnscheduledError] = useState<string | null>(null);
+  const [todayError, setTodayError] = useState<string | null>(null);
+
+  // Keep projects state for CreateTaskModal
   const [projects, setProjects] = useState<Project[]>([]);
-  const [projectsLoading, setProjectsLoading] = useState(true);
-  const [projectsError, setProjectsError] = useState<string | null>(null);
-  const [showCreateProjectModal, setShowCreateProjectModal] = useState(false);
   const [showCreateTaskModal, setShowCreateTaskModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [editingProject, setEditingProject] = useState<Project | null>(null);
-  const [deletingProject, setDeletingProject] = useState<Project | null>(null);
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+
+  // Task detail modal state
+  const [showTaskDetailModal, setShowTaskDetailModal] = useState(false);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
   const fetchProjects = async () => {
     try {
-      setProjectsLoading(true);
-      setProjectsError(null);
       const response = await listProjects();
-      // API returns { success, message, data: { items, pagination }, error }
       const items = response.data?.data?.items ?? [];
       setProjects(Array.isArray(items) ? items : []);
     } catch (err) {
-      setProjectsError("Failed to load projects");
+      console.error("Failed to load projects:", err);
+      toast.error("ไม่สามารถโหลดข้อมูลโปรเจกต์ได้");
+    }
+  };
+
+  const fetchTaskStatistics = async () => {
+    try {
+      setStatisticsLoading(true);
+      setStatisticsError(null);
+      const response = await getTaskStatistics();
+      setStatistics(response.data?.data ?? null);
+    } catch (err) {
+      console.error("Failed to load task statistics:", err);
+      const errorMessage = "ไม่สามารถโหลดข้อมูลสถิติได้";
+      setStatisticsError(errorMessage);
+      toast.error(errorMessage);
     } finally {
-      setProjectsLoading(false);
+      setStatisticsLoading(false);
+    }
+  };
+
+  const fetchUnscheduledTasks = async () => {
+    try {
+      setUnscheduledLoading(true);
+      setUnscheduledError(null);
+      const response = await getUnscheduledTasks();
+      const items = response.data?.data?.items ?? [];
+      setUnscheduledTasks(Array.isArray(items) ? items : []);
+    } catch (err) {
+      console.error("Failed to load unscheduled tasks:", err);
+      const errorMessage = "ไม่สามารถโหลดงานที่ยังไม่ได้กำหนดวันที่ได้";
+      setUnscheduledError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setUnscheduledLoading(false);
+    }
+  };
+
+  const fetchTodayTasks = async () => {
+    try {
+      setTodayLoading(true);
+      setTodayError(null);
+      const response = await getTodayTasks();
+      const items = response.data?.data?.items ?? [];
+      setTodayTasks(Array.isArray(items) ? items : []);
+    } catch (err) {
+      console.error("Failed to load today's tasks:", err);
+      const errorMessage = "ไม่สามารถโหลดงานวันนี้ได้";
+      setTodayError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setTodayLoading(false);
     }
   };
 
   useEffect(() => {
     fetchProjects();
+    fetchTaskStatistics();
+    fetchUnscheduledTasks();
+    fetchTodayTasks();
   }, []);
 
-  // Listen for project updates from other components
-  useEffect(() => {
-    const handleProjectsUpdated = () => {
-      fetchProjects();
-    };
+  const handleDeleteTask = async (taskId: string) => {
+    try {
+      await deleteTask(taskId);
+      toast.success("ลบงานสำเร็จ");
 
-    window.addEventListener('projectsUpdated', handleProjectsUpdated);
-    return () => {
-      window.removeEventListener('projectsUpdated', handleProjectsUpdated);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const handleProjectCreated = () => {
-    fetchProjects();
-    // Dispatch event to notify other components
-    window.dispatchEvent(new CustomEvent('projectsUpdated'));
+      // Refresh all data after successful deletion
+      fetchTaskStatistics();
+      fetchUnscheduledTasks();
+      fetchTodayTasks();
+    } catch (err) {
+      console.error("Failed to delete task:", err);
+      toast.error("ไม่สามารถลบงานได้");
+      throw err; // Re-throw to let the component handle it
+    }
   };
 
-  const handleProjectUpdated = () => {
-    fetchProjects();
-    // Dispatch event to notify other components
-    window.dispatchEvent(new CustomEvent('projectsUpdated'));
+  const handleTaskClick = (taskId: string) => {
+    setSelectedTaskId(taskId);
+    setShowTaskDetailModal(true);
   };
 
-  const handleEditProject = (project: Project) => {
-    setEditingProject(project);
-    setShowEditModal(true);
-    setOpenDropdown(null);
+  const handleStatusChange = () => {
+    // Refresh all data after status change
+    fetchTaskStatistics();
+    fetchUnscheduledTasks();
+    fetchTodayTasks();
   };
 
-  const handleDeleteProject = (project: Project) => {
-    setDeletingProject(project);
-    setShowDeleteModal(true);
-    setOpenDropdown(null);
+  const handleTaskDetailSuccess = () => {
+    // Refresh all data after task update
+    fetchTaskStatistics();
+    fetchUnscheduledTasks();
+    fetchTodayTasks();
   };
 
-  const stats = {
-    total: tasks.length,
-    completed: tasks.filter((t) => t.status === "completed").length,
-    inProgress: tasks.filter((t) => t.status === "in-progress").length,
-    todo: tasks.filter((t) => t.status === "todo").length,
+  // Calculate stats from statistics data
+  const stats = statistics ? {
+    total: statistics.todo + statistics.in_progress + statistics.in_review + statistics.done,
+    completed: statistics.done,
+    inProgress: statistics.in_progress,
+    inReview: statistics.in_review,
+    todo: statistics.todo,
+  } : {
+    total: 0,
+    completed: 0,
+    inProgress: 0,
+    inReview: 0,
+    todo: 0,
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 text-base">
       {/* Main Content */}
-      <main className="p-6 max-w-7xl mx-auto">
-        {/* Page Header */}
+      <main className="p-6 max-w-[1600px] mx-auto">
+        {/* Page Title */}
+        <h1 className="text-3xl font-semibold text-gray-900 mb-2 lg:hidden">
+          แดชบอร์ด
+        </h1>
+        
+        {/* Page Subtitle */}
         <div className="mb-6">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h2>
-          <p className="text-gray-600">
-            Welcome back! Here&apos;s what&apos;s happening with your projects today.
+          <p className="text-lg text-gray-600">
+            ยินดีต้อนรับกลับมา! นี่คือสิ่งที่เกิดขึ้นกับโปรเจกต์ของคุณวันนี้
           </p>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
-                Total Tasks
+              <CardTitle className="text-base font-medium text-gray-600">
+                งานทั้งหมด
               </CardTitle>
-              <BarChart3 className="w-4 h-4 text-gray-400" />
+              <BookCheck className="w-5 h-5" style={{ color: 'zinc-800' }} />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-gray-900">
+              <div className="text-3xl font-bold text-gray-900">
                 {stats.total}
               </div>
-              <p className="text-xs text-green-600 flex items-center mt-1">
-                <TrendingUp className="w-3 h-3 mr-1" />
-                +12% from last week
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
-                Completed
-              </CardTitle>
-              <CheckCircle2 className="w-4 h-4 text-green-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-gray-900">
-                {stats.completed}
-              </div>
-              <p className="text-xs text-gray-600 mt-1">
-                {Math.round((stats.completed / stats.total) * 100)}% completion
-                rate
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
-                In Progress
-              </CardTitle>
-              <Clock className="w-4 h-4 text-blue-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-gray-900">
-                {stats.inProgress}
-              </div>
-              <p className="text-xs text-gray-600 mt-1">Active work items</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
-                To Do
-              </CardTitle>
-              <AlertCircle className="w-4 h-4 text-orange-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-gray-900">
-                {stats.todo}
-              </div>
-              <p className="text-xs text-gray-600 mt-1">Pending tasks</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Workspaces (Projects) */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Workspaces</CardTitle>
-                  <CardDescription>Your active projects</CardDescription>
-                </div>
-                <Button size="sm" variant="outline" onClick={() => setShowCreateProjectModal(true)} className="flex items-center justify-center gap-2">
-                  <Plus className="w-4 h-4" />
-                  New
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {projectsLoading ? (
-                <div className="space-y-3">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="border border-gray-200 rounded-lg p-3">
-                      <div className="flex items-center gap-3">
-                        <Skeleton className="w-2 h-2 rounded-full" />
-                        <div className="flex-1 space-y-2">
-                          <Skeleton className="h-4 w-3/4" />
-                          <Skeleton className="h-3 w-1/2" />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : projectsError ? (
-                <div className="text-center py-8 text-red-500">
-                  <AlertCircle className="w-8 h-8 mx-auto mb-2" />
-                  <p className="text-sm">{projectsError}</p>
-                </div>
-              ) : projects.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <FolderOpen className="w-8 h-8 mx-auto mb-2" />
-                  <p className="text-sm">No projects yet</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {projects.map((project, index) => (
-                    <div
-                      key={project.id}
-                      className="border border-gray-200 rounded-lg p-3 hover:border-gray-300 transition-colors group"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={`w-2 h-2 rounded-full ${WORKSPACE_COLORS[index % WORKSPACE_COLORS.length]}`} />
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-medium text-gray-900 truncate">
-                            {project.name}
-                          </h4>
-                          {project.config?.nickname && (
-                            <p className="text-xs text-gray-500 truncate">
-                              {project.config.nickname}
-                            </p>
-                          )}
-                        </div>
-                        <div className="relative">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setOpenDropdown(openDropdown === project.id ? null : project.id);
-                            }}
-                          >
-                            <MoreHorizontal className="w-4 h-4 text-gray-500" />
-                          </Button>
-
-                          {/* Dropdown Content */}
-                          {openDropdown === project.id && (
-                            <>
-                              {/* Backdrop */}
-                              <div
-                                className="fixed inset-0 z-10"
-                                onClick={() => setOpenDropdown(null)}
-                              />
-
-                              {/* Menu */}
-                              <div className="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 animate-in fade-in-0 slide-in-from-top-2 duration-200">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleEditProject(project);
-                                  }}
-                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                                >
-                                  <Edit3 className="w-4 h-4" />
-                                  แก้ไข
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDeleteProject(project);
-                                  }}
-                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                  ลบ
-                                </button>
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+              {stats.total > 0 && (
+                <p className="text-sm text-gray-500 mt-1">
+                  งานทั้งหมดในระบบ
+                </p>
               )}
             </CardContent>
           </Card>
 
-          {/* Recent Tasks */}
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Recent Tasks</CardTitle>
-                  <CardDescription>
-                    Your latest work items and their progress
-                  </CardDescription>
-                </div>
-                <Button size="sm" onClick={() => setShowCreateTaskModal(true)} className="flex items-center justify-center gap-2">
-                  <Plus className="w-4 h-4" />
-                  New Task
-                </Button>
-              </div>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-base font-medium text-gray-600">
+                รอดำเนินการ
+              </CardTitle>
+              <CircleMinus className="w-5 h-5" style={{ color: 'zinc-500' }} />
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {tasks.map((task) => (
-                  <div
-                    key={task.id}
-                    className="border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors"
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <h4 className="font-medium text-gray-900 mb-2">
-                          {task.title}
-                        </h4>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <Badge
-                            variant="outline"
-                            className={getStatusColor(task.status)}
-                          >
-                            {task.status.replace("-", " ")}
-                          </Badge>
-                          <Badge
-                            variant="outline"
-                            className={getPriorityColor(task.priority)}
-                          >
-                            {task.priority}
-                          </Badge>
-                          <span className="text-xs text-gray-500 flex items-center">
-                            <Calendar className="w-3 h-3 mr-1" />
-                            {task.dueDate}
-                          </span>
-                        </div>
-                      </div>
-                      <Avatar className="w-8 h-8">
-                        <AvatarImage
-                          src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${task.assignee}`}
-                        />
-                        <AvatarFallback>
-                          {task.assignee
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")}
-                        </AvatarFallback>
-                      </Avatar>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-xs text-gray-600">
-                        <span>Progress</span>
-                        <span className="font-medium">{task.progress}%</span>
-                      </div>
-                      <Progress value={task.progress} className="h-2" />
-                    </div>
-                  </div>
-                ))}
+              <div className="text-3xl font-bold text-gray-900">
+                {stats.todo}
               </div>
+              <p className="text-sm text-gray-600 mt-1">งานที่รอดำเนินการ</p>
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-base font-medium text-gray-600">
+                กำลังดำเนินการ
+              </CardTitle>
+              <Clock className="w-5 h-5" style={{ color: '#00a6f4' }} />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-gray-900">
+                {stats.inProgress}
+              </div>
+              <p className="text-sm text-gray-600 mt-1">งานที่กำลังทำอยู่</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-base font-medium text-gray-600">
+                รอตรวจสอบ
+              </CardTitle>
+              <AlertCircle className="w-5 h-5" style={{ color: '#f0b100' }} />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-gray-900">
+                {stats.inReview}
+              </div>
+              <p className="text-sm text-gray-600 mt-1">งานที่รอตรวจสอบ</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-base font-medium text-gray-600">
+                เสร็จสิ้น
+              </CardTitle>
+              <CheckCircle2 className="w-5 h-5" style={{ color: '#7ccf00' }} />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-gray-900">
+                {stats.completed}
+              </div>
+              {stats.total > 0 && (
+                <p className="text-sm text-gray-600 mt-1">งานที่ดำเนินการเสร็จสิ้น</p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* Today's Tasks Section */}
+          {todayLoading ? (
+            <Card>
+              <CardHeader>
+                <Skeleton className="h-6 w-48" />
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <Skeleton key={i} className="h-20 w-full" />
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ) : todayError ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>งานที่ต้องทำในวันนี้</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="py-8 flex flex-col items-center justify-center text-center">
+                  <AlertCircle className="w-12 h-12 text-rose-500 mb-3" />
+                  <p className="text-sm text-gray-600 mb-3">{todayError}</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={fetchTodayTasks}
+                    className="gap-2"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                    ลองอีกครั้ง
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <TodayTasksSection
+              tasks={todayTasks}
+              onDelete={handleDeleteTask}
+              onTaskClick={handleTaskClick}
+              onStatusChange={handleStatusChange}
+            />
+          )}
+
+          {/* Task Status Chart */}
+          {statisticsLoading ? (
+            <Card>
+              <CardHeader>
+                <Skeleton className="h-6 w-48" />
+                <Skeleton className="h-4 w-64 mt-2" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-[200px] w-full" />
+              </CardContent>
+            </Card>
+          ) : statisticsError ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>สถิติงานตาม Status</CardTitle>
+                <CardDescription>แสดงจำนวนงานทั้งหมดแยกตามสถานะ</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[200px] flex flex-col items-center justify-center text-center">
+                  <AlertCircle className="w-12 h-12 text-rose-500 mb-3" />
+                  <p className="text-sm text-gray-600 mb-3">{statisticsError}</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={fetchTaskStatistics}
+                    className="gap-2"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                    ลองอีกครั้ง
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ) : statistics ? (
+            <TaskStatusChart statistics={statistics} />
+          ) : null}
+        </div>
+
+        {/* Unscheduled Tasks Section */}
+        <div className="mb-6">
+          {unscheduledLoading ? (
+            <Card>
+              <CardHeader>
+                <Skeleton className="h-6 w-48" />
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <Skeleton key={i} className="h-20 w-full" />
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ) : unscheduledError ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>งานที่ยังไม่ได้กำหนดวันที่</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="py-8 flex flex-col items-center justify-center text-center">
+                  <AlertCircle className="w-12 h-12 text-rose-500 mb-3" />
+                  <p className="text-sm text-gray-600 mb-3">{unscheduledError}</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={fetchUnscheduledTasks}
+                    className="gap-2"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                    ลองอีกครั้ง
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <UnscheduledTasksSection
+              tasks={unscheduledTasks}
+              onDelete={handleDeleteTask}
+              onTaskClick={handleTaskClick}
+              onStatusChange={handleStatusChange}
+            />
+          )}
         </div>
       </main>
 
       {/* Modals */}
-      <CreateProjectModal
-        open={showCreateProjectModal}
-        onOpenChange={setShowCreateProjectModal}
-        onSuccess={handleProjectCreated}
-      />
-
       <CreateTaskModal
         open={showCreateTaskModal}
         onOpenChange={setShowCreateTaskModal}
@@ -441,18 +416,11 @@ export default function HomePage() {
         }}
       />
 
-      <EditWorkspaceModal
-        open={showEditModal}
-        onOpenChange={setShowEditModal}
-        onSuccess={handleProjectUpdated}
-        project={editingProject}
-      />
-
-      <DeleteWorkspaceModal
-        open={showDeleteModal}
-        onOpenChange={setShowDeleteModal}
-        onSuccess={handleProjectUpdated}
-        project={deletingProject}
+      <TaskDetailModal
+        open={showTaskDetailModal}
+        onOpenChange={setShowTaskDetailModal}
+        onSuccess={handleTaskDetailSuccess}
+        taskId={selectedTaskId}
       />
     </div>
   );

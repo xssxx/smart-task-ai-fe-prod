@@ -1,10 +1,13 @@
 "use client";
 import { useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { signup } from "../../../services/api";
+import { ROUTES } from "@/constants";
 import axios from "axios";
 
 export default function SignUpPage() {
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -63,9 +66,10 @@ export default function SignUpPage() {
       };
 
       await signup(payload);
-
-      // Success - redirect or show success message
+      
+      // Redirect to login page after successful signup
       alert("สมัครสมาชิกสำเร็จ!");
+      router.push(ROUTES.LOGIN);
     } catch (err) {
       if (axios.isAxiosError(err)) {
         setError(
@@ -98,18 +102,18 @@ export default function SignUpPage() {
               className="w-full h-full object-contain"
             />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            SMART TASK AI
+          <h1 className="text-3xl font-momo text-gray-900 mb-2">
+            Smart Task
           </h1>
           <p className="text-gray-600 text-lg">สร้างบัญชีใหม่</p>
         </div>
 
         {/* Error Message */}
         {error && (
-          <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 mb-4">
+          <div className="bg-rose-50 border-2 border-rose-200 rounded-xl p-4 mb-4">
             <div className="flex items-center space-x-2">
               <svg
-                className="w-5 h-5 text-red-600"
+                className="w-5 h-5 text-rose-600"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -121,7 +125,7 @@ export default function SignUpPage() {
                   d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
-              <p className="text-red-700 text-sm font-medium">{error}</p>
+              <p className="text-rose-700 text-sm font-medium">{error}</p>
             </div>
           </div>
         )}
@@ -151,7 +155,7 @@ export default function SignUpPage() {
                 type="text"
                 value={formData.username}
                 onChange={(e) => handleInputChange("username", e.target.value)}
-                placeholder="username"
+                placeholder="ชื่อผู้ใช้"
                 className="w-full h-12 pl-11 pr-4 rounded-xl bg-gray-50 border-2 border-gray-100 outline-none focus:border-gray-900 focus:bg-white transition-all duration-200 text-gray-700 placeholder:text-gray-400 text-sm"
               />
             </div>
@@ -180,7 +184,7 @@ export default function SignUpPage() {
                 type="email"
                 value={formData.email}
                 onChange={(e) => handleInputChange("email", e.target.value)}
-                placeholder="your@email.com"
+                placeholder="อีเมลของคุณ"
                 className="w-full h-12 pl-11 pr-4 rounded-xl bg-gray-50 border-2 border-gray-100 outline-none focus:border-gray-900 focus:bg-white transition-all duration-200 text-gray-700 placeholder:text-gray-400 text-sm"
               />
             </div>

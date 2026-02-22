@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Loader2, Trash2 } from "lucide-react";
 import { deleteProject, Project } from "@/services/api";
+import { toast } from "@/lib/enhanced-toast";
 
 interface DeleteWorkspaceModalProps {
   open: boolean;
@@ -36,11 +37,24 @@ export default function DeleteWorkspaceModal({
     setError(null);
 
     try {
+      const projectName = project.name;
       await deleteProject(project.id);
+      
+      toast.success("ลบ Workspace สำเร็จ", {
+        description: (
+          <>
+            Workspace <strong>{projectName}</strong> ถูกลบเรียบร้อยแล้ว
+          </>
+        ),
+      });
+
       onOpenChange(false);
       onSuccess?.();
     } catch (err) {
       setError("ไม่สามารถลบ Workspace ได้ กรุณาลองใหม่อีกครั้ง");
+      toast.error("เกิดข้อผิดพลาด", {
+        description: "ไม่สามารถลบ Workspace ได้ กรุณาลองใหม่อีกครั้ง",
+      });
     } finally {
       setIsDeleting(false);
     }
@@ -59,7 +73,7 @@ export default function DeleteWorkspaceModal({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[500px] max-w-[95vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-red-600">
+          <DialogTitle className="flex items-center gap-2 text-rose-600">
             <Trash2 className="w-5 h-5" />
             ลบ Workspace
           </DialogTitle>
@@ -69,18 +83,17 @@ export default function DeleteWorkspaceModal({
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Error Message */}
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
+            <div className="bg-rose-50 border border-rose-200 rounded-lg p-3 text-sm text-rose-700">
               {error}
             </div>
           )}
 
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-sm text-red-700">
+          <div className="bg-rose-50 border border-rose-200 rounded-lg p-4">
+            <p className="text-sm text-rose-700">
               คุณแน่ใจหรือไม่ที่จะลบ workspace <strong>&quot;{project.name}&quot;</strong>?
             </p>
-            <p className="text-xs text-red-600 mt-2">
+            <p className="text-xs text-rose-600 mt-2">
               ข้อมูลทั้งหมดใน workspace นี้จะถูกลบอย่างถาวร รวมถึง tasks และ chat history
             </p>
           </div>

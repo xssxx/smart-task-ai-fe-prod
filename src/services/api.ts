@@ -2,10 +2,66 @@ import apiClient, { clearAuthCookie } from ".";
 import { SigninRequest } from "@/types/auth/signin";
 import { SignupRequest } from "@/types/auth/signup";
 import { SendMessageRequest, SendMessageResponse, ApiResponse } from "@/types/chat";
+import { CreateProfileRequest, CreateProfileResponse } from "@/types/profile";
 import { ROUTES } from "@/constants";
 
 export const signup = (payload: SignupRequest) => {
   return apiClient.post("/api/signup", payload);
+};
+
+export const createProfile = (payload: CreateProfileRequest) => {
+  return apiClient.post<{ success: boolean; message: string; data: CreateProfileResponse; error: unknown }>("/api/profiles", payload);
+};
+
+export const getProfile = () => {
+  return apiClient.get<{ success: boolean; message: string; data: { account_id: string; first_name: string; last_name: string; nickname?: string; avatar_path?: string; state: string; created_at: string; updated_at: string }; error: unknown }>("/api/profiles");
+};
+
+export const updateProfile = (payload: { first_name: string; last_name: string; nickname?: string; avatar_path?: string }) => {
+  return apiClient.patch<{ success: boolean; message: string; data: { account_id: string; first_name: string; last_name: string; nickname?: string; avatar_path?: string; state: string; created_at: string; updated_at: string }; error: unknown }>("/api/profiles", payload);
+};
+
+export interface TaskStatistics {
+  todo: number;
+  in_progress: number;
+  in_review: number;
+  done: number;
+}
+
+export interface TaskWithProject {
+  id: string;
+  name: string;
+  description?: string;
+  priority: string;
+  status: string;
+  start_datetime?: string;
+  end_datetime?: string;
+  project: {
+    id: string;
+    name: string;
+  };
+}
+
+export interface UnscheduledTasksResponse {
+  items: TaskWithProject[];
+  total: number;
+}
+
+export interface TodayTasksResponse {
+  items: TaskWithProject[];
+  total: number;
+}
+
+export const getTaskStatistics = () => {
+  return apiClient.get<{ success: boolean; message: string; data: TaskStatistics; error: unknown }>("/api/dashboard/statistics");
+};
+
+export const getUnscheduledTasks = () => {
+  return apiClient.get<{ success: boolean; message: string; data: UnscheduledTasksResponse; error: unknown }>("/api/dashboard/unscheduled-tasks");
+};
+
+export const getTodayTasks = () => {
+  return apiClient.get<{ success: boolean; message: string; data: TodayTasksResponse; error: unknown }>("/api/dashboard/today-tasks");
 };
 
 export const signin = (payload: SigninRequest) => {
@@ -17,7 +73,6 @@ export const logout = () => {
   window.location.href = ROUTES.LOGIN;
 };
 
-// Project types
 export interface ProjectConfig {
   nickname?: string;
   context?: string;
@@ -44,7 +99,6 @@ export interface ListProjectsResponse {
   pagination: Pagination;
 }
 
-// Project API
 export const listProjects = (limit = 10, offset = 0) => {
   return apiClient.get<{ success: boolean; message: string; data: ListProjectsResponse; error: unknown }>(`/api/projects?limit=${limit}&offset=${offset}`);
 };
@@ -83,27 +137,19 @@ export const deleteProject = (projectId: string) => {
   return apiClient.delete<{ success: boolean; message: string; error: unknown }>(`/api/projects/${projectId}`);
 };
 
-// Task types
 export interface Task {
   id: string;
-  nodeId: string;
-  projectId: string;
   name: string;
-  description: string;
+  description?: string;
   priority: string;
-  startDateTime: string;
-  endDateTime: string;
-  location: string;
-  recurringDays: number;
-  recurringUntil: string;
-  status: {
-    Todo: string;
-    InProgess: string;
-    Review: string;
-    Done: string;
-  };
-  createdAt: string;
-  updatedAt: string;
+  status: string;
+  start_datetime?: string;
+  end_datetime?: string;
+  location?: string;
+  recurring_days?: number;
+  recurring_until?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface ListTasksResponse {
@@ -111,7 +157,6 @@ export interface ListTasksResponse {
   pagination: Pagination;
 }
 
-// Task API
 export const listTasksByProject = (projectId: string, limit = 10, offset = 0) => {
   return apiClient.get<{ success: boolean; message: string; data: ListTasksResponse; error: unknown }>(
     `/api/${projectId}/tasks?limit=${limit}&offset=${offset}`
@@ -130,6 +175,7 @@ export interface CreateTaskRequest {
   end_datetime?: string;
   location?: string;
   recurring_days?: number;
+  recurring_until?: string;
 }
 
 export const createTask = (projectId: string, payload: CreateTaskRequest) => {
@@ -141,13 +187,14 @@ export const createTask = (projectId: string, payload: CreateTaskRequest) => {
 
 export interface UpdateTaskRequest {
   name?: string;
-  description?: string;
+  description?: string | null;
   priority?: string;
-  start_datetime?: string;
-  end_datetime?: string;
-  location?: string;
+  start_datetime?: string | null;
+  end_datetime?: string | null;
+  location?: string | null;
   status?: string;
-  recurring_days?: number;
+  recurring_days?: number | null;
+  recurring_until?: string | null;
 }
 
 export const updateTask = (taskId: string, payload: UpdateTaskRequest) => {
@@ -163,13 +210,47 @@ export const deleteTask = (taskId: string) => {
   );
 };
 
-// Chat API
 export const sendChatMessage = (
   projectId: string,
   payload: SendMessageRequest
 ) => {
   return apiClient.post<ApiResponse<SendMessageResponse>>(
     `/api/${projectId}/chat`,
+    payload
+  );
+};
+
+export interface PresignRequest {
+  file_name: string;
+  file_size: number;
+  content_type: string;
+}
+
+export interface PresignResponse {
+  presigned_url: string;
+  key: string;
+  expires_datetime: string;
+}
+
+export interface UploadFileS3Request {
+  key: string;
+}
+
+export interface UploadFileS3Response {
+  url: string;
+  updated_at: string;
+}
+
+export const requestPresignedURL = (payload: PresignRequest) => {
+  return apiClient.post<{ success: boolean; message: string; data: PresignResponse; error: unknown }>(
+    "/api/files/avatar/presign",
+    payload
+  );
+};
+
+export const UploadFileS3 = (payload: UploadFileS3Request) => {
+  return apiClient.post<{ success: boolean; message: string; data: UploadFileS3Response; error: unknown }>(
+    "/api/files/avatar/upload",
     payload
   );
 };
