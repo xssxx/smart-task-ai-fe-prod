@@ -25,11 +25,13 @@ import {
   MoreHorizontal,
   Edit3,
   Trash2,
+  Users,
 } from "lucide-react";
 import { LinkWithLoading } from "@/components/LinkWithLoading";
 import CreateProjectModal from "@/components/CreateProjectModal";
 import EditWorkspaceModal from "@/components/EditWorkspaceModal";
 import DeleteWorkspaceModal from "@/components/DeleteWorkspaceModal";
+import ManageMembersModal from "@/components/ManageMembersModal";
 import { WORKSPACE_COLORS } from "@/constants";
 
 interface WorkspaceItem {
@@ -54,17 +56,25 @@ interface SidebarProps {
 const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
   const pathname = usePathname();
   const [activeItem, setActiveItem] = useState("");
-  const [expandedWorkspaces, setExpandedWorkspaces] = useState<Set<string>>(new Set());
+  const [expandedWorkspaces, setExpandedWorkspaces] = useState<Set<string>>(
+    new Set(),
+  );
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showMembersModal, setShowMembersModal] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [deletingProject, setDeletingProject] = useState<Project | null>(null);
+  const [managingMembersProject, setManagingMembersProject] =
+    useState<Project | null>(null);
 
   const { projects, loading, refetch } = useProjects();
 
-  const updateActiveStateFromPath = (path: string, workspaceList: Workspace[]) => {
+  const updateActiveStateFromPath = (
+    path: string,
+    workspaceList: Workspace[],
+  ) => {
     let newActiveItem = "";
     let workspaceToExpand: string | null = null;
 
@@ -77,7 +87,7 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
       if (projectMatch) {
         const projectId = projectMatch[1];
         const section = projectMatch[2];
-        const workspace = workspaceList.find(w => w.id === projectId);
+        const workspace = workspaceList.find((w) => w.id === projectId);
         if (workspace) {
           newActiveItem = `${section}-${projectId}`;
           workspaceToExpand = projectId;
@@ -87,7 +97,7 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
 
     setActiveItem(newActiveItem);
     if (workspaceToExpand) {
-      setExpandedWorkspaces(prev => new Set([...prev, workspaceToExpand]));
+      setExpandedWorkspaces((prev) => new Set([...prev, workspaceToExpand]));
     }
   };
 
@@ -134,8 +144,13 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
     setShowDeleteModal(true);
   };
 
+  const handleManageMembers = (project: Project) => {
+    setManagingMembersProject(project as Project);
+    setShowMembersModal(true);
+  };
+
   const toggleWorkspace = (workspaceId: string) => {
-    setExpandedWorkspaces(prev => {
+    setExpandedWorkspaces((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(workspaceId)) {
         newSet.delete(workspaceId);
@@ -148,7 +163,12 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
 
   const menuItems = [
     { id: "home", icon: Home, label: "หน้าแรก", href: "/app/home" },
-    { id: "my-calendar", icon: Calendar, label: "ปฏิทินของฉัน", href: "/app/calendar" },
+    {
+      id: "my-calendar",
+      icon: Calendar,
+      label: "ปฏิทินของฉัน",
+      href: "/app/calendar",
+    },
   ];
 
   return (
@@ -178,22 +198,32 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
       >
         <div className="p-5 pt-16 lg:pt-5">
           <div className="hidden lg:flex items-center gap-3 mb-8">
-            <Image src="/logo.svg" alt="Smart Task AI" width={40} height={40} className="object-contain" />
+            <Image
+              src="/logo.svg"
+              alt="Smart Task AI"
+              width={40}
+              height={40}
+              className="object-contain"
+            />
             <h1 className="text-2xl font-momo text-gray-900">Smart Task</h1>
           </div>
 
           <nav className="space-y-1 mb-6">
             {menuItems.map((item) => {
               const Icon = item.icon;
-              const isActive = activeItem === item.id || (item.id === "home" && pathname === "/app/home") || (item.id === "my-calendar" && pathname === "/app/calendar");
+              const isActive =
+                activeItem === item.id ||
+                (item.id === "home" && pathname === "/app/home") ||
+                (item.id === "my-calendar" && pathname === "/app/calendar");
               return (
                 <LinkWithLoading
                   key={item.id}
                   href={item.href}
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-base font-medium transition-colors ${isActive
-                    ? "bg-gray-100 text-gray-900"
-                    : "text-gray-600 hover:bg-gray-50"
-                    }`}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-base font-medium transition-colors ${
+                    isActive
+                      ? "bg-gray-100 text-gray-900"
+                      : "text-gray-600 hover:bg-gray-50"
+                  }`}
                 >
                   <div className="flex items-center gap-3">
                     <Icon className="w-6 h-6" />
@@ -233,7 +263,9 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
                   ))}
                 </div>
               ) : workspaces.length === 0 ? (
-                <p className="text-base text-gray-500 px-4 py-2">No projects yet</p>
+                <p className="text-base text-gray-500 px-4 py-2">
+                  No projects yet
+                </p>
               ) : (
                 workspaces.map((workspace) => (
                   <div key={workspace.id} className="group">
@@ -243,8 +275,11 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
                         className="flex-1 flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-100 transition-colors"
                       >
                         <ChevronRight
-                          className={`w-5 h-5 transition-transform ${expandedWorkspaces.has(workspace.id) ? "rotate-90" : ""
-                            }`}
+                          className={`w-5 h-5 transition-transform ${
+                            expandedWorkspaces.has(workspace.id)
+                              ? "rotate-90"
+                              : ""
+                          }`}
                         />
                         <div
                           className={`w-3 h-3 rounded-full ${workspace.color}`}
@@ -265,11 +300,28 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
                             <MoreHorizontal className="w-5 h-5 text-gray-500" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-40">
+                        <DropdownMenuContent align="end" className="w-48">
                           <DropdownMenuItem
                             onClick={(e) => {
                               e.stopPropagation();
-                              const project = projects.find(p => p.id === workspace.id);
+                              const project = projects.find(
+                                (p) => p.id === workspace.id,
+                              );
+                              if (project) {
+                                handleManageMembers(project);
+                              }
+                            }}
+                            className="cursor-pointer"
+                          >
+                            <Users className="w-4 h-4 mr-2" />
+                            จัดการสมาชิก
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const project = projects.find(
+                                (p) => p.id === workspace.id,
+                              );
                               if (project) {
                                 handleEditProject(project);
                               }
@@ -282,7 +334,9 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
                           <DropdownMenuItem
                             onClick={(e) => {
                               e.stopPropagation();
-                              const project = projects.find(p => p.id === workspace.id);
+                              const project = projects.find(
+                                (p) => p.id === workspace.id,
+                              );
                               if (project) {
                                 handleDeleteProject(project);
                               }
@@ -305,10 +359,11 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
                             <LinkWithLoading
                               key={item.id}
                               href={item.to ?? "#"}
-                              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-base transition-colors ${isActive
-                                ? "bg-gray-100 text-gray-900 font-medium"
-                                : "text-gray-500 hover:bg-gray-50"
-                                }`}
+                              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-base transition-colors ${
+                                isActive
+                                  ? "bg-gray-100 text-gray-900 font-medium"
+                                  : "text-gray-500 hover:bg-gray-50"
+                              }`}
                             >
                               <Icon className="w-5 h-5" />
                               <span>{item.label}</span>
@@ -346,6 +401,15 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
         onSuccess={handleProjectUpdated}
         project={deletingProject}
       />
+
+      {managingMembersProject && (
+        <ManageMembersModal
+          open={showMembersModal}
+          onOpenChange={setShowMembersModal}
+          projectId={managingMembersProject.id}
+          projectName={managingMembersProject.name}
+        />
+      )}
     </>
   );
 };
