@@ -94,6 +94,11 @@
   --toast-info-bg: #e1f2fa;
   --toast-info-text: #00a6f4;
   --toast-info-border: #00a6f4;
+
+  /* Action badge background colors (light theme) */
+  --action-created-bg: #f1fae5;
+  --action-updated-bg: #e1f2fa;
+  --action-deleted-bg: #f9e4ea;
 }
 
 /* Task status colors */
@@ -132,13 +137,6 @@
   --completion-positive: #7ccf00;
   --completion-neutral: #212121;
   --completion-negative: #fb2c36;
-}
-
-:root {
-  /* Action badge background colors (light theme) */
-  --action-created-bg: #f1fae5;
-  --action-updated-bg: #e1f2fa;
-  --action-deleted-bg: #f9e4ea;
 }
 
 .dark {

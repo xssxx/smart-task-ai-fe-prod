@@ -1003,9 +1003,8 @@ export default function AIChatPage() {
             {messages.map((message) => (
               <div
                 key={message.id}
-                className={`flex gap-4 ${
-                  message.role === "user" ? "flex-row-reverse" : ""
-                }`}
+                className={`flex gap-4 ${message.role === "user" ? "flex-row-reverse" : ""
+                  }`}
               >
                 <div className="shrink-0">
                   {message.role === "assistant" ? (
@@ -1034,9 +1033,8 @@ export default function AIChatPage() {
                 </div>
 
                 <div
-                  className={`flex-1 ${
-                    message.role === "user" ? "flex justify-end" : ""
-                  }`}
+                  className={`flex-1 ${message.role === "user" ? "flex justify-end" : ""
+                    }`}
                 >
                   <div
                     className={`inline-block max-w-2xl ${message.role === "user"
@@ -1062,7 +1060,7 @@ export default function AIChatPage() {
                     {message.content && (
                       <p
                         className={`text-sm whitespace-pre-wrap ${message.role === "user" ? "text-primary-foreground" : "text-foreground"
-                        }`}
+                          }`}
                       >
                         {message.content}
                       </p>
@@ -1186,11 +1184,10 @@ export default function AIChatPage() {
                   disabled={isLoading || isTranscribing}
                   size="lg"
                   variant={isRecording ? "destructive" : "outline"}
-                  className={`h-[52px] px-6 shrink-0 rounded-xl ${
-                    isRecording
+                  className={`h-[52px] px-6 shrink-0 rounded-xl ${isRecording
                       ? "animate-pulse"
                       : ""
-                  }`}
+                    }`}
                   title={isRecording ? "หยุดบันทึกเสียง" : "บันทึกเสียง"}
                 >
                   {isTranscribing ? (
@@ -1238,10 +1235,6 @@ export default function AIChatPage() {
           className={`
             ${isRightPanelOpen ? "w-80 lg:w-96 opacity-100" : "w-0 opacity-0"} 
             bg-card border-l border-border flex flex-col h-full
-=======
-            ${isRightPanelOpen ? 'w-80 lg:w-96 opacity-100' : 'w-0 opacity-0'} 
-            bg-card border-l border-border flex flex-col h-full
->>>>>>> f03553c (feat: implement dark/light theme and more translate language for i18n)
             transition-all duration-300 ease-in-out overflow-hidden
             fixed right-0 top-0 lg:relative z-40
           `}
