@@ -321,7 +321,7 @@ export default function TaskDetailModal({
                 onChange={(e) => handleChange("name", e.target.value)}
                 placeholder={t('task.namePlaceholder')}
                 disabled={!isEditing || isSaving}
-                className={!isEditing ? "bg-gray-50" : ""}
+                className={!isEditing ? "bg-muted" : ""}
               />
             </div>
 
@@ -334,7 +334,7 @@ export default function TaskDetailModal({
                 placeholder={t('task.descriptionPlaceholder')}
                 rows={3}
                 disabled={!isEditing || isSaving}
-                className={!isEditing ? "bg-gray-50" : ""}
+                className={!isEditing ? "bg-muted" : ""}
               />
             </div>
 
@@ -346,13 +346,16 @@ export default function TaskDetailModal({
                   onValueChange={(value) => handleChange("priority", value)}
                   disabled={!isEditing || isSaving}
                 >
-                  <SelectTrigger className={cn("w-full", !isEditing && "bg-gray-50")}>
+                  <SelectTrigger className={cn("w-full", !isEditing && "bg-muted")}>
                     <SelectValue placeholder={t('task.selectPriority')} />
                   </SelectTrigger>
                   <SelectContent>
                     {PRIORITY_OPTIONS.map((opt) => (
                       <SelectItem key={opt.value} value={opt.value}>
-                        {t(getPriorityKey(opt.value))}
+                        <div className="flex items-center gap-2">
+                          <div className={cn("w-2 h-2 rounded-full", `priority-dot-${opt.value}`)} />
+                          {t(getPriorityKey(opt.value))}
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -366,7 +369,7 @@ export default function TaskDetailModal({
                   onValueChange={(value) => handleChange("status", value)}
                   disabled={!isEditing || isSaving}
                 >
-                  <SelectTrigger className={cn("w-full", !isEditing && "bg-gray-50")}>
+                  <SelectTrigger className={cn("w-full", !isEditing && "bg-muted")}>
                     <SelectValue placeholder={t('task.selectStatus')} />
                   </SelectTrigger>
                   <SelectContent>
@@ -450,7 +453,7 @@ export default function TaskDetailModal({
                 onChange={(e) => handleChange("location", e.target.value)}
                 placeholder={t('task.locationPlaceholder')}
                 disabled={!isEditing || isSaving}
-                className={!isEditing ? "bg-gray-50" : ""}
+                className={!isEditing ? "bg-muted" : ""}
               />
             </div>
 
@@ -471,7 +474,7 @@ export default function TaskDetailModal({
                 }}
                 disabled={!isEditing || isSaving}
               >
-                <SelectTrigger className={cn("w-full", !isEditing && "bg-gray-50")}>
+                <SelectTrigger className={cn("w-full", !isEditing && "bg-muted")}>
                   <SelectValue placeholder={t('task.noRecurring')} />
                 </SelectTrigger>
                 <SelectContent>
@@ -498,7 +501,7 @@ export default function TaskDetailModal({
                     }}
                     disabled={!isEditing || isSaving}
                   >
-                    <SelectTrigger className={cn("w-full", !isEditing && "bg-gray-50")}>
+                    <SelectTrigger className={cn("w-full", !isEditing && "bg-muted")}>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>

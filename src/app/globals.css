@@ -94,12 +94,51 @@
   --toast-info-bg: #e1f2fa;
   --toast-info-text: #00a6f4;
   --toast-info-border: #00a6f4;
+}
 
-  /* Task status colors */
+/* Task status colors */
+:root,
+.dark {
   --status-todo: #737373;
   --status-in-progress: #00a6f4;
   --status-in-review: #f0b100;
   --status-done: #7ccf00;
+
+  /* Task priority colors */
+  --priority-urgent: #9f0712;
+  --priority-high: #ff2056;
+  --priority-medium: #fe9a00;
+  --priority-low: #7ccf00;
+
+  /* Action badge text/border colors */
+  --action-created: #7ccf00;
+  --action-created-border: #7ccf00;
+  --action-updated: #00a6f4;
+  --action-updated-border: #00a6f4;
+  --action-deleted: #ff2056;
+  --action-deleted-border: #ff2056;
+
+  /* Toast text/border colors */
+  --toast-success-text: #7ccf00;
+  --toast-success-border: #7ccf00;
+  --toast-error-text: #ff2056;
+  --toast-error-border: #ff2056;
+  --toast-warning-text: #fe9a00;
+  --toast-warning-border: #fe9a00;
+  --toast-info-text: #00a6f4;
+  --toast-info-border: #00a6f4;
+
+  /* Completion rate colors */
+  --completion-positive: #7ccf00;
+  --completion-neutral: #212121;
+  --completion-negative: #fb2c36;
+}
+
+:root {
+  /* Action badge background colors (light theme) */
+  --action-created-bg: #f1fae5;
+  --action-updated-bg: #e1f2fa;
+  --action-deleted-bg: #f9e4ea;
 }
 
 .dark {
@@ -136,25 +175,16 @@
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
 
-  /* Toast colors for dark theme */
+  /* Toast background colors (dark theme) */
   --toast-success-bg: #212a15;
-  --toast-success-text: #7ccf00;
-  --toast-success-border: #7ccf00;
   --toast-error-bg: #2e181e;
-  --toast-error-text: #ff2056;
-  --toast-error-border: #ff2056;
   --toast-warning-bg: #2e2415;
-  --toast-warning-text: #fe9a00;
-  --toast-warning-border: #fe9a00;
   --toast-info-bg: #15262d;
-  --toast-info-text: #00a6f4;
-  --toast-info-border: #00a6f4;
 
-  /* Task status colors (same for dark theme) */
-  --status-todo: #737373;
-  --status-in-progress: #00a6f4;
-  --status-in-review: #f0b100;
-  --status-done: #7ccf00;
+  /* Action badge background colors (dark theme) */
+  --action-created-bg: #212a15;
+  --action-updated-bg: #15262d;
+  --action-deleted-bg: #2e181e;
 }
 
 @layer base {
@@ -377,6 +407,95 @@ button {
 
 .status-dot-done {
   background-color: var(--status-done);
+}
+
+/* Task priority indicator colors */
+.priority-dot-urgent {
+  background-color: var(--priority-urgent);
+}
+
+.priority-dot-high {
+  background-color: var(--priority-high);
+}
+
+.priority-dot-medium {
+  background-color: var(--priority-medium);
+}
+
+.priority-dot-low {
+  background-color: var(--priority-low);
+}
+
+/* Task priority badge colors */
+.priority-badge-urgent {
+  background-color: color-mix(in srgb, var(--priority-urgent) 10%, transparent);
+  color: var(--priority-urgent);
+  border-color: color-mix(in srgb, var(--priority-urgent) 20%, transparent);
+}
+
+.priority-badge-high {
+  background-color: color-mix(in srgb, var(--priority-high) 10%, transparent);
+  color: var(--priority-high);
+  border-color: color-mix(in srgb, var(--priority-high) 20%, transparent);
+}
+
+.priority-badge-medium {
+  background-color: color-mix(in srgb, var(--priority-medium) 10%, transparent);
+  color: var(--priority-medium);
+  border-color: color-mix(in srgb, var(--priority-medium) 20%, transparent);
+}
+
+.priority-badge-low {
+  background-color: color-mix(in srgb, var(--priority-low) 10%, transparent);
+  color: var(--priority-low);
+  border-color: color-mix(in srgb, var(--priority-low) 20%, transparent);
+}
+
+/* Task status badge colors */
+.status-badge-todo {
+  background-color: color-mix(in srgb, var(--status-todo) 10%, transparent);
+  color: var(--status-todo);
+  border-color: color-mix(in srgb, var(--status-todo) 20%, transparent);
+}
+
+.status-badge-in-progress,
+.status-badge-in_progress {
+  background-color: color-mix(in srgb, var(--status-in-progress) 10%, transparent);
+  color: var(--status-in-progress);
+  border-color: color-mix(in srgb, var(--status-in-progress) 20%, transparent);
+}
+
+.status-badge-in-review,
+.status-badge-in_review {
+  background-color: color-mix(in srgb, var(--status-in-review) 10%, transparent);
+  color: var(--status-in-review);
+  border-color: color-mix(in srgb, var(--status-in-review) 20%, transparent);
+}
+
+.status-badge-done,
+.status-badge-completed {
+  background-color: color-mix(in srgb, var(--status-done) 10%, transparent);
+  color: var(--status-done);
+  border-color: color-mix(in srgb, var(--status-done) 20%, transparent);
+}
+
+/* Action badge colors */
+.action-badge-created {
+  background-color: var(--action-created-bg);
+  color: var(--action-created);
+  border-color: var(--action-created-border);
+}
+
+.action-badge-updated {
+  background-color: var(--action-updated-bg);
+  color: var(--action-updated);
+  border-color: var(--action-updated-border);
+}
+
+.action-badge-deleted {
+  background-color: var(--action-deleted-bg);
+  color: var(--action-deleted);
+  border-color: var(--action-deleted-border);
 }
 
 /* Board column responsive width */

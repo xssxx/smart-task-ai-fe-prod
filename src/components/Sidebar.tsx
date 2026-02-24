@@ -302,7 +302,7 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
                             className="cursor-pointer"
                           >
                             <Users className="w-4 h-4 mr-2" />
-                            จัดการสมาชิก
+                            {t('sidebar.manageMembers')}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={(e) => {

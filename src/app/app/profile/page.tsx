@@ -20,6 +20,7 @@ export default function ProfilePage() {
     lastName: "",
     nickname: "",
     avatarPath: "",
+    accountId: "",
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
@@ -37,6 +38,7 @@ export default function ProfilePage() {
           lastName: profile.last_name,
           nickname: profile.nickname || "",
           avatarPath: profile.avatar_path || "",
+          accountId: profile.account_id || "",
         });
       } catch (err) {
         toast.error(t('common.error'), {
@@ -284,8 +286,8 @@ export default function ProfilePage() {
               <p className="text-lg font-semibold text-foreground">
                 {formData.firstName} {formData.lastName}
               </p>
-              {formData.nickname && (
-                <p className="text-sm text-muted-foreground">@{formData.nickname}</p>
+              {formData.accountId && (
+                <p className="text-sm text-muted-foreground font-mono">{formData.accountId}</p>
               )}
             </div>
           </div>

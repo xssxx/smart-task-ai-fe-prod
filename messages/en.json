@@ -21,7 +21,8 @@
     "aiChat": "AI Chat",
     "noProjects": "No projects yet",
     "edit": "Edit",
-    "delete": "Delete"
+    "delete": "Delete",
+    "manageMembers": "Manage Members"
   },
   "common": {
     "cancel": "Cancel",
@@ -35,7 +36,8 @@
     "creating": "Creating...",
     "required": "Required",
     "optional": "Optional",
-    "error": "Error"
+    "error": "Error",
+    "cannotUndo": "This action cannot be undone"
   },
   "task": {
     "createTask": "Create Task",
@@ -304,5 +306,28 @@
     "title": "Select Theme",
     "light": "Light",
     "dark": "Dark"
+  },
+  "members": {
+    "manageMembers": "Manage Members",
+    "addNewMember": "Add New Member",
+    "email": "Email",
+    "emailPlaceholder": "user@example.com",
+    "role": "Role",
+    "member": "Member",
+    "owner": "Owner",
+    "addMember": "Add Member",
+    "adding": "Adding...",
+    "currentMembers": "Current Members",
+    "noMembers": "No members yet",
+    "added": "Added",
+    "memberAddedSuccess": "Member added successfully",
+    "memberAddFailed": "Failed to add member",
+    "memberRemovedSuccess": "Member removed successfully",
+    "memberRemoveFailed": "Failed to remove member",
+    "cannotRemoveOwner": "Cannot remove owner",
+    "confirmRemoveMember": "Are you sure you want to remove this member?",
+    "confirmRemoveWarning": "This member will no longer have access to this project",
+    "removeMember": "Remove Member",
+    "removing": "Removing..."
   }
 }

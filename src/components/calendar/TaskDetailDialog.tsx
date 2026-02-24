@@ -25,7 +25,7 @@ import { cn } from "@/lib/utils";
 import { getTaskById, updateTask, deleteTask, UpdateTaskRequest } from "@/services/api";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { toast } from "@/lib/enhanced-toast";
-import { PRIORITY_OPTIONS, STATUS_OPTIONS, TOAST_DURATION, getPriorityColor } from "@/constants";
+import { PRIORITY_OPTIONS, STATUS_OPTIONS, TOAST_DURATION } from "@/constants";
 import { getPriorityKey, getStatusKey } from "@/lib/task-utils";
 
 interface TaskDetailDialogTask {
@@ -341,7 +341,7 @@ function TaskDetailDialog({
                     id="project"
                     value={project.name}
                     disabled
-                    className="bg-gray-50 cursor-not-allowed"
+                    className="bg-muted cursor-not-allowed"
                   />
                 </div>
               )}
@@ -354,7 +354,7 @@ function TaskDetailDialog({
                   onChange={(e) => handleChange("name", e.target.value)}
                   placeholder={t('task.namePlaceholder')}
                   disabled={!isEditing || isSaving}
-                  className={!isEditing ? "bg-gray-50" : ""}
+                  className={!isEditing ? "bg-muted" : ""}
                 />
               </div>
 
@@ -367,7 +367,7 @@ function TaskDetailDialog({
                   placeholder={t('task.descriptionPlaceholder')}
                   rows={3}
                   disabled={!isEditing || isSaving}
-                  className={!isEditing ? "bg-gray-50" : ""}
+                  className={!isEditing ? "bg-muted" : ""}
                 />
               </div>
 
@@ -379,19 +379,14 @@ function TaskDetailDialog({
                     onValueChange={(value) => handleChange("priority", value)}
                     disabled={!isEditing || isSaving}
                   >
-                    <SelectTrigger className={cn("w-full", !isEditing && "bg-gray-50")}>
+                    <SelectTrigger className={cn("w-full", !isEditing && "bg-muted")}>
                       <SelectValue placeholder={t('task.selectPriority')} />
                     </SelectTrigger>
                     <SelectContent>
                       {PRIORITY_OPTIONS.map((opt) => (
                         <SelectItem key={opt.value} value={opt.value}>
                           <div className="flex items-center gap-2">
-                            <div
-                              className={cn(
-                                "w-2 h-2 rounded-full",
-                                getPriorityColor(opt.value)
-                              )}
-                            />
+                            <div className={cn("w-2 h-2 rounded-full", `priority-dot-${opt.value}`)} />
                             {t(getPriorityKey(opt.value))}
                           </div>
                         </SelectItem>
@@ -407,7 +402,7 @@ function TaskDetailDialog({
                     onValueChange={(value) => handleChange("status", value)}
                     disabled={!isEditing || isSaving}
                   >
-                    <SelectTrigger className={cn("w-full", !isEditing && "bg-gray-50")}>
+                    <SelectTrigger className={cn("w-full", !isEditing && "bg-muted")}>
                       <SelectValue placeholder={t('task.selectStatus')} />
                     </SelectTrigger>
                     <SelectContent>
@@ -491,7 +486,7 @@ function TaskDetailDialog({
                   onChange={(e) => handleChange("location", e.target.value)}
                   placeholder={t('task.locationPlaceholder')}
                   disabled={!isEditing || isSaving}
-                  className={!isEditing ? "bg-gray-50" : ""}
+                  className={!isEditing ? "bg-muted" : ""}
                 />
               </div>
 
@@ -512,7 +507,7 @@ function TaskDetailDialog({
                   }}
                   disabled={!isEditing || isSaving}
                 >
-                  <SelectTrigger className={cn("w-full", !isEditing && "bg-gray-50")}>
+                  <SelectTrigger className={cn("w-full", !isEditing && "bg-muted")}>
                     <SelectValue placeholder={t('task.noRecurring')} />
                   </SelectTrigger>
                   <SelectContent>
@@ -539,7 +534,7 @@ function TaskDetailDialog({
                       }}
                       disabled={!isEditing || isSaving}
                     >
-                      <SelectTrigger className={cn("w-full", !isEditing && "bg-gray-50")}>
+                      <SelectTrigger className={cn("w-full", !isEditing && "bg-muted")}>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>

@@ -24,6 +24,7 @@ import { toast } from "@/lib/enhanced-toast";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { PRIORITY_OPTIONS, TOAST_DURATION } from "@/constants";
 import { getPriorityKey } from "@/lib/task-utils";
+import { cn } from "@/lib/utils";
 
 interface CreateTaskModalProps {
   open: boolean;
@@ -248,7 +249,10 @@ export default function CreateTaskModal({
               <SelectContent>
                 {PRIORITY_OPTIONS.map((opt) => (
                   <SelectItem key={opt.value} value={opt.value}>
-                    {t(getPriorityKey(opt.value))}
+                    <div className="flex items-center gap-2">
+                      <div className={cn("w-2 h-2 rounded-full", `priority-dot-${opt.value}`)} />
+                      {t(getPriorityKey(opt.value))}
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>

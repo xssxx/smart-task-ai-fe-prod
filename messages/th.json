@@ -21,7 +21,8 @@
     "aiChat": "แชท AI",
     "noProjects": "ยังไม่มีโปรเจกต์",
     "edit": "แก้ไข",
-    "delete": "ลบ"
+    "delete": "ลบ",
+    "manageMembers": "จัดการสมาชิก"
   },
   "common": {
     "cancel": "ยกเลิก",
@@ -35,7 +36,8 @@
     "creating": "กำลังสร้าง...",
     "required": "จำเป็น",
     "optional": "ไม่บังคับ",
-    "error": "เกิดข้อผิดพลาด"
+    "error": "เกิดข้อผิดพลาด",
+    "cannotUndo": "การดำเนินการนี้ไม่สามารถย้อนกลับได้"
   },
   "task": {
     "createTask": "สร้าง Task",
@@ -304,5 +306,28 @@
     "title": "เลือกธีม",
     "light": "สว่าง",
     "dark": "มืด"
+  },
+  "members": {
+    "manageMembers": "จัดการสมาชิก",
+    "addNewMember": "เพิ่มสมาชิกใหม่",
+    "email": "อีเมล",
+    "emailPlaceholder": "user@example.com",
+    "role": "บทบาท",
+    "member": "สมาชิก",
+    "owner": "เจ้าของ",
+    "addMember": "เพิ่มสมาชิก",
+    "adding": "กำลังเพิ่ม...",
+    "currentMembers": "สมาชิกปัจจุบัน",
+    "noMembers": "ยังไม่มีสมาชิก",
+    "added": "เพิ่มเมื่อ",
+    "memberAddedSuccess": "เพิ่มสมาชิกสำเร็จ",
+    "memberAddFailed": "ไม่สามารถเพิ่มสมาชิกได้",
+    "memberRemovedSuccess": "ลบสมาชิกสำเร็จ",
+    "memberRemoveFailed": "ไม่สามารถลบสมาชิกได้",
+    "cannotRemoveOwner": "ไม่สามารถลบเจ้าของได้",
+    "confirmRemoveMember": "คุณแน่ใจหรือไม่ที่จะลบสมาชิกนี้?",
+    "confirmRemoveWarning": "สมาชิกจะไม่สามารถเข้าถึงโปรเจกต์นี้ได้อีกต่อไป",
+    "removeMember": "ลบสมาชิก",
+    "removing": "กำลังลบ..."
   }
 }
