@@ -75,7 +75,6 @@ export const useProjectMembers = (projectId: string) => {
             saveEmailMap(updated);
             return updated;
           });
-          toast.success("Member added successfully");
           await fetchMembers();
           return true;
         }
@@ -100,7 +99,6 @@ export const useProjectMembers = (projectId: string) => {
       try {
         const response = await removeProjectMember(projectId, accountId);
         if (response.data.success) {
-          toast.success("Member removed successfully");
           await fetchMembers();
           return true;
         }

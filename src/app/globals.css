@@ -48,80 +48,152 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(0.99 0 0);
-  --foreground: oklch(0.09 0 0);
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.09 0 0);
+  --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.09 0 0);
-  --primary: oklch(0.09 0 0);
-  --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.96 0 0);
-  --secondary-foreground: oklch(0.09 0 0);
-  --muted: oklch(0.96 0 0);
-  --muted-foreground: oklch(0.45 0 0);
-  --accent: oklch(0.96 0 0);
-  --accent-foreground: oklch(0.09 0 0);
-  --destructive: oklch(61.012% 0.22261 24.781);
-  --border: oklch(0.91 0 0);
-  --input: oklch(0.91 0 0);
-  --ring: oklch(0.09 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
   --chart-1: oklch(0.25 0 0);
   --chart-2: oklch(0.40 0 0);
   --chart-3: oklch(0.55 0 0);
   --chart-4: oklch(0.70 0 0);
   --chart-5: oklch(0.85 0 0);
-  --sidebar: oklch(0.98 0 0);
-  --sidebar-foreground: oklch(0.09 0 0);
-  --sidebar-primary: oklch(0.09 0 0);
-  --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: oklch(0.94 0 0);
-  --sidebar-accent-foreground: oklch(0.09 0 0);
-  --sidebar-border: oklch(0.91 0 0);
-  --sidebar-ring: oklch(0.09 0 0);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+
+  /* Toast colors for light theme */
+  --toast-success-bg: #f1fae5;
+  --toast-success-text: #7ccf00;
+  --toast-success-border: #7ccf00;
+  --toast-error-bg: #f9e4ea;
+  --toast-error-text: #ff2056;
+  --toast-error-border: #ff2056;
+  --toast-warning-bg: #fdf7e5;
+  --toast-warning-text: #fe9a00;
+  --toast-warning-border: #fe9a00;
+  --toast-info-bg: #e1f2fa;
+  --toast-info-text: #00a6f4;
+  --toast-info-border: #00a6f4;
+
+  /* Action badge background colors (light theme) */
+  --action-created-bg: #f1fae5;
+  --action-updated-bg: #e1f2fa;
+  --action-deleted-bg: #f9e4ea;
+}
+
+/* Task status colors */
+:root,
+.dark {
+  --status-todo: #737373;
+  --status-in-progress: #00a6f4;
+  --status-in-review: #f0b100;
+  --status-done: #7ccf00;
+
+  /* Task priority colors */
+  --priority-urgent: #9f0712;
+  --priority-high: #ff2056;
+  --priority-medium: #fe9a00;
+  --priority-low: #7ccf00;
+
+  /* Action badge text/border colors */
+  --action-created: #7ccf00;
+  --action-created-border: #7ccf00;
+  --action-updated: #00a6f4;
+  --action-updated-border: #00a6f4;
+  --action-deleted: #ff2056;
+  --action-deleted-border: #ff2056;
+
+  /* Toast text/border colors */
+  --toast-success-text: #7ccf00;
+  --toast-success-border: #7ccf00;
+  --toast-error-text: #ff2056;
+  --toast-error-border: #ff2056;
+  --toast-warning-text: #fe9a00;
+  --toast-warning-border: #fe9a00;
+  --toast-info-text: #00a6f4;
+  --toast-info-border: #00a6f4;
+
+  /* Completion rate colors */
+  --completion-positive: #7ccf00;
+  --completion-neutral: #212121;
+  --completion-negative: #fb2c36;
 }
 
 .dark {
-  --background: oklch(0.09 0 0);
-  --foreground: oklch(0.98 0 0);
-  --card: oklch(0.12 0 0);
-  --card-foreground: oklch(0.98 0 0);
-  --popover: oklch(0.12 0 0);
-  --popover-foreground: oklch(0.98 0 0);
-  --primary: oklch(0.98 0 0);
-  --primary-foreground: oklch(0.09 0 0);
-  --secondary: oklch(0.18 0 0);
-  --secondary-foreground: oklch(0.98 0 0);
-  --muted: oklch(0.18 0 0);
-  --muted-foreground: oklch(0.65 0 0);
-  --accent: oklch(0.18 0 0);
-  --accent-foreground: oklch(0.98 0 0);
-  --destructive: oklch(0.60 0.2 25);
-  --border: oklch(0.22 0 0);
-  --input: oklch(0.22 0 0);
-  --ring: oklch(0.98 0 0);
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.269 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.371 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
   --chart-1: oklch(0.85 0 0);
   --chart-2: oklch(0.70 0 0);
   --chart-3: oklch(0.55 0 0);
   --chart-4: oklch(0.40 0 0);
   --chart-5: oklch(0.25 0 0);
-  --sidebar: oklch(0.12 0 0);
-  --sidebar-foreground: oklch(0.98 0 0);
-  --sidebar-primary: oklch(0.98 0 0);
-  --sidebar-primary-foreground: oklch(0.09 0 0);
-  --sidebar-accent: oklch(0.18 0 0);
-  --sidebar-accent-foreground: oklch(0.98 0 0);
-  --sidebar-border: oklch(0.22 0 0);
-  --sidebar-ring: oklch(0.98 0 0);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.922 0 0);
+  --sidebar-primary-foreground: oklch(0.205 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+
+  /* Toast background colors (dark theme) */
+  --toast-success-bg: #212a15;
+  --toast-error-bg: #2e181e;
+  --toast-warning-bg: #2e2415;
+  --toast-info-bg: #15262d;
+
+  /* Action badge background colors (dark theme) */
+  --action-created-bg: #212a15;
+  --action-updated-bg: #15262d;
+  --action-deleted-bg: #2e181e;
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    border-color: var(--color-border);
+    outline-color: color-mix(in oklch, var(--color-ring) 50%, transparent);
   }
 
   body {
-    @apply bg-background text-foreground;
+    background-color: var(--color-background);
+    color: var(--color-foreground);
     font-family: var(--font-kanit), sans-serif;
   }
 
@@ -199,29 +271,16 @@
 
 /* Custom Sonner Toast Styles */
 [data-sonner-toaster] {
-  --normal-bg: oklch(1 0 0) !important;
-  --normal-border: oklch(0.85 0 0) !important;
-  --normal-text: oklch(0.15 0 0) !important;
-  --success-bg: oklch(0.97 0.05 142) !important;
-  --success-border: oklch(0.75 0.15 142) !important;
-  --success-text: oklch(0.25 0.15 142) !important;
-  --error-bg: oklch(0.97 0.05 25) !important;
-  --error-border: oklch(0.75 0.15 25) !important;
-  --error-text: oklch(0.25 0.15 25) !important;
-  --info-bg: oklch(0.97 0.05 220) !important;
-  --info-border: oklch(0.75 0.15 220) !important;
-  --info-text: oklch(0.25 0.15 220) !important;
   font-family: var(--font-kanit), sans-serif !important;
   z-index: 9999 !important;
 }
 
 [data-sonner-toast] {
-  background: var(--normal-bg) !important;
-  border: 1px solid var(--normal-border) !important;
-  color: var(--normal-text) !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
   font-family: var(--font-kanit), sans-serif !important;
   z-index: 9999 !important;
+  border-width: 1px !important;
+  border-style: solid !important;
 }
 
 /* Make newest toast appear on top with higher z-index */
@@ -229,36 +288,78 @@
   z-index: 10001 !important;
 }
 
-[data-sonner-toast][data-type="success"] {
-  background: var(--success-bg) !important;
-  border-color: var(--success-border) !important;
-  color: var(--success-text) !important;
-}
-
-[data-sonner-toast][data-type="error"] {
-  background: var(--error-bg) !important;
-  border-color: var(--error-border) !important;
-  color: var(--error-text) !important;
-}
-
-[data-sonner-toast][data-type="info"] {
-  background: var(--info-bg) !important;
-  border-color: var(--info-border) !important;
-  color: var(--info-text) !important;
-}
-
-/* Ensure all toast content uses Kanit font */
+/* Ensure all toast content uses font */
 [data-sonner-toast] * {
   font-family: var(--font-kanit), sans-serif !important;
 }
 
+/* Toast type-specific colors using CSS variables */
+[data-sonner-toast][data-type="success"] {
+  background-color: var(--toast-success-bg) !important;
+  color: var(--toast-success-text) !important;
+  border-color: var(--toast-success-border) !important;
+}
+
+[data-sonner-toast][data-type="success"] [data-icon],
+[data-sonner-toast][data-type="success"] [data-title],
+[data-sonner-toast][data-type="success"] [data-description] {
+  color: var(--toast-success-text) !important;
+}
+
+[data-sonner-toast][data-type="error"] {
+  background-color: var(--toast-error-bg) !important;
+  color: var(--toast-error-text) !important;
+  border-color: var(--toast-error-border) !important;
+}
+
+[data-sonner-toast][data-type="error"] [data-icon],
+[data-sonner-toast][data-type="error"] [data-title],
+[data-sonner-toast][data-type="error"] [data-description] {
+  color: var(--toast-error-text) !important;
+}
+
+[data-sonner-toast][data-type="warning"] {
+  background-color: var(--toast-warning-bg) !important;
+  color: var(--toast-warning-text) !important;
+  border-color: var(--toast-warning-border) !important;
+}
+
+[data-sonner-toast][data-type="warning"] [data-icon],
+[data-sonner-toast][data-type="warning"] [data-title],
+[data-sonner-toast][data-type="warning"] [data-description] {
+  color: var(--toast-warning-text) !important;
+}
+
+[data-sonner-toast][data-type="info"] {
+  background-color: var(--toast-info-bg) !important;
+  color: var(--toast-info-text) !important;
+  border-color: var(--toast-info-border) !important;
+}
+
+[data-sonner-toast][data-type="info"] [data-icon],
+[data-sonner-toast][data-type="info"] [data-title],
+[data-sonner-toast][data-type="info"] [data-description] {
+  color: var(--toast-info-text) !important;
+}
+
 /* Board Navigation Dots */
 .board-nav-dot {
-  @apply w-2 h-2 rounded-full transition-all cursor-pointer bg-gray-400 hover:bg-gray-500;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+  cursor: pointer;
+  background-color: rgb(156 163 175);
+}
+
+.board-nav-dot:hover {
+  background-color: rgb(107 114 128);
 }
 
 .board-nav-dot.active {
-  @apply bg-gray-600;
+  background-color: rgb(75 85 99);
 }
 
 /* Global font override to ensure Kanit is used everywhere */
@@ -274,9 +375,125 @@ button {
   font-family: var(--font-kanit), sans-serif !important;
 }
 
+/* Emoji font support - allow system emoji fonts to render */
+.font-emoji {
+  font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", "Segoe UI Symbol", "Twemoji Mozilla", sans-serif !important;
+  font-style: normal !important;
+  font-weight: normal !important;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 /* Momo Signature font for logo */
 .font-momo {
   font-family: var(--font-momo), cursive !important;
+}
+
+/* Task status indicator colors */
+.status-dot-todo {
+  background-color: var(--status-todo);
+}
+
+.status-dot-in-progress {
+  background-color: var(--status-in-progress);
+}
+
+.status-dot-in-review {
+  background-color: var(--status-in-review);
+}
+
+.status-dot-done {
+  background-color: var(--status-done);
+}
+
+/* Task priority indicator colors */
+.priority-dot-urgent {
+  background-color: var(--priority-urgent);
+}
+
+.priority-dot-high {
+  background-color: var(--priority-high);
+}
+
+.priority-dot-medium {
+  background-color: var(--priority-medium);
+}
+
+.priority-dot-low {
+  background-color: var(--priority-low);
+}
+
+/* Task priority badge colors */
+.priority-badge-urgent {
+  background-color: color-mix(in srgb, var(--priority-urgent) 10%, transparent);
+  color: var(--priority-urgent);
+  border-color: color-mix(in srgb, var(--priority-urgent) 20%, transparent);
+}
+
+.priority-badge-high {
+  background-color: color-mix(in srgb, var(--priority-high) 10%, transparent);
+  color: var(--priority-high);
+  border-color: color-mix(in srgb, var(--priority-high) 20%, transparent);
+}
+
+.priority-badge-medium {
+  background-color: color-mix(in srgb, var(--priority-medium) 10%, transparent);
+  color: var(--priority-medium);
+  border-color: color-mix(in srgb, var(--priority-medium) 20%, transparent);
+}
+
+.priority-badge-low {
+  background-color: color-mix(in srgb, var(--priority-low) 10%, transparent);
+  color: var(--priority-low);
+  border-color: color-mix(in srgb, var(--priority-low) 20%, transparent);
+}
+
+/* Task status badge colors */
+.status-badge-todo {
+  background-color: color-mix(in srgb, var(--status-todo) 10%, transparent);
+  color: var(--status-todo);
+  border-color: color-mix(in srgb, var(--status-todo) 20%, transparent);
+}
+
+.status-badge-in-progress,
+.status-badge-in_progress {
+  background-color: color-mix(in srgb, var(--status-in-progress) 10%, transparent);
+  color: var(--status-in-progress);
+  border-color: color-mix(in srgb, var(--status-in-progress) 20%, transparent);
+}
+
+.status-badge-in-review,
+.status-badge-in_review {
+  background-color: color-mix(in srgb, var(--status-in-review) 10%, transparent);
+  color: var(--status-in-review);
+  border-color: color-mix(in srgb, var(--status-in-review) 20%, transparent);
+}
+
+.status-badge-done,
+.status-badge-completed {
+  background-color: color-mix(in srgb, var(--status-done) 10%, transparent);
+  color: var(--status-done);
+  border-color: color-mix(in srgb, var(--status-done) 20%, transparent);
+}
+
+/* Action badge colors */
+.action-badge-created {
+  background-color: var(--action-created-bg);
+  color: var(--action-created);
+  border-color: var(--action-created-border);
+}
+
+.action-badge-updated {
+  background-color: var(--action-updated-bg);
+  color: var(--action-updated);
+  border-color: var(--action-updated-border);
+}
+
+.action-badge-deleted {
+  background-color: var(--action-deleted-bg);
+  color: var(--action-deleted);
+  border-color: var(--action-deleted-border);
 }
 
 /* Board column responsive width */

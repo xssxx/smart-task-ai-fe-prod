@@ -51,13 +51,13 @@ export const WORKSPACE_COLORS = [
 export const getPriorityColor = (priority: string): string => {
   switch (priority?.toLowerCase()) {
     case "urgent":
-      return "bg-[#9f0712]/10 text-[#9f0712] border-[#9f0712]/20";
+      return "priority-badge-urgent";
     case "high":
-      return "bg-[#ff2056]/10 text-[#ff2056] border-[#ff2056]/20";
+      return "priority-badge-high";
     case "medium":
-      return "bg-[#fe9a00]/10 text-[#fe9a00] border-[#fe9a00]/20";
+      return "priority-badge-medium";
     case "low":
-      return "bg-[#7ccf00]/10 text-[#7ccf00] border-[#7ccf00]/20";
+      return "priority-badge-low";
     default:
       return "bg-gray-100 text-gray-800 border-gray-200";
   }
@@ -65,32 +65,31 @@ export const getPriorityColor = (priority: string): string => {
 
 // Status Colors
 export const getStatusColor = (status: string): string => {
-  switch (status?.toLowerCase()) {
+  const normalizedStatus = status?.toLowerCase().replace("-", "_");
+  switch (normalizedStatus) {
     case "completed":
     case "done":
-      return "bg-[#7ccf00]/10 text-[#7ccf00] border-[#7ccf00]/20";
-    case "in-progress":
+      return "status-badge-done";
     case "in_progress":
-      return "bg-[#00a6f4]/10 text-[#00a6f4] border-[#00a6f4]/20";
-    case "in-review":
+      return "status-badge-in-progress";
     case "in_review":
-      return "bg-[#f0b100]/10 text-[#f0b100] border-[#f0b100]/20";
+      return "status-badge-in-review";
     case "todo":
-      return "bg-[#737373]/10 text-[#737373] border-[#737373]/20";
+      return "status-badge-todo";
     default:
       return "bg-gray-100 text-gray-800 border-gray-200";
   }
 };
 
-// Action Badge Colors (for chat)
+// Action Badge Colors
 export const getActionBadgeColor = (type: string): string => {
   switch (type) {
     case "created":
-      return "bg-green-100 text-green-800 border-green-200";
+      return "action-badge-created";
     case "updated":
-      return "bg-blue-100 text-blue-800 border-blue-200";
+      return "action-badge-updated";
     case "deleted":
-      return "bg-rose-100 text-rose-800 border-rose-200";
+      return "action-badge-deleted";
     default:
       return "bg-gray-100 text-gray-800 border-gray-200";
   }
@@ -99,10 +98,10 @@ export const getActionBadgeColor = (type: string): string => {
 // Completion Rate Color
 export const getCompletionRateColor = (rate: number): string => {
   if (rate > 0) {
-    return "#7ccf00"; // lime-500 - green
+    return "var(--completion-positive)";
   } else if (rate === 0) {
-    return "#212121"; // hard-gray
+    return "var(--completion-neutral)";
   } else {
-    return "#fb2c36"; // rose-500
+    return "var(--completion-negative)";
   }
 };

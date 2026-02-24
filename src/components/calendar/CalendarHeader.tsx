@@ -1,4 +1,5 @@
 import { memo } from "react";
+import { useTranslations } from "next-intl";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Plus, Grid3x3, Columns2, List } from "lucide-react";
@@ -22,6 +23,7 @@ function CalendarHeader({
   onNavigate,
   onAddEvent,
 }: CalendarHeaderProps) {
+  const t = useTranslations();
   const today = new Date();
 
   return (
@@ -44,7 +46,7 @@ function CalendarHeader({
               {format(currentDate, "MMMM yyyy")}
             </p>
             <div className="whitespace-nowrap rounded-sm border px-1.5 py-0.5 text-xs">
-              {taskCount} tasks
+              {taskCount} {t('calendar.tasks')}
             </div>
           </div>
 
@@ -98,7 +100,7 @@ function CalendarHeader({
               <List className={cn("w-4 h-4 transition-transform duration-300", viewMode === "day" && "scale-110")} />
               {viewMode === "day" && (
                 <p className="font-medium whitespace-nowrap animate-in fade-in slide-in-from-left-2 duration-200">
-                  Day
+                  {t('calendar.day')}
                 </p>
               )}
             </div>
@@ -122,7 +124,7 @@ function CalendarHeader({
               <Columns2 className={cn("w-4 h-4 transition-transform duration-300", viewMode === "week" && "scale-110")} />
               {viewMode === "week" && (
                 <p className="font-medium whitespace-nowrap animate-in fade-in slide-in-from-left-2 duration-200">
-                  Week
+                  {t('calendar.week')}
                 </p>
               )}
             </div>
@@ -146,7 +148,7 @@ function CalendarHeader({
               <Grid3x3 className={cn("w-4 h-4 transition-transform duration-300", viewMode === "month" && "scale-110")} />
               {viewMode === "month" && (
                 <p className="font-medium whitespace-nowrap animate-in fade-in slide-in-from-left-2 duration-200">
-                  Month
+                  {t('calendar.month')}
                 </p>
               )}
             </div>
@@ -159,7 +161,7 @@ function CalendarHeader({
           className="flex items-center gap-1 bg-primary text-background shadow hover:bg-primary/90 h-9 px-4 py-2"
         >
           <Plus className="w-4 h-4" />
-          New Task
+          {t('calendar.newTask')}
         </Button>
       </div>
     </div>

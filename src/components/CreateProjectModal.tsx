@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   Dialog,
   DialogContent,
@@ -34,6 +35,7 @@ export default function CreateProjectModal({
   onOpenChange,
   onSuccess,
 }: CreateProjectModalProps) {
+  const t = useTranslations();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -57,7 +59,7 @@ export default function CreateProjectModal({
     setError(null);
 
     if (!formData.name.trim()) {
-      setError("กรุณากรอกชื่อ Workspace");
+      setError(t('project.pleaseEnterWorkspaceName'));
       return;
     }
 
@@ -85,10 +87,10 @@ export default function CreateProjectModal({
       });
       setShowAdvanced(false);
 
-      toast.success("สร้าง Workspace สำเร็จ", {
+      toast.success(t('project.workspaceCreatedSuccess'), {
         description: (
           <>
-            Workspace <strong>{formData.name.trim()}</strong> ถูกสร้างเรียบร้อยแล้ว
+            {t('project.workspaceCreatedDescription').replace('{name}', '')} <strong>{formData.name.trim()}</strong>
           </>
         ),
       });
@@ -96,9 +98,9 @@ export default function CreateProjectModal({
       onOpenChange(false);
       onSuccess?.();
     } catch (err) {
-      setError("ไม่สามารถสร้าง Workspace ได้ กรุณาลองใหม่อีกครั้ง");
-      toast.error("เกิดข้อผิดพลาด", {
-        description: "ไม่สามารถสร้าง Workspace ได้ กรุณาลองใหม่อีกครั้ง",
+      setError(t('project.workspaceCreateFailedDescription'));
+      toast.error(t('project.workspaceCreateFailed'), {
+        description: t('project.workspaceCreateFailedDescription'),
       });
     } finally {
       setIsLoading(false);
@@ -123,9 +125,9 @@ export default function CreateProjectModal({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[600px] max-w-[95vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>สร้าง Workspace ใหม่</DialogTitle>
+          <DialogTitle>{t('project.createNewWorkspace')}</DialogTitle>
           <DialogDescription>
-            สร้าง workspace สำหรับจัดการ tasks ของคุณ
+            {t('project.createWorkspaceDescription')}
           </DialogDescription>
         </DialogHeader>
 
@@ -138,11 +140,11 @@ export default function CreateProjectModal({
 
           <div className="space-y-3">
             <Label htmlFor="name">
-              ชื่อ Workspace <span className="text-rose-500">*</span>
+              {t('project.workspaceName')} <span className="text-rose-500">*</span>
             </Label>
             <Input
               id="name"
-              placeholder="เช่น My Project, Work Tasks"
+              placeholder={t('project.workspaceNamePlaceholder')}
               value={formData.name}
               onChange={(e) => handleInputChange("name", e.target.value)}
               disabled={isLoading}
@@ -162,53 +164,53 @@ export default function CreateProjectModal({
                     showAdvanced && "rotate-180"
                   )}
                 />
-                ตั้งค่า AI Assistant (ไม่บังคับ)
+                {t('project.aiAssistantSettings')}
               </button>
             </CollapsibleTrigger>
 
             <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
               <div className="space-y-4 pt-4 mt-2 border-t border-gray-100">
                 <div className="space-y-2">
-                  <Label htmlFor="nickname">ชื่อเล่น AI</Label>
+                  <Label htmlFor="nickname">{t('project.aiNickname')}</Label>
                   <Input
                     id="nickname"
-                    placeholder="เช่น Jarvis, Assistant"
+                    placeholder={t('project.aiNicknamePlaceholder')}
                     value={formData.nickname}
                     onChange={(e) => handleInputChange("nickname", e.target.value)}
                     disabled={isLoading}
                   />
                   <p className="text-xs text-gray-500">
-                    ตั้งชื่อเล่นให้ AI assistant ของคุณ
+                    {t('project.aiNicknameDescription')}
                   </p>
                 </div>
 
                 <div className="space-y-3">
-                  <Label htmlFor="context">Context</Label>
+                  <Label htmlFor="context">{t('project.context')}</Label>
                   <Textarea
                     id="context"
-                    placeholder="เช่น You are a helpful assistant for software developers."
+                    placeholder={t('project.contextPlaceholder')}
                     value={formData.context}
                     onChange={(e) => handleInputChange("context", e.target.value)}
                     disabled={isLoading}
                     rows={3}
                   />
                   <p className="text-xs text-gray-500">
-                    อธิบายบทบาทและหน้าที่ของ AI
+                    {t('project.contextDescription')}
                   </p>
                 </div>
 
                 <div className="space-y-3">
-                  <Label htmlFor="domain_knowledge">Domain Knowledge</Label>
+                  <Label htmlFor="domain_knowledge">{t('project.domainKnowledge')}</Label>
                   <Textarea
                     id="domain_knowledge"
-                    placeholder="เช่น Expert in Golang, Clean Architecture, and PostgreSQL"
+                    placeholder={t('project.domainKnowledgePlaceholder')}
                     value={formData.domain_knowledge}
                     onChange={(e) => handleInputChange("domain_knowledge", e.target.value)}
                     disabled={isLoading}
                     rows={3}
                   />
                   <p className="text-xs text-gray-500">
-                    ความรู้เฉพาะทางที่ AI ควรมี
+                    {t('project.domainKnowledgeDescription')}
                   </p>
                 </div>
               </div>
@@ -223,16 +225,16 @@ export default function CreateProjectModal({
               disabled={isLoading}
               className="w-full sm:w-auto"
             >
-              ยกเลิก
+              {t('common.cancel')}
             </Button>
             <Button type="submit" disabled={isLoading} className="w-full sm:w-auto">
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  กำลังสร้าง...
+                  {t('common.creating')}
                 </>
               ) : (
-                "สร้าง Workspace"
+                t('project.createWorkspace')
               )}
             </Button>
           </DialogFooter>
