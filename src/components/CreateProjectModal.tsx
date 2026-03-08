@@ -79,6 +79,8 @@ export default function CreateProjectModal({
 
       await createProject(payload);
 
+      const projectName = formData.name.trim();
+
       setFormData({
         name: "",
         nickname: "",
@@ -88,11 +90,7 @@ export default function CreateProjectModal({
       setShowAdvanced(false);
 
       toast.success(t('project.workspaceCreatedSuccess'), {
-        description: (
-          <>
-            {t('project.workspaceCreatedDescription').replace('{name}', '')} <strong>{formData.name.trim()}</strong>
-          </>
-        ),
+        description: t('project.workspaceCreatedDescription', { name: projectName }),
       });
 
       onOpenChange(false);

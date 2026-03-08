@@ -436,7 +436,7 @@ function TaskProposalCard({
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-7 sm:h-8 px-2 sm:px-3 text-xs sm:text-sm hover:bg-accent flex-1"
+                  className="h-7 sm:h-8 px-2 sm:px-3 text-xs sm:text-sm flex-1 status-badge-done hover:opacity-80 transition-opacity"
                   onClick={() => onAccept(task)}
                 >
                   <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1" />
@@ -445,7 +445,7 @@ function TaskProposalCard({
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-7 sm:h-8 px-2 sm:px-3 text-xs sm:text-sm hover:bg-accent flex-1"
+                  className="h-7 sm:h-8 px-2 sm:px-3 text-xs sm:text-sm flex-1 status-badge-in-progress hover:opacity-80 transition-opacity"
                   onClick={() => onEdit(task)}
                 >
                   <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1" />
@@ -454,7 +454,7 @@ function TaskProposalCard({
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-7 sm:h-8 px-2 sm:px-3 text-xs sm:text-sm hover:bg-accent flex-1"
+                  className="h-7 sm:h-8 px-2 sm:px-3 text-xs sm:text-sm flex-1 priority-badge-high hover:opacity-80 transition-opacity"
                   onClick={() => onReject(task)}
                 >
                   <X className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1" />
@@ -737,7 +737,6 @@ export default function AIChatPage() {
         model: "whisper-large-v3",
         temperature: 0,
         response_format: "verbose_json",
-        language: "th", // ระบุภาษาไทย
       });
 
       if (transcription.text) {
@@ -829,7 +828,6 @@ export default function AIChatPage() {
         model: "whisper-large-v3",
         temperature: 0,
         response_format: "verbose_json",
-        language: "th",
       });
 
       if (!transcription.text) {
@@ -1147,13 +1145,13 @@ export default function AIChatPage() {
           >
             {/* Drop overlay */}
             {isDraggingAudio && (
-              <div className="absolute inset-0 z-10 bg-primary/10 border-2 border-dashed border-primary rounded-lg flex items-center justify-center pointer-events-none">
-                <div className="flex flex-col items-center gap-2 text-primary">
-                  <Upload className="w-8 h-8" />
-                  <p className="text-sm font-medium">
+              <div className="absolute inset-0 z-10 backdrop-blur-md bg-background/80 border-2 border-dashed border-primary rounded-lg flex items-center justify-center pointer-events-none">
+                <div className="flex flex-col items-center gap-2 sm:gap-3 text-primary">
+                  <Upload className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12" />
+                  <p className="text-xs sm:text-sm md:text-base font-medium text-center px-4">
                     วางไฟล์เสียงที่นี่เพื่อแปลงเป็นข้อความ
                   </p>
-                  <p className="text-xs text-blue-400">
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">
                     .mp3, .wav, .m4a, .webm
                   </p>
                 </div>
@@ -1185,8 +1183,8 @@ export default function AIChatPage() {
                   size="lg"
                   variant={isRecording ? "destructive" : "outline"}
                   className={`h-[52px] px-6 shrink-0 rounded-xl ${isRecording
-                      ? "animate-pulse"
-                      : ""
+                    ? "animate-pulse"
+                    : ""
                     }`}
                   title={isRecording ? "หยุดบันทึกเสียง" : "บันทึกเสียง"}
                 >

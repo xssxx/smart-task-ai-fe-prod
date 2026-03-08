@@ -38,7 +38,7 @@ export default getRequestConfig(async () => {
           if (value && typeof value === 'string') {
             return value;
           }
-        } catch (e) {
+        } catch (_e) {
           // Fallback failed, return key path
         }
       }

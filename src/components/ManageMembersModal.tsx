@@ -10,21 +10,14 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { UserPlus, Trash2, Crown, Loader2 } from "lucide-react";
+import { Trash2, Crown, Loader2 } from "lucide-react";
 import { useProjectMembers } from "@/hooks/useProjectMembers";
 import { toast } from "@/lib/enhanced-toast";
+import InviteMemberForm from "@/components/InviteMemberForm";
+import PendingInvitationsList from "@/components/PendingInvitationsList";
 
 interface ManageMembersModalProps {
   open: boolean;
@@ -40,44 +33,25 @@ const ManageMembersModal = ({
   projectName,
 }: ManageMembersModalProps) => {
   const t = useTranslations();
-  const { members, loading, emailMap, fetchMembers, addMember, removeMember } =
+  const { members, loading, emailMap, fetchMembers, removeMember } =
     useProjectMembers(projectId);
-  const [addingMember, setAddingMember] = useState(false);
-  const [newMemberEmail, setNewMemberEmail] = useState("");
-  const [newMemberRole, setNewMemberRole] = useState<"member" | "owner">(
-    "member",
-  );
   const [removingMember, setRemovingMember] = useState<{
     accountId: string;
     email: string;
   } | null>(null);
   const [isRemoving, setIsRemoving] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     if (open) {
+      // Refresh members when modal opens
       fetchMembers();
     }
   }, [open, fetchMembers]);
 
-  const handleAddMember = async () => {
-    if (!newMemberEmail.trim()) {
-      return;
-    }
-
-    setAddingMember(true);
-    const success = await addMember({
-      email: newMemberEmail.trim(),
-      role: newMemberRole,
-    });
-
-    if (success) {
-      toast.success(t('members.memberAddedSuccess'), {
-        description: `${newMemberEmail} ${t('members.added').toLowerCase()}`,
-      });
-      setNewMemberEmail("");
-      setNewMemberRole("member");
-    }
-    setAddingMember(false);
+  const handleInvitationSuccess = () => {
+    fetchMembers();
+    setRefreshKey(prev => prev + 1); // Force PendingInvitationsList to refresh
   };
 
   const handleRemoveMemberClick = (accountId: string) => {
@@ -119,51 +93,10 @@ const ManageMembersModal = ({
           </DialogHeader>
 
           <div className="space-y-4 sm:space-y-6">
-            <div className="space-y-3 sm:space-y-4 p-3 sm:p-4 bg-muted/50 rounded-lg">
-              <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <UserPlus className="w-4 h-4" />
-                {t('members.addNewMember')}
-              </h3>
-              <div className="space-y-3">
-                <div>
-                  <Label htmlFor="email" className="text-sm">{t('members.email')}</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder={t('members.emailPlaceholder')}
-                    value={newMemberEmail}
-                    onChange={(e) => setNewMemberEmail(e.target.value)}
-                    disabled={addingMember}
-                    className="text-sm"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="role" className="text-sm">{t('members.role')}</Label>
-                  <Select
-                    value={newMemberRole}
-                    onValueChange={(value: "member" | "owner") =>
-                      setNewMemberRole(value)
-                    }
-                    disabled={addingMember}
-                  >
-                    <SelectTrigger id="role" className="text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="member">{t('members.member')}</SelectItem>
-                      <SelectItem value="owner">{t('members.owner')}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Button
-                  onClick={handleAddMember}
-                  disabled={addingMember || !newMemberEmail.trim()}
-                  className="w-full text-sm"
-                >
-                  {addingMember ? t('members.adding') : t('members.addMember')}
-                </Button>
-              </div>
-            </div>
+            <InviteMemberForm
+              projectId={projectId}
+              onSuccess={handleInvitationSuccess}
+            />
 
             <div className="space-y-3">
               <h3 className="text-sm font-semibold text-foreground">
@@ -236,6 +169,8 @@ const ManageMembersModal = ({
                 )}
               </div>
             </div>
+
+            <PendingInvitationsList key={refreshKey} projectId={projectId} />
           </div>
         </DialogContent>
       </Dialog>

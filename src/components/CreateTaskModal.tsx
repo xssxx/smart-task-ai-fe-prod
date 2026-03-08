@@ -125,11 +125,7 @@ export default function CreateTaskModal({
       }
 
       toast.success(t('task.taskCreatedSuccess'), {
-        description: (
-          <>
-            {t('task.taskCreatedDescription').replace('{name}', '')} <strong>{payload.name}</strong>
-          </>
-        ),
+        description: t('task.taskCreatedDescription', { name: payload.name }),
         duration: TOAST_DURATION.SUCCESS,
       });
       handleClose(false);

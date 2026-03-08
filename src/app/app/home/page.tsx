@@ -38,7 +38,6 @@ import { toast } from "@/lib/enhanced-toast";
 export default function HomePage() {
   const t = useTranslations();
 
-  // New state for dashboard data
   const [statistics, setStatistics] = useState<TaskStatistics | null>(null);
   const [unscheduledTasks, setUnscheduledTasks] = useState<TaskWithProject[]>([]);
   const [todayTasks, setTodayTasks] = useState<TaskWithProject[]>([]);
@@ -133,15 +132,13 @@ export default function HomePage() {
     try {
       await deleteTask(taskId);
       toast.success(t('dashboard.deleteTaskSuccess'));
-
-      // Refresh all data after successful deletion
       fetchTaskStatistics();
       fetchUnscheduledTasks();
       fetchTodayTasks();
     } catch (err) {
       console.error("Failed to delete task:", err);
       toast.error(t('dashboard.deleteTaskFailed'));
-      throw err; // Re-throw to let the component handle it
+      throw err;
     }
   };
 
@@ -151,14 +148,12 @@ export default function HomePage() {
   };
 
   const handleStatusChange = () => {
-    // Refresh all data after status change
     fetchTaskStatistics();
     fetchUnscheduledTasks();
     fetchTodayTasks();
   };
 
   const handleTaskDetailSuccess = () => {
-    // Refresh all data after task update
     fetchTaskStatistics();
     fetchUnscheduledTasks();
     fetchTodayTasks();
@@ -236,7 +231,7 @@ export default function HomePage() {
               <CardTitle className="text-base font-medium text-muted-foreground">
                 {t('dashboard.inProgressTasks')}
               </CardTitle>
-              <Clock className="w-5 h-5 text-sky-500" />
+              <Clock className="w-5 h-5 dashboard-icon-in-progress" />
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-foreground">
@@ -251,7 +246,7 @@ export default function HomePage() {
               <CardTitle className="text-base font-medium text-muted-foreground">
                 {t('dashboard.inReviewTasks')}
               </CardTitle>
-              <AlertCircle className="w-5 h-5 text-yellow-500" />
+              <AlertCircle className="w-5 h-5 dashboard-icon-in-review" />
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-foreground">
@@ -266,7 +261,7 @@ export default function HomePage() {
               <CardTitle className="text-base font-medium text-muted-foreground">
                 {t('dashboard.completedTasks')}
               </CardTitle>
-              <CheckCircle2 className="w-5 h-5 text-lime-500" />
+              <CheckCircle2 className="w-5 h-5 dashboard-icon-done" />
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-foreground">
@@ -301,7 +296,7 @@ export default function HomePage() {
               </CardHeader>
               <CardContent>
                 <div className="py-8 flex flex-col items-center justify-center text-center">
-                  <AlertCircle className="w-12 h-12 text-rose-500 mb-3" />
+                  <AlertCircle className="w-12 h-12 dashboard-icon-error mb-3" />
                   <p className="text-sm text-muted-foreground mb-3">{todayError}</p>
                   <Button
                     variant="outline"
@@ -343,7 +338,7 @@ export default function HomePage() {
               </CardHeader>
               <CardContent>
                 <div className="h-[200px] flex flex-col items-center justify-center text-center">
-                  <AlertCircle className="w-12 h-12 text-rose-500 mb-3" />
+                  <AlertCircle className="w-12 h-12 dashboard-icon-error mb-3" />
                   <p className="text-sm text-muted-foreground mb-3">{statisticsError}</p>
                   <Button
                     variant="outline"
@@ -384,7 +379,7 @@ export default function HomePage() {
               </CardHeader>
               <CardContent>
                 <div className="py-8 flex flex-col items-center justify-center text-center">
-                  <AlertCircle className="w-12 h-12 text-rose-500 mb-3" />
+                  <AlertCircle className="w-12 h-12 dashboard-icon-error mb-3" />
                   <p className="text-sm text-muted-foreground mb-3">{unscheduledError}</p>
                   <Button
                     variant="outline"
