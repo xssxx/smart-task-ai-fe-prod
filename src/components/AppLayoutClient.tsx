@@ -14,10 +14,9 @@ function NotificationSetup() {
   const { addNotification } = useNotifications();
 
   useEffect(() => {
-    console.log('[NotificationSetup] Registering notification handler');
     setGlobalNotificationHandler(addNotification);
     return () => {
-      console.log('[NotificationSetup] Unregistering notification handler');
+      setGlobalNotificationHandler(() => { });
     };
   }, [addNotification]);
 

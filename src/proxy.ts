@@ -23,7 +23,7 @@ export function proxy(req: NextRequest) {
   const locale = req.cookies.get('NEXT_LOCALE')?.value || defaultLocale;
   const validLocale = locales.includes(locale as any) ? locale : defaultLocale;
 
-  let response = getRouteResponse(pathname, isAuthenticated, isPublicRoute, req.url);
+  const response = getRouteResponse(pathname, isAuthenticated, isPublicRoute, req.url);
 
   if (!req.cookies.get('NEXT_LOCALE')) {
     response.cookies.set('NEXT_LOCALE', validLocale);
@@ -62,3 +62,5 @@ function getRouteResponse(
 export const config = {
   matcher: ["/((?!api|_next/static|_next/image|favicon.ico|logo.svg).*)"],
 };
+
+export default proxy;

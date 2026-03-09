@@ -544,7 +544,7 @@ export default function BoardPage() {
           <h1 className="text-3xl font-semibold text-foreground mb-2 lg:hidden">
             {t('board.pageTitle')}
           </h1>
-          
+
           {/* Page Subtitle and Action Buttons */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
             <p className="text-base sm:text-lg text-muted-foreground">

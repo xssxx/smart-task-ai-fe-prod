@@ -99,6 +99,19 @@
   --action-created-bg: #f1fae5;
   --action-updated-bg: #e1f2fa;
   --action-deleted-bg: #f9e4ea;
+
+  /* Invitation colors (light theme) */
+  --invitation-success: #16a34a;
+  --invitation-success-hover: #15803d;
+  --invitation-success-bg: #f0fdf4;
+  --invitation-success-border: #bbf7d0;
+  --invitation-danger: #dc2626;
+  --invitation-danger-hover: #b91c1c;
+  --invitation-danger-bg: #fef2f2;
+  --invitation-danger-border: #fecaca;
+  --invitation-warning: #f59e0b;
+  --invitation-warning-bg: #fffbeb;
+  --invitation-warning-border: #fde68a;
 }
 
 /* Task status colors */
@@ -183,6 +196,19 @@
   --action-created-bg: #212a15;
   --action-updated-bg: #15262d;
   --action-deleted-bg: #2e181e;
+
+  /* Invitation colors (dark theme) */
+  --invitation-success: #22c55e;
+  --invitation-success-hover: #16a34a;
+  --invitation-success-bg: #14532d;
+  --invitation-success-border: #166534;
+  --invitation-danger: #ef4444;
+  --invitation-danger-hover: #dc2626;
+  --invitation-danger-bg: #450a0a;
+  --invitation-danger-border: #991b1b;
+  --invitation-warning: #f59e0b;
+  --invitation-warning-bg: #451a03;
+  --invitation-warning-border: #92400e;
 }
 
 @layer base {
@@ -516,4 +542,80 @@ button {
     flex: 1 1 100%;
     max-width: 100%;
   }
+}
+
+/* Invitation utility classes */
+.invitation-success-btn {
+  background-color: var(--invitation-success);
+  color: white;
+}
+
+.invitation-success-btn:hover {
+  background-color: var(--invitation-success-hover);
+}
+
+.invitation-danger-btn {
+  color: var(--invitation-danger);
+  border-color: var(--invitation-danger-border);
+}
+
+.invitation-danger-btn:hover {
+  background-color: var(--invitation-danger-bg);
+  color: var(--invitation-danger-hover);
+}
+
+.invitation-danger-icon {
+  color: var(--invitation-danger);
+}
+
+.invitation-danger-icon:hover {
+  color: var(--invitation-danger-hover);
+  background-color: var(--invitation-danger-bg);
+}
+
+.invitation-danger-border {
+  border-color: var(--invitation-danger);
+}
+
+.invitation-danger-text {
+  color: var(--invitation-danger);
+}
+
+.invitation-warning-bg {
+  background-color: var(--invitation-warning-bg);
+  border-color: var(--invitation-warning-border);
+}
+
+.invitation-warning-text {
+  color: var(--invitation-warning);
+}
+
+.invitation-danger-dialog-title {
+  color: var(--invitation-danger);
+}
+
+.invitation-danger-dialog-bg {
+  background-color: var(--invitation-danger-bg);
+  border-color: var(--invitation-danger-border);
+}
+
+.invitation-danger-dialog-text {
+  color: var(--invitation-danger);
+}
+
+/* Dashboard icon colors */
+.dashboard-icon-in-progress {
+  color: var(--status-in-progress);
+}
+
+.dashboard-icon-in-review {
+  color: var(--status-in-review);
+}
+
+.dashboard-icon-done {
+  color: var(--status-done);
+}
+
+.dashboard-icon-error {
+  color: var(--toast-error-text);
 }

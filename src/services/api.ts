@@ -139,6 +139,7 @@ export interface ProjectConfig {
 export interface Project {
   id: string;
   name: string;
+  role: string; // owner/member
   config?: ProjectConfig;
   created_at: string;
   updated_at: string;
@@ -408,4 +409,82 @@ export const listProjectMembers = (projectId: string) => {
     data: ListMembersResponse;
     error: unknown;
   }>(`/api/projects/${projectId}/members`);
+};
+
+// Invitation Management APIs
+import type { Invitation, CreateInvitationRequest } from "@/types/invitation";
+
+export type InvitationResponse = Invitation;
+
+export interface ListInvitationsResponse {
+  invitations: InvitationResponse[];
+  total: number;
+}
+
+export type { CreateInvitationRequest };
+
+export const createInvitation = (
+  projectId: string,
+  payload: CreateInvitationRequest,
+) => {
+  return apiClient.post<{
+    success: boolean;
+    message: string;
+    data: InvitationResponse;
+    error: unknown;
+  }>(`/api/projects/${projectId}/invite`, payload);
+};
+
+export const acceptInvitation = (
+  projectId: string,
+  inviteeAccountId: string,
+) => {
+  return apiClient.post<{
+    success: boolean;
+    message: string;
+    data: { message: string };
+    error: unknown;
+  }>(`/api/projects/${projectId}/invite/${inviteeAccountId}/accept`, {});
+};
+
+export const rejectInvitation = (
+  projectId: string,
+  inviteeAccountId: string,
+) => {
+  return apiClient.post<{
+    success: boolean;
+    message: string;
+    data: { message: string };
+    error: unknown;
+  }>(`/api/projects/${projectId}/invite/${inviteeAccountId}/reject`, {});
+};
+
+export const cancelInvitation = (
+  projectId: string,
+  inviteeAccountId: string,
+) => {
+  return apiClient.delete<{
+    success: boolean;
+    message: string;
+    data: { message: string };
+    error: unknown;
+  }>(`/api/projects/${projectId}/invite/${inviteeAccountId}`);
+};
+
+export const getMyInvitations = () => {
+  return apiClient.get<{
+    success: boolean;
+    message: string;
+    data: ListInvitationsResponse;
+    error: unknown;
+  }>("/api/accounts/me/invite");
+};
+
+export const getProjectInvitations = (projectId: string) => {
+  return apiClient.get<{
+    success: boolean;
+    message: string;
+    data: ListInvitationsResponse;
+    error: unknown;
+  }>(`/api/projects/${projectId}/invite`);
 };
