@@ -11,12 +11,26 @@ interface SidebarInvitationsProps {
   onReject?: () => void;
 }
 
-export const SidebarInvitations = ({ onAccept, onReject }: SidebarInvitationsProps) => {
+export const SidebarInvitations = ({
+  onAccept,
+  onReject,
+}: SidebarInvitationsProps) => {
   const t = useTranslations();
-  const { invitations, loading: invitationsLoading, refetch } = useMyInvitations();
-  const { acceptInvitation, rejectInvitation, loading: actionLoading } = useInvitationActions();
+  const {
+    invitations,
+    loading: invitationsLoading,
+    refetch,
+  } = useMyInvitations();
+  const {
+    acceptInvitation,
+    rejectInvitation,
+    loading: actionLoading,
+  } = useInvitationActions();
 
-  const handleAcceptInvitation = async (projectId: string, inviteeAccountId: string) => {
+  const handleAcceptInvitation = async (
+    projectId: string,
+    inviteeAccountId: string,
+  ) => {
     const success = await acceptInvitation(projectId, inviteeAccountId);
     if (success) {
       // Refresh invitations list
@@ -28,7 +42,10 @@ export const SidebarInvitations = ({ onAccept, onReject }: SidebarInvitationsPro
     }
   };
 
-  const handleRejectInvitation = async (projectId: string, inviteeAccountId: string) => {
+  const handleRejectInvitation = async (
+    projectId: string,
+    inviteeAccountId: string,
+  ) => {
     const success = await rejectInvitation(projectId, inviteeAccountId);
     if (success) {
       // Refresh invitations list
@@ -52,15 +69,17 @@ export const SidebarInvitations = ({ onAccept, onReject }: SidebarInvitationsPro
   return (
     <>
       {invitations.map((invitation) => (
-        <div key={invitation.invitation_id} className="group">
+        <div key={invitation.created_at} className="group">
           <div className="flex items-center gap-3 px-4 py-3">
             <div
               className={`w-3 h-3 rounded-full ${WORKSPACE_COLORS[Math.floor(Math.random() * WORKSPACE_COLORS.length)]}`}
             ></div>
             <div className="flex-1 min-w-0">
-              <span className="truncate block text-sm font-medium">{invitation.project_name}</span>
+              <span className="truncate block text-sm font-medium">
+                {invitation.project_name}
+              </span>
               <span className="text-xs text-muted-foreground block">
-                {t('invitations.invitedBy')} {invitation.inviter_name}
+                {t("invitations.invitedBy")} {invitation.inviter_name}
               </span>
             </div>
           </div>
@@ -71,7 +90,12 @@ export const SidebarInvitations = ({ onAccept, onReject }: SidebarInvitationsPro
               size="sm"
               variant="outline"
               className="h-8 text-xs flex-1 status-badge-done hover:opacity-80 transition-opacity"
-              onClick={() => handleAcceptInvitation(invitation.project_id, invitation.invitee_account_id)}
+              onClick={() =>
+                handleAcceptInvitation(
+                  invitation.project_id,
+                  invitation.invitee_account_id,
+                )
+              }
               disabled={actionLoading}
             >
               {actionLoading ? (
@@ -79,7 +103,7 @@ export const SidebarInvitations = ({ onAccept, onReject }: SidebarInvitationsPro
               ) : (
                 <>
                   <Check className="w-3 h-3 mr-1" />
-                  {t('invitations.accept')}
+                  {t("invitations.accept")}
                 </>
               )}
             </Button>
@@ -87,7 +111,12 @@ export const SidebarInvitations = ({ onAccept, onReject }: SidebarInvitationsPro
               size="sm"
               variant="outline"
               className="h-8 text-xs flex-1 priority-badge-high hover:opacity-80 transition-opacity"
-              onClick={() => handleRejectInvitation(invitation.project_id, invitation.invitee_account_id)}
+              onClick={() =>
+                handleRejectInvitation(
+                  invitation.project_id,
+                  invitation.invitee_account_id,
+                )
+              }
               disabled={actionLoading}
             >
               {actionLoading ? (
@@ -95,7 +124,7 @@ export const SidebarInvitations = ({ onAccept, onReject }: SidebarInvitationsPro
               ) : (
                 <>
                   <XCircle className="w-3 h-3 mr-1" />
-                  {t('invitations.reject')}
+                  {t("invitations.reject")}
                 </>
               )}
             </Button>
@@ -105,4 +134,3 @@ export const SidebarInvitations = ({ onAccept, onReject }: SidebarInvitationsPro
     </>
   );
 };
-

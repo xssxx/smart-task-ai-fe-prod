@@ -1,4 +1,5 @@
 export interface Invitation {
+  invitation_id?: string;
   project_id: string;
   project_name: string;
   inviter_account_id: string;
