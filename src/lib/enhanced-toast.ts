@@ -11,7 +11,6 @@ export const setGlobalNotificationHandler = (
 
 export const toast = {
   success: (message: string, options?: any) => {
-    console.log('[Enhanced Toast] Success called:', { message, options });
     sonnerToast.success(message, options);
     if (globalNotificationHandler) {
       let fullMessage = message;
@@ -21,14 +20,10 @@ export const toast = {
           : extractTextFromReactNode(options.description);
         fullMessage = `${message} - ${descText}`;
       }
-      console.log('[Enhanced Toast] Calling notification handler:', { fullMessage, metadata: options?.metadata });
       globalNotificationHandler("success", fullMessage, options?.metadata);
-    } else {
-      console.warn('[Enhanced Toast] No global notification handler registered');
     }
   },
   error: (message: string, options?: any) => {
-    console.log('[Enhanced Toast] Error called:', { message, options });
     sonnerToast.error(message, options);
     if (globalNotificationHandler) {
       let fullMessage = message;
@@ -38,14 +33,10 @@ export const toast = {
           : extractTextFromReactNode(options.description);
         fullMessage = `${message} - ${descText}`;
       }
-      console.log('[Enhanced Toast] Calling notification handler:', { fullMessage, metadata: options?.metadata });
       globalNotificationHandler("error", fullMessage, options?.metadata);
-    } else {
-      console.warn('[Enhanced Toast] No global notification handler registered');
     }
   },
   info: (message: string, options?: any) => {
-    console.log('[Enhanced Toast] Info called:', { message, options });
     sonnerToast.info(message, options);
     if (globalNotificationHandler) {
       let fullMessage = message;
@@ -55,10 +46,7 @@ export const toast = {
           : extractTextFromReactNode(options.description);
         fullMessage = `${message} - ${descText}`;
       }
-      console.log('[Enhanced Toast] Calling notification handler:', { fullMessage, metadata: options?.metadata });
       globalNotificationHandler("info", fullMessage, options?.metadata);
-    } else {
-      console.warn('[Enhanced Toast] No global notification handler registered');
     }
   },
   warning: sonnerToast.warning,

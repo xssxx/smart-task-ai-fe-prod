@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Loader2, Calendar, Folder, Trash2, ChevronDown } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { getPriorityColor, getStatusColor } from "@/constants";
-import { getStatusLabel } from "@/lib/task-utils";
+import { getStatusKey } from "@/lib/task-utils";
 import { TaskWithProject, updateTask } from "@/services/api";
 import { toast } from "@/lib/enhanced-toast";
 
@@ -35,6 +36,7 @@ export default function UnscheduledTasksSection({
   onTaskClick,
   onStatusChange,
 }: UnscheduledTasksSectionProps) {
+  const t = useTranslations();
   const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [selectedTask, setSelectedTask] = useState<TaskWithProject | null>(null);
@@ -70,13 +72,13 @@ export default function UnscheduledTasksSection({
     try {
       setUpdatingTaskId(taskId);
       await updateTask(taskId, { status: newStatus });
-      toast.success("อัพเดท Status สำเร็จ");
+      toast.success(t('task.statusUpdatedSuccess'));
       if (onStatusChange) {
         onStatusChange();
       }
     } catch (error) {
       console.error("Failed to update task status:", error);
-      toast.error("ไม่สามารถอัพเดท Status ได้");
+      toast.error(t('task.statusUpdateFailed'));
     } finally {
       setUpdatingTaskId(null);
     }
@@ -94,18 +96,18 @@ export default function UnscheduledTasksSection({
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-xl">
             <Calendar className="w-5 h-5" />
-            งานที่ยังไม่ได้กำหนดวันที่
+            {t('dashboard.unscheduledTasks')}
           </CardTitle>
           <CardDescription>
-            งานที่ยังไม่มีกำหนดวันที่ชัดเจน ควรจัดลำดับความสำคัญและกำหนดวันที่ให้เร็วที่สุด
+            {t('dashboard.unscheduledTasksDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent className={tasks.length === 0 ? "" : tasks.length <= 3 ? "" : "max-h-[500px] overflow-y-auto"}>
           {tasks.length === 0 ? (
-            <div className="py-8 flex items-center justify-center text-gray-500">
+            <div className="py-8 flex items-center justify-center text-muted-foreground">
               <div className="text-center">
-                <Calendar className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                <p className="text-sm">ไม่มีงานที่ยังไม่ได้กำหนดวันที่</p>
+                <Calendar className="w-12 h-12 mx-auto mb-3 text-muted" />
+                <p className="text-sm">{t('dashboard.noUnscheduledTasks')}</p>
               </div>
             </div>
           ) : (
@@ -113,17 +115,17 @@ export default function UnscheduledTasksSection({
               {tasks.map((task) => (
                 <div
                   key={task.id}
-                  className="flex items-center justify-between gap-3 md:gap-6 p-4 md:p-6 border rounded-lg hover:bg-gray-50 transition-colors min-h-[140px] cursor-pointer"
+                  className="flex items-center justify-between gap-3 md:gap-6 p-4 md:p-6 border border-border rounded-lg hover:bg-accent transition-colors min-h-[140px] cursor-pointer"
                   onClick={() => handleCardClick(task.id)}
                 >
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2 text-gray-600">
+                    <div className="flex items-center gap-2 mb-2 text-muted-foreground">
                       <Folder className="w-4 h-4 shrink-0" />
                       <span className="text-sm truncate">{task.project.name}</span>
                     </div>
 
                     <div className="flex items-center gap-2 md:gap-3 mb-3">
-                      <h4 className="text-lg md:text-2xl font-semibold text-gray-900 truncate">
+                      <h4 className="text-lg md:text-2xl font-semibold text-foreground truncate">
                         {task.name}
                       </h4>
                       <Badge
@@ -135,7 +137,7 @@ export default function UnscheduledTasksSection({
                     </div>
 
                     {task.description && (
-                      <p className="text-sm md:text-base text-gray-600 line-clamp-2">
+                      <p className="text-sm md:text-base text-muted-foreground line-clamp-2">
                         {task.description}
                       </p>
                     )}
@@ -146,7 +148,7 @@ export default function UnscheduledTasksSection({
                       variant="outline"
                       className={`${getStatusColor(task.status)} px-3 py-1.5 md:px-4 md:py-2 text-sm font-medium rounded-md whitespace-nowrap`}
                     >
-                      {getStatusLabel(task.status)}
+                      {t(getStatusKey(task.status))}
                     </Badge>
 
                     <DropdownMenu>
@@ -170,8 +172,8 @@ export default function UnscheduledTasksSection({
                           onClick={() => handleStatusChange(task.id, "todo")}
                         >
                           <span className="flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-[#737373]"></span>
-                            รอดำเนินการ
+                            <span className="w-2 h-2 rounded-full status-dot-todo"></span>
+                            {t('status.todo')}
                           </span>
                         </DropdownMenuItem>
                         <DropdownMenuItem
@@ -179,8 +181,8 @@ export default function UnscheduledTasksSection({
                           onClick={() => handleStatusChange(task.id, "in_progress")}
                         >
                           <span className="flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-[#00a6f4]"></span>
-                            กำลังดำเนินการ
+                            <span className="w-2 h-2 rounded-full status-dot-in-progress"></span>
+                            {t('status.inProgress')}
                           </span>
                         </DropdownMenuItem>
                         <DropdownMenuItem
@@ -188,8 +190,8 @@ export default function UnscheduledTasksSection({
                           onClick={() => handleStatusChange(task.id, "in_review")}
                         >
                           <span className="flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-[#f0b100]"></span>
-                            รอตรวจสอบ
+                            <span className="w-2 h-2 rounded-full status-dot-in-review"></span>
+                            {t('status.inReview')}
                           </span>
                         </DropdownMenuItem>
                         <DropdownMenuItem
@@ -197,8 +199,8 @@ export default function UnscheduledTasksSection({
                           onClick={() => handleStatusChange(task.id, "done")}
                         >
                           <span className="flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-[#7ccf00]"></span>
-                            เสร็จสิ้น
+                            <span className="w-2 h-2 rounded-full status-dot-done"></span>
+                            {t('status.done')}
                           </span>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -228,10 +230,9 @@ export default function UnscheduledTasksSection({
       <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
-            <DialogTitle className="text-rose-600">ยืนยันการลบ Task</DialogTitle>
+            <DialogTitle className="text-rose-600">{t('task.confirmDelete')}</DialogTitle>
             <DialogDescription>
-              คุณต้องการลบ Task &quot;{selectedTask?.name}&quot; หรือไม่?
-              การดำเนินการนี้ไม่สามารถย้อนกลับได้
+              {t('task.confirmDeleteDescription', { name: selectedTask?.name || '' })}
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-3 pt-4">
@@ -240,7 +241,7 @@ export default function UnscheduledTasksSection({
               onClick={handleCancelDelete}
               disabled={deletingTaskId !== null}
             >
-              ยกเลิก
+              {t('common.cancel')}
             </Button>
             <Button
               variant="destructive"
@@ -250,10 +251,10 @@ export default function UnscheduledTasksSection({
               {deletingTaskId !== null ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  กำลังลบ...
+                  {t('common.deleting')}
                 </>
               ) : (
-                "ลบ Task"
+                t('common.delete')
               )}
             </Button>
           </div>

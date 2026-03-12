@@ -6,6 +6,7 @@ export interface Message {
 export interface SendMessageRequest {
   content: string;
   session_history?: Message[];
+  locale?: string;
 }
 
 export interface TaskAction {
@@ -54,6 +55,7 @@ export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
   timestamp: Date;
+  audioUrl?: string;
   taskActions?: TaskAction[];
   proposedTasks?: ProposedTask[];
 }

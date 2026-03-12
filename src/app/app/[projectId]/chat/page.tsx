@@ -1,10 +1,12 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import { useParams } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import Groq from "groq-sdk";
 import {
   Send,
   Bot,
@@ -19,13 +21,16 @@ import {
   Clock,
   Flag,
   PanelRight,
+  Mic,
+  MicOff,
+  Upload,
 } from "lucide-react";
 import { sendChatMessage, createTask, CreateTaskRequest } from "@/services/api";
 import { ChatMessage, Message, ProposedTask } from "@/types/chat";
 import { getActionBadgeColor, PRIORITY_OPTIONS } from "@/constants";
 import { formatDateTime } from "@/lib/date-utils";
-import { getPriorityLabel } from "@/lib/task-utils";
-import { useProfile } from "@/hooks/useProfile";
+import { getPriorityKey } from "@/lib/task-utils";
+import { useProfile } from "@/contexts/ProfileContext";
 import {
   Dialog,
   DialogContent,
@@ -51,15 +56,32 @@ interface EditProposedTaskModalProps {
   task: ProposedTask | null;
   isOpen: boolean;
   onClose: () => void;
-  onSave: (task: ProposedTask, location?: string, recurringDays?: number, recurringUntil?: string) => void;
+  onSave: (
+    task: ProposedTask,
+    location?: string,
+    recurringDays?: number,
+    recurringUntil?: string,
+  ) => void;
 }
 
 function EditProposedTaskModal({ task, isOpen, onClose, onSave }: EditProposedTaskModalProps) {
+  const t = useTranslations();
   const [editedTask, setEditedTask] = useState<ProposedTask | null>(null);
-  const [startDateTime, setStartDateTime] = useState<{ date?: Date | null, hasTime: boolean }>({ hasTime: true });
-  const [endDateTime, setEndDateTime] = useState<{ date?: Date | null, hasTime: boolean }>({ hasTime: true });
-  const [recurringUntil, setRecurringUntil] = useState<{ date?: Date | null; hasTime: boolean }>({ hasTime: false });
-  const [recurringEndType, setRecurringEndType] = useState<"never" | "on_date">("never");
+  const [startDateTime, setStartDateTime] = useState<{
+    date?: Date | null;
+    hasTime: boolean;
+  }>({ hasTime: true });
+  const [endDateTime, setEndDateTime] = useState<{
+    date?: Date | null;
+    hasTime: boolean;
+  }>({ hasTime: true });
+  const [recurringUntil, setRecurringUntil] = useState<{
+    date?: Date | null;
+    hasTime: boolean;
+  }>({ hasTime: false });
+  const [recurringEndType, setRecurringEndType] = useState<"never" | "on_date">(
+    "never",
+  );
   const [location, setLocation] = useState("");
   const [recurringDays, setRecurringDays] = useState<number | null>(null);
 
@@ -86,27 +108,37 @@ function EditProposedTaskModal({ task, isOpen, onClose, onSave }: EditProposedTa
   const handleSave = () => {
     const updatedTask = {
       ...editedTask,
-      start_datetime: startDateTime.date?.toISOString() || editedTask.start_datetime,
+      start_datetime:
+        startDateTime.date?.toISOString() || editedTask.start_datetime,
       end_datetime: endDateTime.date?.toISOString() || editedTask.end_datetime,
     };
-    const recurringUntilValue = recurringEndType === "on_date" && recurringUntil.date
-      ? recurringUntil.date.toISOString()
-      : undefined;
-    onSave(updatedTask, location || undefined, recurringDays || undefined, recurringUntilValue);
+    const recurringUntilValue =
+      recurringEndType === "on_date" && recurringUntil.date
+        ? recurringUntil.date.toISOString()
+        : undefined;
+    onSave(
+      updatedTask,
+      location || undefined,
+      recurringDays || undefined,
+      recurringUntilValue,
+    );
   };
 
-  const isDateRangeInvalid = startDateTime.date && endDateTime.date && endDateTime.date <= startDateTime.date;
+  const isDateRangeInvalid =
+    startDateTime.date &&
+    endDateTime.date &&
+    endDateTime.date <= startDateTime.date;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px] max-w-[95vw] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-125 max-w-[95vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>แก้ไข Task</DialogTitle>
+          <DialogTitle>{t('chat.editTask')}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="name">ชื่อ Task <span className="text-rose-500">*</span></Label>
+            <Label htmlFor="name">{t('chat.taskName')} <span className="text-rose-500">*</span></Label>
             <Input
               id="name"
               value={editedTask.name}
@@ -117,7 +149,7 @@ function EditProposedTaskModal({ task, isOpen, onClose, onSave }: EditProposedTa
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">รายละเอียด</Label>
+            <Label htmlFor="description">{t('chat.description')}</Label>
             <Textarea
               id="description"
               value={editedTask.description}
@@ -129,7 +161,7 @@ function EditProposedTaskModal({ task, isOpen, onClose, onSave }: EditProposedTa
           </div>
 
           <div className="space-y-2">
-            <Label>Priority <span className="text-rose-500">*</span></Label>
+            <Label>{t('chat.priority')} <span className="text-rose-500">*</span></Label>
             <Select
               value={editedTask.priority}
               onValueChange={(value: "high" | "medium" | "low") =>
@@ -142,7 +174,7 @@ function EditProposedTaskModal({ task, isOpen, onClose, onSave }: EditProposedTa
               <SelectContent>
                 {PRIORITY_OPTIONS.map((opt) => (
                   <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
+                    {t(getPriorityKey(opt.value))}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -151,13 +183,13 @@ function EditProposedTaskModal({ task, isOpen, onClose, onSave }: EditProposedTa
 
           {/* Start DateTime */}
           <div className="space-y-2">
-            <Label>วันเวลาเริ่มต้น</Label>
+            <Label>{t('chat.startDateTime')}</Label>
             <div className="flex gap-2">
               <div className="flex-1">
                 <DateTimePicker
                   value={startDateTime}
                   onChange={setStartDateTime}
-                  placeholder="เลือกวันเวลาเริ่มต้น"
+                  placeholder={t('chat.selectStartDateTime')}
                 />
               </div>
               {startDateTime.date && (
@@ -165,7 +197,9 @@ function EditProposedTaskModal({ task, isOpen, onClose, onSave }: EditProposedTa
                   type="button"
                   variant="outline"
                   size="icon"
-                  onClick={() => setStartDateTime({ date: null, hasTime: true })}
+                  onClick={() =>
+                    setStartDateTime({ date: null, hasTime: true })
+                  }
                   className="shrink-0"
                 >
                   <X className="w-4 h-4" />
@@ -176,13 +210,13 @@ function EditProposedTaskModal({ task, isOpen, onClose, onSave }: EditProposedTa
 
           {/* End DateTime */}
           <div className="space-y-2">
-            <Label>วันเวลาสิ้นสุด</Label>
+            <Label>{t('chat.endDateTime')}</Label>
             <div className="flex gap-2">
               <div className="flex-1">
                 <DateTimePicker
                   value={endDateTime}
                   onChange={setEndDateTime}
-                  placeholder="เลือกวันเวลาสิ้นสุด"
+                  placeholder={t('chat.selectEndDateTime')}
                 />
               </div>
               {endDateTime.date && (
@@ -199,23 +233,23 @@ function EditProposedTaskModal({ task, isOpen, onClose, onSave }: EditProposedTa
             </div>
             {isDateRangeInvalid && (
               <p className="text-xs text-rose-600">
-                วันเวลาสิ้นสุดต้องมากกว่าวันเวลาเริ่มต้น
+                {t('chat.endDateMustBeAfterStart')}
               </p>
             )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="location">สถานที่</Label>
+            <Label htmlFor="location">{t('chat.location')}</Label>
             <Input
               id="location"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              placeholder="เช่น ห้องประชุม A, Online"
+              placeholder={t('chat.locationPlaceholder')}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="recurringDays">ทำประจำ</Label>
+            <Label htmlFor="recurringDays">{t('chat.recurring')}</Label>
             <Select
               value={recurringDays ? recurringDays.toString() : "0"}
               onValueChange={(value) => {
@@ -228,14 +262,14 @@ function EditProposedTaskModal({ task, isOpen, onClose, onSave }: EditProposedTa
               }}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="ไม่ทำประจำ" />
+                <SelectValue placeholder={t('chat.noRecurring')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="0">ไม่ทำประจำ</SelectItem>
-                <SelectItem value="1">ทุกวัน</SelectItem>
-                <SelectItem value="7">ทุกสัปดาห์</SelectItem>
-                <SelectItem value="14">ทุก 2 สัปดาห์</SelectItem>
-                <SelectItem value="30">ทุกเดือน</SelectItem>
+                <SelectItem value="0">{t('chat.noRecurring')}</SelectItem>
+                <SelectItem value="1">{t('chat.daily')}</SelectItem>
+                <SelectItem value="7">{t('chat.weekly')}</SelectItem>
+                <SelectItem value="14">{t('chat.biweekly')}</SelectItem>
+                <SelectItem value="30">{t('chat.monthly')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -243,7 +277,7 @@ function EditProposedTaskModal({ task, isOpen, onClose, onSave }: EditProposedTa
           {recurringDays && recurringDays > 0 && (
             <>
               <div className="space-y-2">
-                <Label>สิ้นสุดการทำประจำ</Label>
+                <Label>{t('chat.recurringEnd')}</Label>
                 <Select
                   value={recurringEndType}
                   onValueChange={(value: "never" | "on_date") => {
@@ -257,21 +291,21 @@ function EditProposedTaskModal({ task, isOpen, onClose, onSave }: EditProposedTa
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="never">ไม่เลย</SelectItem>
-                    <SelectItem value="on_date">ในวันที่</SelectItem>
+                    <SelectItem value="never">{t('chat.never')}</SelectItem>
+                    <SelectItem value="on_date">{t('chat.onDate')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               {recurringEndType === "on_date" && (
                 <div className="space-y-2">
-                  <Label>วันที่สิ้นสุด</Label>
+                  <Label>{t('chat.recurringEndDate')}</Label>
                   <div className="flex gap-2">
                     <div className="flex-1">
                       <DateTimePicker
                         value={recurringUntil}
                         onChange={setRecurringUntil}
-                        placeholder="เลือกวันที่สิ้นสุดการทำประจำ"
+                        placeholder={t('chat.selectRecurringEndDate')}
                       />
                     </div>
                     {recurringUntil.date && (
@@ -279,7 +313,9 @@ function EditProposedTaskModal({ task, isOpen, onClose, onSave }: EditProposedTa
                         type="button"
                         variant="outline"
                         size="icon"
-                        onClick={() => setRecurringUntil({ date: null, hasTime: false })}
+                        onClick={() =>
+                          setRecurringUntil({ date: null, hasTime: false })
+                        }
                         className="shrink-0"
                       >
                         <X className="w-4 h-4" />
@@ -294,14 +330,14 @@ function EditProposedTaskModal({ task, isOpen, onClose, onSave }: EditProposedTa
 
         <DialogFooter className="flex-col sm:flex-row gap-2">
           <Button variant="outline" onClick={onClose} className="w-full sm:w-auto">
-            ยกเลิก
+            {t('chat.cancel')}
           </Button>
           <Button
             onClick={handleSave}
-            className="bg-gray-900 hover:bg-gray-800 w-full sm:w-auto"
+            className="w-full sm:w-auto"
           >
             <Check className="w-4 h-4 mr-1" />
-            บันทึกและยอมรับ
+            {t('chat.saveAndAccept')}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -323,15 +359,17 @@ function TaskProposalCard({
   onEdit,
   onReject,
 }: TaskProposalCardProps) {
+  const t = useTranslations();
+  const locale = useLocale();
   const isProcessed = task.userAction !== "pending";
 
   return (
     <Card
       className={`border transition-all ${task.userAction === "accepted"
-        ? "border-green-300 bg-green-50"
+        ? "border-primary/30 bg-accent"
         : task.userAction === "rejected"
-          ? "border-rose-300 bg-rose-50 opacity-60"
-          : "border-gray-200 hover:border-gray-300"
+          ? "border-muted bg-muted/50 opacity-60"
+          : "border-border hover:border-muted-foreground"
         }`}
     >
       <CardContent className="p-3 sm:p-4">
@@ -339,7 +377,7 @@ function TaskProposalCard({
           {/* Content */}
           <div className="flex-1 min-w-0">
             <div className="flex flex-wrap items-center gap-2 mb-2">
-              <h4 className="font-semibold text-gray-900 text-sm sm:text-base truncate max-w-[200px] sm:max-w-none">
+              <h4 className="font-semibold text-foreground text-sm sm:text-base truncate max-w-[200px] sm:max-w-none">
                 {task.name}
               </h4>
               <Badge
@@ -347,49 +385,49 @@ function TaskProposalCard({
                 className={`text-xs ${getPriorityColor(task.priority)}`}
               >
                 <Flag className="w-3 h-3 mr-1" />
-                {getPriorityLabel(task.priority)}
+                {t(getPriorityKey(task.priority))}
               </Badge>
             </div>
 
-            <p className="text-xs sm:text-sm text-gray-600 mb-2 sm:mb-3 line-clamp-2">
+            <p className="text-xs sm:text-sm text-muted-foreground mb-2 sm:mb-3 line-clamp-2">
               {task.description}
             </p>
 
-            <div className="flex flex-col sm:flex-row sm:flex-wrap gap-1 sm:gap-3 text-xs text-gray-500">
+            <div className="flex flex-col sm:flex-row sm:flex-wrap gap-1 sm:gap-3 text-xs text-muted-foreground">
               <div className="flex items-center gap-1">
                 <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 <span className="text-[11px] sm:text-xs">
-                  {formatDateTime(task.start_datetime)}
+                  {formatDateTime(task.start_datetime, locale)}
                 </span>
               </div>
               <div className="flex items-center gap-1">
                 <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 <span className="text-[11px] sm:text-xs">
-                  ถึง {formatDateTime(task.end_datetime)}
+                  {t('chat.until')} {formatDateTime(task.end_datetime, locale)}
                 </span>
               </div>
             </div>
           </div>
 
           {/* Action buttons or status */}
-          <div className="flex items-center gap-2 pt-2 border-t border-gray-100">
+          <div className="flex items-center gap-2 pt-2 border-t border-border">
             {isProcessed ? (
               <Badge
                 variant="outline"
                 className={`text-xs ${task.userAction === "accepted"
-                  ? "bg-green-100 text-green-700 border-green-300"
-                  : "bg-rose-100 text-rose-700 border-rose-300"
+                  ? "bg-primary/10 text-primary border-primary/20"
+                  : "bg-muted text-muted-foreground border-muted-foreground/20"
                   }`}
               >
                 {task.userAction === "accepted" ? (
                   <>
                     <Check className="w-3 h-3 mr-1" />
-                    ยอมรับแล้ว
+                    {t('chat.accepted')}
                   </>
                 ) : (
                   <>
                     <X className="w-3 h-3 mr-1" />
-                    ปฏิเสธแล้ว
+                    {t('chat.rejected')}
                   </>
                 )}
               </Badge>
@@ -398,29 +436,29 @@ function TaskProposalCard({
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-7 sm:h-8 px-2 sm:px-3 text-xs sm:text-sm text-green-600 border-green-300 hover:bg-green-50 flex-1"
+                  className="h-7 sm:h-8 px-2 sm:px-3 text-xs sm:text-sm flex-1 status-badge-done hover:opacity-80 transition-opacity"
                   onClick={() => onAccept(task)}
                 >
                   <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1" />
-                  <span className="hidden lg:inline">ยอมรับ</span>
+                  <span className="hidden lg:inline">{t('chat.accept')}</span>
                 </Button>
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-7 sm:h-8 px-2 sm:px-3 text-xs sm:text-sm text-blue-600 border-blue-300 hover:bg-blue-50 flex-1"
+                  className="h-7 sm:h-8 px-2 sm:px-3 text-xs sm:text-sm flex-1 status-badge-in-progress hover:opacity-80 transition-opacity"
                   onClick={() => onEdit(task)}
                 >
                   <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1" />
-                  <span className="hidden lg:inline">แก้ไข</span>
+                  <span className="hidden lg:inline">{t('chat.edit')}</span>
                 </Button>
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-7 sm:h-8 px-2 sm:px-3 text-xs sm:text-sm text-rose-600 border-rose-300 hover:bg-rose-50 flex-1"
+                  className="h-7 sm:h-8 px-2 sm:px-3 text-xs sm:text-sm flex-1 priority-badge-high hover:opacity-80 transition-opacity"
                   onClick={() => onReject(task)}
                 >
                   <X className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1" />
-                  <span className="hidden lg:inline">ปฏิเสธ</span>
+                  <span className="hidden lg:inline">{t('chat.reject')}</span>
                 </Button>
               </div>
             )}
@@ -440,8 +478,10 @@ interface StoredChatMessage extends Omit<ChatMessage, "timestamp"> {
 }
 
 export default function AIChatPage() {
+  const t = useTranslations();
   const params = useParams();
   const projectId = params.projectId as string;
+  const locale = useLocale();
 
   // Get user profile for avatar
   const { profile } = useProfile();
@@ -452,6 +492,14 @@ export default function AIChatPage() {
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Voice recording state
+  const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [isDraggingAudio, setIsDraggingAudio] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const dragCounterRef = useRef(0);
 
   // Edit modal state
   const [editingTask, setEditingTask] = useState<ProposedTask | null>(null);
@@ -475,8 +523,8 @@ export default function AIChatPage() {
     setIsRightPanelOpen(window.innerWidth >= 1024);
 
     // Listen for resize
-    window.addEventListener('resize', checkScreenSize);
-    return () => window.removeEventListener('resize', checkScreenSize);
+    window.addEventListener("resize", checkScreenSize);
+    return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
 
   // Get all proposed tasks from all messages
@@ -578,12 +626,13 @@ export default function AIChatPage() {
 
   const handleNonStreamingResponse = async (
     content: string,
-    sessionHistory: Message[]
+    sessionHistory: Message[],
   ) => {
     try {
       const response = await sendChatMessage(projectId, {
         content,
         session_history: sessionHistory,
+        locale,
       });
 
       const responseData = response.data.data;
@@ -606,7 +655,8 @@ export default function AIChatPage() {
         content: responseData.message,
         timestamp: new Date(),
         taskActions: responseData.task_actions,
-        proposedTasks: proposedTasks && proposedTasks.length > 0 ? proposedTasks : undefined,
+        proposedTasks:
+          proposedTasks && proposedTasks.length > 0 ? proposedTasks : undefined,
       };
 
       setMessages((prev) => [...prev, aiResponse]);
@@ -614,7 +664,7 @@ export default function AIChatPage() {
       const errorMessage =
         err instanceof Error
           ? err.message
-          : "ไม่สามารถเชื่อมต่อกับ AI ได้ กรุณาลองใหม่อีกครั้ง";
+          : t('chat.cannotConnectToAI');
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -628,11 +678,192 @@ export default function AIChatPage() {
     }
   };
 
+  // Voice recording functions
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, {
+          type: "audio/webm",
+        });
+        await transcribeAudio(audioBlob);
+
+        // Stop all tracks
+        stream.getTracks().forEach((track) => track.stop());
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+      setError(null);
+    } catch (err) {
+      console.error("Error starting recording:", err);
+      setError("ไม่สามารถเข้าถึงไมโครโฟนได้ กรุณาอนุญาตการใช้งานไมโครโฟน");
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
+  const transcribeAudio = async (audioBlob: Blob) => {
+    setIsTranscribing(true);
+    try {
+      // Initialize Groq client
+      const groq = new Groq({
+        apiKey: process.env.NEXT_PUBLIC_GROQ_API_KEY,
+        dangerouslyAllowBrowser: true,
+      });
+
+      // Convert Blob to File
+      const audioFile = new File([audioBlob], "recording.webm", {
+        type: audioBlob.type,
+      });
+
+      const transcription = await groq.audio.transcriptions.create({
+        file: audioFile,
+        model: "whisper-large-v3",
+        temperature: 0,
+        response_format: "verbose_json",
+      });
+
+      if (transcription.text) {
+        setInput(transcription.text);
+        // Auto-focus textarea after transcription
+        textareaRef.current?.focus();
+      } else {
+        setError("ไม่สามารถแปลงเสียงเป็นข้อความได้");
+      }
+    } catch (err) {
+      console.error("Transcription error:", err);
+      setError("เกิดข้อผิดพลาดในการแปลงเสียง");
+    } finally {
+      setIsTranscribing(false);
+    }
+  };
+
+  const toggleRecording = () => {
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  };
+
+  // Drag and drop audio handlers
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current++;
+    if (e.dataTransfer.types.includes("Files")) {
+      setIsDraggingAudio(true);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current--;
+    if (dragCounterRef.current === 0) {
+      setIsDraggingAudio(false);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingAudio(false);
+    dragCounterRef.current = 0;
+
+    const files = Array.from(e.dataTransfer.files);
+    const audioFile = files.find((file) => file.type.startsWith("audio/"));
+
+    if (!audioFile) {
+      setError("กรุณาลากไฟล์เสียงเท่านั้น (เช่น .mp3, .wav, .m4a, .webm)");
+      return;
+    }
+
+    // Create object URL for audio playback
+    const audioUrl = URL.createObjectURL(audioFile);
+
+    // Add user message with audio player immediately
+    const userMessage: ChatMessage = {
+      id: Date.now().toString(),
+      role: "user",
+      content: "",
+      audioUrl,
+      timestamp: new Date(),
+    };
+    setMessages((prev) => [...prev, userMessage]);
+    setIsLoading(true);
+    setError(null);
+
+    // Transcribe audio via Groq
+    setIsTranscribing(true);
+    try {
+      const groq = new Groq({
+        apiKey: process.env.NEXT_PUBLIC_GROQ_API_KEY,
+        dangerouslyAllowBrowser: true,
+      });
+
+      const transcription = await groq.audio.transcriptions.create({
+        file: audioFile,
+        model: "whisper-large-v3",
+        temperature: 0,
+        response_format: "verbose_json",
+      });
+
+      if (!transcription.text) {
+        setError("ไม่สามารถแปลงเสียงเป็นข้อความได้");
+        setIsLoading(false);
+        setIsTranscribing(false);
+        return;
+      }
+
+      // Update the user message with the transcribed text
+      const transcribedText = transcription.text;
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === userMessage.id
+            ? { ...msg, content: transcribedText }
+            : msg,
+        ),
+      );
+      setIsTranscribing(false);
+
+      // Send transcribed text to chat API
+      const sessionHistory = getSessionHistory();
+      await handleNonStreamingResponse(transcribedText, sessionHistory);
+    } catch (err) {
+      console.error("Transcription error:", err);
+      setError("เกิดข้อผิดพลาดในการแปลงเสียง");
+      setIsLoading(false);
+      setIsTranscribing(false);
+    }
+  };
+
   // Update task action in message
   const updateTaskAction = (
     messageId: string,
     taskId: string,
-    action: "accepted" | "rejected"
+    action: "accepted" | "rejected",
   ) => {
     setMessages((prev) =>
       prev.map((msg) => {
@@ -640,12 +871,12 @@ export default function AIChatPage() {
           return {
             ...msg,
             proposedTasks: msg.proposedTasks.map((task) =>
-              task.id === taskId ? { ...task, userAction: action } : task
+              task.id === taskId ? { ...task, userAction: action } : task,
             ),
           };
         }
         return msg;
-      })
+      }),
     );
   };
 
@@ -654,7 +885,7 @@ export default function AIChatPage() {
     task: ProposedTask,
     location?: string,
     recurringDays?: number,
-    recurringUntil?: string
+    recurringUntil?: string,
   ): CreateTaskRequest => ({
     name: task.name,
     description: task.description,
@@ -662,7 +893,8 @@ export default function AIChatPage() {
     start_datetime: task.start_datetime,
     end_datetime: task.end_datetime,
     ...(location && { location }),
-    ...(recurringDays && recurringDays > 0 && { recurring_days: recurringDays }),
+    ...(recurringDays &&
+      recurringDays > 0 && { recurring_days: recurringDays }),
     ...(recurringUntil && { recurring_until: recurringUntil }),
   });
 
@@ -674,7 +906,7 @@ export default function AIChatPage() {
       updateTaskAction(messageId, task.id, "accepted");
     } catch (err) {
       console.error("Failed to create task:", err);
-      setError("ไม่สามารถสร้าง task ได้ กรุณาลองใหม่อีกครั้ง");
+      setError(t('chat.cannotCreateTask'));
     }
   };
 
@@ -695,12 +927,17 @@ export default function AIChatPage() {
     editedTask: ProposedTask,
     location?: string,
     recurringDays?: number,
-    recurringUntil?: string
+    recurringUntil?: string,
   ) => {
     if (!editingMessageId) return;
 
     try {
-      const payload = proposedTaskToRequest(editedTask, location, recurringDays, recurringUntil);
+      const payload = proposedTaskToRequest(
+        editedTask,
+        location,
+        recurringDays,
+        recurringUntil,
+      );
       await createTask(projectId, payload);
 
       // Mark as accepted
@@ -712,31 +949,33 @@ export default function AIChatPage() {
       setEditingMessageId(null);
     } catch (err) {
       console.error("Failed to create task:", err);
-      setError("ไม่สามารถสร้าง task ได้ กรุณาลองใหม่อีกครั้ง");
+      setError(t('chat.cannotCreateTask'));
     }
   };
 
   return (
-    <div className="h-full bg-gray-50">
+    <div className="h-full bg-background">
       <div className="flex h-full">
         {/* Main Chat Area */}
-        <main className={`flex-1 flex flex-col transition-all duration-300 ${isRightPanelOpen ? 'mr-0' : ''}`}>
+        <main
+          className={`flex-1 flex flex-col transition-all duration-300 ${isRightPanelOpen ? "mr-0" : ""}`}
+        >
           {/* Header */}
-          <div className="p-6 bg-white border-b border-gray-200">
+          <div className="p-6 bg-card border-b border-border">
             {/* Page Title */}
-            <h1 className="text-3xl font-semibold text-gray-900 mb-2 lg:hidden">
-              AI Task Assistant
+            <h1 className="text-3xl font-semibold text-foreground mb-2 lg:hidden">
+              {t('chat.pageTitle')}
             </h1>
 
             <div className="flex items-center justify-between">
-              <p className="text-base text-gray-600">
-                สร้างและจัดการ tasks ด้วย AI
+              <p className="text-base text-muted-foreground">
+                {t('chat.pageSubtitle')}
               </p>
               <Button
                 variant="outline"
                 size="icon"
                 onClick={() => setIsRightPanelOpen(!isRightPanelOpen)}
-                className={isRightPanelOpen ? "bg-gray-100" : ""}
+                className={isRightPanelOpen ? "bg-accent" : ""}
               >
                 <PanelRight className="w-5 h-5" />
               </Button>
@@ -767,21 +1006,24 @@ export default function AIChatPage() {
               >
                 <div className="shrink-0">
                   {message.role === "assistant" ? (
-                    <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center">
-                      <Bot className="w-4 h-4 text-white" />
+                    <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+                      <Bot className="w-4 h-4 text-primary-foreground" />
                     </div>
                   ) : (
                     <Avatar className="w-8 h-8">
                       {profile?.avatarPath ? (
-                        <AvatarImage src={profile.avatarPath} alt={profile.firstName} />
+                        <AvatarImage
+                          src={profile.avatarPath}
+                          alt={profile.firstName}
+                        />
                       ) : null}
-                      <AvatarFallback className="bg-gray-200">
+                      <AvatarFallback className="bg-muted">
                         {profile?.firstName && profile?.lastName ? (
-                          <span className="text-xs font-medium text-gray-700">
+                          <span className="text-xs font-medium text-muted-foreground">
                             {profile.firstName[0]}{profile.lastName[0]}
                           </span>
                         ) : (
-                          <User className="w-4 h-4 text-gray-600" />
+                          <User className="w-4 h-4 text-muted-foreground" />
                         )}
                       </AvatarFallback>
                     </Avatar>
@@ -794,20 +1036,37 @@ export default function AIChatPage() {
                 >
                   <div
                     className={`inline-block max-w-2xl ${message.role === "user"
-                      ? "bg-gray-900 text-white rounded-2xl rounded-tr-sm"
-                      : "bg-white border border-gray-200 rounded-2xl rounded-tl-sm"
+                      ? "bg-primary text-primary-foreground rounded-2xl rounded-tr-sm"
+                      : "bg-card border border-border rounded-2xl rounded-tl-sm"
                       } p-4 shadow-sm`}
                   >
-                    <p
-                      className={`text-sm whitespace-pre-wrap ${message.role === "user" ? "text-white" : "text-gray-900"
-                        }`}
-                    >
-                      {message.content}
-                    </p>
+                    {message.audioUrl && (
+                      <div className="mb-2">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <Mic className="w-3.5 h-3.5 text-primary-foreground/70" />
+                          <span className="text-xs text-primary-foreground/70">
+                            ข้อความเสียง
+                          </span>
+                        </div>
+                        <audio
+                          controls
+                          src={message.audioUrl}
+                          className="w-full max-w-xs h-8"
+                        />
+                      </div>
+                    )}
+                    {message.content && (
+                      <p
+                        className={`text-sm whitespace-pre-wrap ${message.role === "user" ? "text-primary-foreground" : "text-foreground"
+                          }`}
+                      >
+                        {message.content}
+                      </p>
+                    )}
                     <p
                       className={`text-xs mt-2 ${message.role === "user"
-                        ? "text-gray-300"
-                        : "text-gray-500"
+                        ? "text-primary-foreground/70"
+                        : "text-muted-foreground"
                         }`}
                     >
                       {message.timestamp?.toLocaleTimeString("th-TH", {
@@ -820,13 +1079,13 @@ export default function AIChatPage() {
                   {message.taskActions && message.taskActions.length > 0 && (
                     <div className="mt-4 space-y-2">
                       {message.taskActions.map((action, idx) => (
-                        <Card key={idx} className="border-gray-200">
+                        <Card key={idx} className="border-border">
                           <CardContent className="p-3">
                             <div className="flex items-center gap-3">
-                              <CheckCircle2 className="w-5 h-5 text-green-500" />
+                              <CheckCircle2 className="w-5 h-5 text-primary" />
                               <div className="flex-1">
-                                <span className="font-medium">{action.name}</span>
-                                <span className="text-gray-500 text-sm ml-2">
+                                <span className="font-medium text-foreground">{action.name}</span>
+                                <span className="text-muted-foreground text-sm ml-2">
                                   ({action.task_id})
                                 </span>
                               </div>
@@ -843,7 +1102,6 @@ export default function AIChatPage() {
                     </div>
                   )}
 
-                  {/* Proposed Tasks notification - show only when panel is closed */}
                   {!isRightPanelOpen && message.proposedTasks && message.proposedTasks.length > 0 && (
                     <div className="mt-4">
                       <Button
@@ -853,7 +1111,7 @@ export default function AIChatPage() {
                         className="text-blue-600 border-blue-300 hover:bg-blue-50"
                       >
                         <Flag className="w-4 h-4 mr-2" />
-                        ดู {message.proposedTasks.length} Tasks ที่แนะนำ
+                        {t('chat.viewProposedTasks')}
                       </Button>
                     </div>
                   )}
@@ -863,13 +1121,13 @@ export default function AIChatPage() {
 
             {isLoading && (
               <div className="flex gap-4">
-                <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center">
-                  <Bot className="w-4 h-4 text-white" />
+                <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+                  <Bot className="w-4 h-4 text-primary-foreground" />
                 </div>
-                <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-sm p-4 shadow-sm">
-                  <div className="flex items-center gap-2 text-gray-600">
+                <div className="bg-card border border-border rounded-2xl rounded-tl-sm p-4 shadow-sm">
+                  <div className="flex items-center gap-2 text-muted-foreground">
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span className="text-sm">กำลังคิด...</span>
+                    <span className="text-sm">{t('common.loading')}</span>
                   </div>
                 </div>
               </div>
@@ -878,7 +1136,27 @@ export default function AIChatPage() {
           </div>
 
           {/* Input Area */}
-          <div className="p-6 bg-white border-t border-gray-200">
+          <div
+            className="p-6 bg-card border-t border-border relative"
+            onDragEnter={handleDragEnter}
+            onDragLeave={handleDragLeave}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+          >
+            {/* Drop overlay */}
+            {isDraggingAudio && (
+              <div className="absolute inset-0 z-10 backdrop-blur-md bg-background/80 border-2 border-dashed border-primary rounded-lg flex items-center justify-center pointer-events-none">
+                <div className="flex flex-col items-center gap-2 sm:gap-3 text-primary">
+                  <Upload className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12" />
+                  <p className="text-xs sm:text-sm md:text-base font-medium text-center px-4">
+                    วางไฟล์เสียงที่นี่เพื่อแปลงเป็นข้อความ
+                  </p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">
+                    .mp3, .wav, .m4a, .webm
+                  </p>
+                </div>
+              </div>
+            )}
             <div className="max-w-4xl mx-auto">
               <div className="flex gap-3 items-end">
                 <div className="flex-1 relative flex items-end">
@@ -887,8 +1165,9 @@ export default function AIChatPage() {
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder="พิมพ์ข้อความ"
-                    className="w-full resize-none rounded-xl border border-gray-300 px-4 py-3 pr-12 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent min-h-[52px] max-h-32"
+                    placeholder={t('chat.inputPlaceholder')}
+                    disabled={isRecording || isTranscribing}
+                    className="w-full resize-none rounded-xl border border-input bg-background text-foreground px-4 py-3 pr-12 focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent min-h-[52px] max-h-32 placeholder:text-muted-foreground disabled:opacity-50"
                     rows={1}
                     style={{ height: "auto" }}
                     onInput={(e) => {
@@ -899,20 +1178,51 @@ export default function AIChatPage() {
                   />
                 </div>
                 <Button
-                  onClick={handleSendMessage}
-                  disabled={!input.trim() || isLoading}
+                  onClick={toggleRecording}
+                  disabled={isLoading || isTranscribing}
                   size="lg"
-                  className="h-[52px] px-6 shrink-0 rounded-xl bg-gray-900 hover:bg-gray-800 text-white"
+                  variant={isRecording ? "destructive" : "outline"}
+                  className={`h-[52px] px-6 shrink-0 rounded-xl ${isRecording
+                    ? "animate-pulse"
+                    : ""
+                    }`}
+                  title={isRecording ? "หยุดบันทึกเสียง" : "บันทึกเสียง"}
+                >
+                  {isTranscribing ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : isRecording ? (
+                    <MicOff className="w-5 h-5" />
+                  ) : (
+                    <Mic className="w-5 h-5" />
+                  )}
+                </Button>
+                <Button
+                  onClick={handleSendMessage}
+                  disabled={
+                    !input.trim() || isLoading || isRecording || isTranscribing
+                  }
+                  size="lg"
+                  className="h-[52px] px-6 shrink-0 rounded-xl"
                 >
                   {isLoading ? (
-                    <Loader2 className="w-5 h-5 animate-spin text-white" />
+                    <Loader2 className="w-5 h-5 animate-spin" />
                   ) : (
-                    <Send className="w-5 h-5 text-white" />
+                    <Send className="w-5 h-5" />
                   )}
                 </Button>
               </div>
-              <p className="text-xs text-gray-500 mt-2 text-center">
-                กด Enter เพื่อส่งข้อความ, Shift + Enter เพื่อขึ้นบรรทัดใหม่
+              <p className="text-xs text-muted-foreground mt-2 text-center">
+                {t('chat.inputHint')}
+                {isRecording && (
+                  <span className="text-red-600 font-medium ml-2">
+                    • กำลังบันทึกเสียง...
+                  </span>
+                )}
+                {isTranscribing && (
+                  <span className="text-blue-600 font-medium ml-2">
+                    • กำลังแปลงเสียงเป็นข้อความ...
+                  </span>
+                )}
               </p>
             </div>
           </div>
@@ -921,17 +1231,17 @@ export default function AIChatPage() {
         {/* Right Panel - Proposed Tasks */}
         <aside
           className={`
-            ${isRightPanelOpen ? 'w-80 lg:w-96 opacity-100' : 'w-0 opacity-0'} 
-            bg-white border-l border-gray-200 flex flex-col h-full
+            ${isRightPanelOpen ? "w-80 lg:w-96 opacity-100" : "w-0 opacity-0"} 
+            bg-card border-l border-border flex flex-col h-full
             transition-all duration-300 ease-in-out overflow-hidden
             fixed right-0 top-0 lg:relative z-40
           `}
         >
-          <div className="p-4 border-b border-gray-200 flex items-center justify-between min-w-[320px] lg:min-w-[384px]">
+          <div className="p-4 border-b border-border flex items-center justify-between min-w-[320px] lg:min-w-[384px]">
             <div>
-              <h3 className="font-semibold text-gray-900">Tasks ที่แนะนำ</h3>
-              <p className="text-xs text-gray-500">
-                {getAllProposedTasks().length} tasks จาก AI
+              <h3 className="font-semibold text-foreground">{t('chat.proposedTasks')}</h3>
+              <p className="text-xs text-muted-foreground">
+                {getAllProposedTasks().length} {t('chat.aiCreatedTasks')}
               </p>
             </div>
             <Button
@@ -945,10 +1255,10 @@ export default function AIChatPage() {
 
           <div className="flex-1 overflow-y-auto p-4 space-y-3 min-w-[320px] lg:min-w-[384px]">
             {getAllProposedTasks().length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <Flag className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                <p className="text-sm">ยังไม่มี tasks ที่แนะนำ</p>
-                <p className="text-xs mt-1">ลองถาม AI เพื่อสร้าง tasks ใหม่</p>
+              <div className="text-center py-8 text-muted-foreground">
+                <Flag className="w-12 h-12 mx-auto mb-3 text-muted" />
+                <p className="text-sm">{t('chat.noProposedTasks')}</p>
+                <p className="text-xs mt-1">{t('chat.askAIToCreateTasks')}</p>
               </div>
             ) : (
               getAllProposedTasks().map(({ messageId, task }) => (

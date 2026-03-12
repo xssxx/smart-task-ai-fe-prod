@@ -2,7 +2,10 @@
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { useProjects } from "@/hooks/useProjects";
+import { useMyInvitations } from "@/hooks/useMyInvitations";
+import { useInvitationActions } from "@/hooks/useInvitationActions";
 import type { Project } from "@/services/api";
 
 import { Button } from "@/components/ui/button";
@@ -25,12 +28,17 @@ import {
   MoreHorizontal,
   Edit3,
   Trash2,
+  Users,
 } from "lucide-react";
 import { LinkWithLoading } from "@/components/LinkWithLoading";
+import { SidebarInvitations } from "@/components/SidebarInvitations";
 import CreateProjectModal from "@/components/CreateProjectModal";
 import EditWorkspaceModal from "@/components/EditWorkspaceModal";
 import DeleteWorkspaceModal from "@/components/DeleteWorkspaceModal";
+import LeaveWorkspaceModal from "@/components/LeaveWorkspaceModal";
+import ManageMembersModal from "@/components/ManageMembersModal";
 import { WORKSPACE_COLORS } from "@/constants";
+import { useAccountInfo } from "@/hooks/useAccountInfo";
 
 interface WorkspaceItem {
   id: string;
@@ -42,6 +50,7 @@ interface WorkspaceItem {
 interface Workspace {
   id: string;
   name: string;
+  role: string; // Add role field
   color: string;
   items: WorkspaceItem[];
 }
@@ -53,18 +62,36 @@ interface SidebarProps {
 
 const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
   const pathname = usePathname();
+  const t = useTranslations();
+  const { accountId } = useAccountInfo();
   const [activeItem, setActiveItem] = useState("");
-  const [expandedWorkspaces, setExpandedWorkspaces] = useState<Set<string>>(new Set());
+  const [expandedWorkspaces, setExpandedWorkspaces] = useState<Set<string>>(
+    new Set(),
+  );
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showMembersModal, setShowMembersModal] = useState(false);
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [deletingProject, setDeletingProject] = useState<Project | null>(null);
+  const [leavingProject, setLeavingProject] = useState<Project | null>(null);
+  const [managingMembersProject, setManagingMembersProject] =
+    useState<Project | null>(null);
 
   const { projects, loading, refetch } = useProjects();
+  const { invitations, loading: invitationsLoading } = useMyInvitations();
+  const { acceptInvitation, rejectInvitation, loading: actionLoading } = useInvitationActions();
 
-  const updateActiveStateFromPath = (path: string, workspaceList: Workspace[]) => {
+  const handleInvitationAction = () => {
+    refetch(); // Refresh projects list when invitation is accepted/rejected
+  };
+
+  const updateActiveStateFromPath = (
+    path: string,
+    workspaceList: Workspace[],
+  ) => {
     let newActiveItem = "";
     let workspaceToExpand: string | null = null;
 
@@ -77,7 +104,7 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
       if (projectMatch) {
         const projectId = projectMatch[1];
         const section = projectMatch[2];
-        const workspace = workspaceList.find(w => w.id === projectId);
+        const workspace = workspaceList.find((w) => w.id === projectId);
         if (workspace) {
           newActiveItem = `${section}-${projectId}`;
           workspaceToExpand = projectId;
@@ -87,7 +114,7 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
 
     setActiveItem(newActiveItem);
     if (workspaceToExpand) {
-      setExpandedWorkspaces(prev => new Set([...prev, workspaceToExpand]));
+      setExpandedWorkspaces((prev) => new Set([...prev, workspaceToExpand]));
     }
   };
 
@@ -95,18 +122,19 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
     const mappedWorkspaces: Workspace[] = projects.map((project, index) => ({
       id: project.id,
       name: project.name,
+      role: project.role, // Add role to workspace
       color: WORKSPACE_COLORS[index % WORKSPACE_COLORS.length],
       items: [
         {
           id: `board-${project.id}`,
           icon: FolderKanban,
-          label: "บอร์ด",
+          label: t('sidebar.board'),
           to: `/app/${project.id}/board`,
         },
         {
           id: `chat-${project.id}`,
           icon: MessageCircle,
-          label: "แชท AI",
+          label: t('sidebar.aiChat'),
           to: `/app/${project.id}/chat`,
         },
       ],
@@ -114,7 +142,7 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
 
     updateActiveStateFromPath(pathname, mappedWorkspaces);
     setWorkspaces(mappedWorkspaces);
-  }, [projects, pathname]);
+  }, [projects, pathname, t]);
 
   const handleProjectCreated = () => {
     refetch();
@@ -134,8 +162,18 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
     setShowDeleteModal(true);
   };
 
+  const handleManageMembers = (project: Project) => {
+    setManagingMembersProject(project as Project);
+    setShowMembersModal(true);
+  };
+
+  const handleLeaveProject = (project: Project) => {
+    setLeavingProject(project as Project);
+    setShowLeaveModal(true);
+  };
+
   const toggleWorkspace = (workspaceId: string) => {
-    setExpandedWorkspaces(prev => {
+    setExpandedWorkspaces((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(workspaceId)) {
         newSet.delete(workspaceId);
@@ -147,8 +185,8 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
   };
 
   const menuItems = [
-    { id: "home", icon: Home, label: "หน้าแรก", href: "/app/home" },
-    { id: "my-calendar", icon: Calendar, label: "ปฏิทินของฉัน", href: "/app/calendar" },
+    { id: "home", icon: Home, label: t('sidebar.home'), href: "/app/home" },
+    { id: "my-calendar", icon: Calendar, label: t('sidebar.myCalendar'), href: "/app/calendar" },
   ];
 
   return (
@@ -171,7 +209,7 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
       <aside
         className={`
           fixed lg:relative z-40
-          w-72 bg-white border-r border-gray-200 h-screen overflow-y-auto shrink-0
+          w-72 bg-sidebar border-r border-sidebar-border h-screen overflow-y-auto shrink-0
           transform transition-transform duration-300 ease-in-out
           ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
         `}
@@ -179,20 +217,23 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
         <div className="p-5 pt-16 lg:pt-5">
           <div className="hidden lg:flex items-center gap-3 mb-8">
             <Image src="/logo.svg" alt="Smart Task AI" width={40} height={40} className="object-contain" />
-            <h1 className="text-2xl font-momo text-gray-900">Smart Task</h1>
+            <h1 className="text-2xl font-momo text-sidebar-foreground">Smart Task</h1>
           </div>
 
           <nav className="space-y-1 mb-6">
             {menuItems.map((item) => {
               const Icon = item.icon;
-              const isActive = activeItem === item.id || (item.id === "home" && pathname === "/app/home") || (item.id === "my-calendar" && pathname === "/app/calendar");
+              const isActive =
+                activeItem === item.id ||
+                (item.id === "home" && pathname === "/app/home") ||
+                (item.id === "my-calendar" && pathname === "/app/calendar");
               return (
                 <LinkWithLoading
                   key={item.id}
                   href={item.href}
                   className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-base font-medium transition-colors ${isActive
-                    ? "bg-gray-100 text-gray-900"
-                    : "text-gray-600 hover:bg-gray-50"
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                    : "text-sidebar-foreground hover:bg-sidebar-accent/50"
                     }`}
                 >
                   <div className="flex items-center gap-3">
@@ -204,12 +245,12 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
             })}
           </nav>
 
-          <div className="border-t border-gray-200 my-4"></div>
+          <div className="border-t border-sidebar-border my-4"></div>
 
           <div>
             <div className="flex items-center justify-between mb-3 px-4">
-              <span className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
-                Workspaces
+              <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                {t('sidebar.workspaces')}
               </span>
               <Button
                 variant="ghost"
@@ -217,12 +258,12 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
                 className="h-7 w-7"
                 onClick={() => setShowCreateModal(true)}
               >
-                <Plus className="w-5 h-5 text-gray-500" />
+                <Plus className="w-5 h-5 text-muted-foreground" />
               </Button>
             </div>
 
             <div className="space-y-1">
-              {loading ? (
+              {loading || invitationsLoading ? (
                 <div className="space-y-2 px-4">
                   {[1, 2, 3].map((i) => (
                     <div key={i} className="flex items-center gap-2 py-2">
@@ -232,24 +273,28 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
                     </div>
                   ))}
                 </div>
-              ) : workspaces.length === 0 ? (
-                <p className="text-base text-gray-500 px-4 py-2">No projects yet</p>
+              ) : workspaces.length === 0 && (!invitations || invitations.length === 0) ? (
+                <p className="text-base text-muted-foreground px-4 py-2">{t('sidebar.noProjects')}</p>
               ) : (
-                workspaces.map((workspace) => (
-                  <div key={workspace.id} className="group">
+                <>
+                  {workspaces.map((workspace) => (
+                    <div key={workspace.id} className="group">
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => toggleWorkspace(workspace.id)}
-                        className="flex-1 flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+                        className="flex-1 min-w-0 flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
                       >
                         <ChevronRight
-                          className={`w-5 h-5 transition-transform ${expandedWorkspaces.has(workspace.id) ? "rotate-90" : ""
-                            }`}
+                          className={`w-5 h-5 shrink-0 transition-transform ${
+                            expandedWorkspaces.has(workspace.id)
+                              ? "rotate-90"
+                              : ""
+                          }`}
                         />
                         <div
-                          className={`w-3 h-3 rounded-full ${workspace.color}`}
+                          className={`w-3 h-3 shrink-0 rounded-full ${workspace.color}`}
                         ></div>
-                        <span className="flex-1 text-left truncate">
+                        <span className="flex-1 min-w-0 text-left truncate">
                           {workspace.name}
                         </span>
                       </button>
@@ -259,39 +304,78 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-9 w-9 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
+                            className="h-9 w-9 shrink-0 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110"
                             onClick={(e) => e.stopPropagation()}
                           >
-                            <MoreHorizontal className="w-5 h-5 text-gray-500" />
+                            <MoreHorizontal className="w-5 h-5 text-muted-foreground" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-40">
+                        <DropdownMenuContent align="end" className="w-48">
                           <DropdownMenuItem
                             onClick={(e) => {
                               e.stopPropagation();
-                              const project = projects.find(p => p.id === workspace.id);
+                              const project = projects.find(
+                                (p) => p.id === workspace.id,
+                              );
                               if (project) {
-                                handleEditProject(project);
+                                handleManageMembers(project);
                               }
                             }}
                             className="cursor-pointer"
                           >
-                            <Edit3 className="w-4 h-4 mr-2" />
-                            แก้ไข
+                            <Users className="w-4 h-4 mr-2" />
+                            {t('sidebar.manageMembers')}
                           </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              const project = projects.find(p => p.id === workspace.id);
-                              if (project) {
-                                handleDeleteProject(project);
-                              }
-                            }}
-                            className="cursor-pointer text-rose-600 focus:text-rose-600 focus:bg-rose-50"
-                          >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            ลบ
-                          </DropdownMenuItem>
+                          {workspace.role === 'owner' ? (
+                            <>
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const project = projects.find(
+                                    (p) => p.id === workspace.id,
+                                  );
+                                  if (project) {
+                                    handleEditProject(project);
+                                  }
+                                }}
+                                className="cursor-pointer"
+                              >
+                                <Edit3 className="w-4 h-4 mr-2" />
+                                {t('sidebar.edit')}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const project = projects.find(
+                                    (p) => p.id === workspace.id,
+                                  );
+                                  if (project) {
+                                    handleDeleteProject(project);
+                                  }
+                                }}
+                                className="cursor-pointer text-rose-600 focus:text-rose-600 focus:bg-rose-50"
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                {t('sidebar.delete')}
+                              </DropdownMenuItem>
+                            </>
+                          ) : (
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const project = projects.find(
+                                  (p) => p.id === workspace.id,
+                                );
+                                if (project) {
+                                  handleLeaveProject(project);
+                                }
+                              }}
+                              className="cursor-pointer text-rose-600 focus:text-rose-600 focus:bg-rose-50"
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              {t('sidebar.leave')}
+                            </DropdownMenuItem>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
@@ -306,8 +390,8 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
                               key={item.id}
                               href={item.to ?? "#"}
                               className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-base transition-colors ${isActive
-                                ? "bg-gray-100 text-gray-900 font-medium"
-                                : "text-gray-500 hover:bg-gray-50"
+                                ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                                : "text-muted-foreground hover:bg-sidebar-accent/50"
                                 }`}
                             >
                               <Icon className="w-5 h-5" />
@@ -318,12 +402,18 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
                       </div>
                     )}
                   </div>
-                ))
+                  ))}
+
+                  <SidebarInvitations 
+                    onAccept={handleInvitationAction}
+                    onReject={handleInvitationAction}
+                  />
+                </>
               )}
             </div>
           </div>
 
-          <div className="border-t border-gray-200 my-4"></div>
+          <div className="border-t border-sidebar-border my-4"></div>
         </div>
       </aside>
 
@@ -346,6 +436,25 @@ const Sidebar = ({ isOpen = false, onToggle }: SidebarProps) => {
         onSuccess={handleProjectUpdated}
         project={deletingProject}
       />
+
+      {managingMembersProject && (
+        <ManageMembersModal
+          open={showMembersModal}
+          onOpenChange={setShowMembersModal}
+          projectId={managingMembersProject.id}
+          projectName={managingMembersProject.name}
+        />
+      )}
+
+      {leavingProject && accountId && (
+        <LeaveWorkspaceModal
+          open={showLeaveModal}
+          onOpenChange={setShowLeaveModal}
+          onSuccess={handleProjectUpdated}
+          project={leavingProject}
+          accountId={accountId}
+        />
+      )}
     </>
   );
 };

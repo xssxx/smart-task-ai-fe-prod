@@ -26,10 +26,8 @@ const Toaster = ({ ...props }: ToasterProps) => {
       }}
       toastOptions={{
         classNames: {
-          success: "!bg-[#f1fae5] !text-[#7ccf00] !border-[#7ccf00] !border",
-          error: "!bg-[#f9e4ea] !text-[#ff2056] !border-[#ff2056] !border",
-          warning: "!bg-[#fdf7e5] !text-[#f7c828] !border-[#f7c828] !border",
-          info: "!bg-[#e1f2fa] !text-[#00a6f4] !border-[#00a6f4] !border",
+          toast: "group toast",
+          description: "group-[.toast]:text-muted-foreground",
         },
       }}
       style={
