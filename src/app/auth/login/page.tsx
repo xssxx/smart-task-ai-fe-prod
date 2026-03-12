@@ -15,7 +15,10 @@ export default function SignInPage() {
     rememberMe: false,
   });
 
-  const handleInputChange = (field: keyof typeof formData, value: string | boolean) => {
+  const handleInputChange = (
+    field: keyof typeof formData,
+    value: string | boolean,
+  ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setError("");
   };
@@ -23,15 +26,6 @@ export default function SignInPage() {
   const signInWithGoogle = async () => {
     await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: {
-        redirectTo: `${location.origin}/auth/callback`,
-      },
-    });
-  };
-
-  const signInWithFacebook = async () => {
-    await supabase.auth.signInWithOAuth({
-      provider: "facebook",
       options: {
         redirectTo: `${location.origin}/auth/callback`,
       },
@@ -50,7 +44,10 @@ export default function SignInPage() {
     setIsLoading(true);
 
     try {
-      const res = await signin({ username: formData.email, password: formData.password });
+      const res = await signin({
+        username: formData.email,
+        password: formData.password,
+      });
       if (res.status === 200) {
         const token = res.data.data?.token || res.data.token;
         if (token) {
@@ -97,9 +94,7 @@ export default function SignInPage() {
               className="w-full h-full object-contain"
             />
           </div>
-          <h1 className="text-3xl font-momo text-gray-900 mb-2">
-            Smart Task
-          </h1>
+          <h1 className="text-3xl font-momo text-gray-900 mb-2">Smart Task</h1>
           <p className="text-gray-600 text-lg">ยินดีต้อนรับกลับมา</p>
         </div>
 
@@ -233,7 +228,9 @@ export default function SignInPage() {
                 type="checkbox"
                 id="rememberMe"
                 checked={formData.rememberMe}
-                onChange={(e) => handleInputChange("rememberMe", e.target.checked)}
+                onChange={(e) =>
+                  handleInputChange("rememberMe", e.target.checked)
+                }
                 className="w-4 h-4 rounded border-gray-300 text-gray-900 focus:ring-gray-500"
               />
               <label htmlFor="rememberMe" className="text-sm text-gray-600">
@@ -294,7 +291,7 @@ export default function SignInPage() {
           </div>
 
           {/* Social Login */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3">
             <button
               type="button"
               onClick={signInWithGoogle}
@@ -320,16 +317,6 @@ export default function SignInPage() {
               </svg>
               <span className="text-gray-700 font-medium">Google</span>
             </button>
-            <button
-              type="button"
-              onClick={signInWithFacebook}
-              className="h-12 flex items-center justify-center space-x-2 border-2 border-gray-200 rounded-xl hover:border-gray-400 hover:bg-gray-50 transition-all duration-200"
-            >
-              <svg className="w-5 h-5" fill="#1877F2" viewBox="0 0 24 24">
-                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-              </svg>
-              <span className="text-gray-700 font-medium">Facebook</span>
-            </button>
           </div>
 
           {/* Signup Link */}
@@ -347,10 +334,7 @@ export default function SignInPage() {
         {/* Help Link */}
         <p className="text-center text-xs text-gray-500 mt-6">
           ต้องการความช่วยเหลือ?{" "}
-          <a
-            href="#"
-            className="text-gray-700 hover:text-gray-900 font-medium"
-          >
+          <a href="#" className="text-gray-700 hover:text-gray-900 font-medium">
             ติดต่อเรา
           </a>
         </p>
