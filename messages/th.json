@@ -102,6 +102,7 @@
     "statusUpdateFailed": "ไม่สามารถอัพเดท Status ได้",
     "cannotLoadTask": "ไม่สามารถโหลดข้อมูล Task ได้",
     "cannotEditEndDateWhenNotTodo": "ไม่สามารถแก้ไขวันเวลาสิ้นสุดได้เมื่อ status ไม่ใช่ Todo",
+    "cannotEditStartDateWhenInProgress": "ไม่สามารถแก้ไขวันเวลาเริ่มต้นได้เมื่อ status เป็น In Progress",
     "recurringOverlapWarning": "Task มีระยะเวลา {days} วัน แต่ทำประจำทุก {recurring} วัน จะทำให้เกิดการซ้ำซ้อน",
     "recurringOverlapSuggestion": "Task มีระยะเวลา {days} วัน ควรตั้งทำประจำอย่างน้อย {suggested} วัน หรือลบการทำประจำออก"
   },

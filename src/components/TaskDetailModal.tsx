@@ -219,10 +219,11 @@ export default function TaskDetailModal({
       });
       onOpenChange(false);
       onSuccess();
-    } catch (err) {
-      setError(t('task.taskUpdateFailedDescription'));
+    } catch (err: any) {
+      const errorMessage = err?.response?.data?.message || t('task.taskUpdateFailedDescription');
+      setError(errorMessage);
       toast.error(t('task.taskUpdateFailed'), {
-        description: t('task.taskUpdateFailedDescription'),
+        description: errorMessage,
         duration: TOAST_DURATION.ERROR,
       });
     } finally {
@@ -416,11 +417,11 @@ export default function TaskDetailModal({
                   <DateTimePicker
                     value={endDateTime}
                     onChange={setEndDateTime}
-                    isDisabled={!isEditing || isSaving || formData.status !== 'todo'}
+                    isDisabled={!isEditing || isSaving}
                     placeholder={t('task.selectEndDateTime')}
                   />
                 </div>
-                {isEditing && endDateTime.date && formData.status === 'todo' && (
+                {isEditing && endDateTime.date && (
                   <Button
                     type="button"
                     variant="outline"
@@ -436,11 +437,6 @@ export default function TaskDetailModal({
               {isDateRangeInvalid && (
                 <p className="text-xs text-rose-600">
                   {t('task.endDateMustBeAfterStart')}
-                </p>
-              )}
-              {formData.status !== 'todo' && (
-                <p className="text-xs text-muted-foreground">
-                  {t('task.cannotEditEndDateWhenNotTodo')}
                 </p>
               )}
             </div>

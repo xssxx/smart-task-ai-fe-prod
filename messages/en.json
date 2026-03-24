@@ -102,6 +102,7 @@
     "statusUpdateFailed": "Status Update Failed",
     "cannotLoadTask": "Cannot load task data",
     "cannotEditEndDateWhenNotTodo": "Cannot edit end date/time when status is not Todo",
+    "cannotEditStartDateWhenInProgress": "Cannot edit start date/time when status is In Progress",
     "recurringOverlapWarning": "Task duration is {days} days but recurring every {recurring} days will cause overlap",
     "recurringOverlapSuggestion": "Task duration is {days} days. Should recur at least {suggested} days or remove recurring"
   },
